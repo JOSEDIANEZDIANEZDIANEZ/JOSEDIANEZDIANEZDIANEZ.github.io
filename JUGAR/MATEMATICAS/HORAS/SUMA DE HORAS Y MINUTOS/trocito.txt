@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-image: url('fondo.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: white;
+        }
+        input {
+            width: 50px;
+            background-color: black;
+            color: white;
+        }
+        span {
+            font-size: 20px;
+            color: white;
+        }
+        h1 {
+            color: white;
+        }
+    </style>
+    <title>Calculadora de Diferencia de Tiempo</title>
+</head>
+<body>
+    <h1>Restar horas y minutos</h1>
+  
+    <div>
+        <span id="horaMayor"></span>
+    </div>
+    <div>
+        <span id="horaMenor"></span>
+    </div>
+    <div>
+        <span>Solución:</span>
+        <input type="number" id="horasSolucion" placeholder="Horas">
+        <span>:</span>
+        <input type="number" id="minutosSolucion" placeholder="Minutos">
+    </div><br>
+    <button onclick="comprobarSolucion()">Comprobar</button>
+    <p id="resultado"></p>
+    <div id="videodiv" style="display: flex; justify-content: center; height: 300px;">
+        <video id="videoElement" autoplay controls style="height: 70%; position: absolute; bottom: 10;">
+            <source src="ayuda.mp4">
+        </video>
+    </div>
+    <div id="countdown" style="position: absolute; top: 0; left: 0; padding: 10px; background: rgba(0, 0, 0, 0.7); color: white;"></div>
+    
+    <script>
+        var tiempomaximo = 7; // Tiempo máximo en segundos
+        var countdownElement = document.getElementById('countdown');
+        var comprobarButton = document.querySelector('button');
+        var countdownInterval;
+
+        function startCountdown() {
+            countdownElement.textContent = tiempomaximo;
+            countdownInterval = setInterval(function() {
+                tiempomaximo--;
+                countdownElement.textContent = tiempomaximo;
+                if (tiempomaximo === 0) {
+                    clearInterval(countdownInterval);
+                    // Simular un clic en el botón "Comprobar"
+                    comprobarButton.click();
+                }
+            }, 1000);
+        }
+
+        function stopCountdown() {
+            clearInterval(countdownInterval);
+        }
+
+        // Resto de tu código...
+
+        // Iniciar el contador de tiempo al cargar la página
+        startCountdown();
+    </script>
+</body>
+</html>

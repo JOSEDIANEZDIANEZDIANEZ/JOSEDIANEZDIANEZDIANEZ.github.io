@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-image: url('fondo.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: white;
+        }
+
+        input {
+            width: 50px;
+            background-color: black;
+            color: white;
+            font-size: 50px;
+            min-width: 75px;
+        }
+
+        span {
+            font-size: 40px;
+            color: white;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        button {
+            color: aliceblue;
+            background-color: black;
+            font-size: large;
+        }
+
+        .inputentradanombreclass {
+
+            min-width: 400px;
+            font-size: 50px;
+        }
+
+        /* Estilo para dispositivos móviles */
+        @media (max-width: 768px) {
+            .responsive-video {
+                width: 100%;
+                height: auto;
+            }
+
+            .titulo-pagina {
+                display: none;
+            }
+
+
+
+            .inputentradanombreclass {
+                width: 50%;
+                /* Ajustar el ancho del input según el ancho de la pantalla */
+                font-size: 20px;
+                margin: 0 auto;
+                /* Centrar horizontalmente */
+                position: absolute;
+                /* Establecer posición absoluta */
+                top: 0%;
+                /* Ajustar la posición verticalmente en el centro de la pantalla */
+                left: 75%;
+                /* Ajustar la posición horizontalmente en el centro de la pantalla */
+                transform: translate(-50%, -50%);
+                /* Centrar con respecto a sí mismo */
+            }
+
+
+
+        }
+
+        /* Estilo para ordenadores */
+        @media (min-width: 769px) {
+            .responsive-video {
+                width: auto;
+                /* O el ancho original que desees */
+                height: 70%;
+
+            }
+        }
+    </style>
+    <title>Calculadora de Diferencia de Tiempo</title>
+</head>
+
+<body>
+    <!-- <div id="paginadepresentacionId"
+    style="position: absolute; top: 0; left: 0; padding: 10px; background: rgba(0, 0, 0, 0.7); color: white;">-->
+    <div id="paginadepresentacionId"
+        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 10px; background: rgba(0, 0, 0, 0.7); color: white;">
+        <!-- Contenido de tu div -->
+
+        <input id="nombrejugadorId" placeholder="Agente:nombre" class="inputentradanombreclass">
+
+        <button onclick="irapaginaintermediadeayuda()"style="font-size: 30px; padding: 10px 20px;" >SU MISIÓN</button>
+    </div>
+    <div id="paginaintermediadeayuda" style="display: none;">
+
+        <div>
+            <button onclick="empezarjuego()" style="font-size: 20px; padding: 10px 20px;">DESACTIVAR BOMBA</button>
+
+            
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+
+            <video id="videoElement" class="responsive-video" controls
+                style="height: 70%; position: absolute; bottom: 10;" src="ayuda.mp4"></video>
+
+        </div>
+    </div>
+    <div id="pagina2Id" style="display: none;">
+
+        <!--<h1>Restar horas y minutos</h1>-->
+        <h1 class="titulo-pagina" style="position: absolute; top: 0; right: 0; margin: 10px; color: white;">Sumar horas
+            y minutos</h1>
+
+        <div>
+            <span id="horaMayor"></span>
+        </div>
+        <div>
+            <span id="horaMenor"></span>
+        </div>
+
+
+
+
+
+        <!--<span>Solución:</span>-->
+        <input id="horasSolucion">
+        <span>:</span>
+        <input id="minutosSolucion">
+        <br>
+        <button onclick="comprobarSolucion()" id="comprobarbuttonId" style="font-size: 40px; padding: 10px 20px;" >Comprobar</button>
+        <p id="resultado" hidden></p>
+        <div id="videodiv" style="display: flex; justify-content: center; height: 300px;">
+
+
+            </video>
+        </div>
+        <div id="countdown"
+            style="position: absolute; top: 0; left: 0; padding: 10px; background: rgba(0, 0, 0, 0.7); color: white;font-size: 70px;">
+        </div>
+    </div>
+    <script>
+        var tiempomaximo = 30; // Tiempo máximo en segundos
+        var countdownElement = document.getElementById('countdown');
+        var countdownInterval;
+        var divinicial = document.getElementById("paginadepresentacionId");
+        var paginadeayuda = document.getElementById("paginaintermediadeayuda");
+        var buttoncomprobar=document.getElementById("comprobarbuttonId");
+        function irapaginaintermediadeayuda() {
+
+            paginadeayuda.style.display = "block";
+            divinicial.style.display = "none";
+        }
+        function empezarjuego() {
+
+            var divjuego = document.getElementById("pagina2Id");
+            var nombreJugadorInput = document.getElementById('nombrejugadorId');
+            var nombredeljugadoractual = nombreJugadorInput.value;
+            // Oculta el div de presentación
+            paginadeayuda.style.display = "none";
+
+            // Muestra el div del juego
+            divjuego.style.display = "block";
+
+            // Iniciar el contador de tiempo al hacer clic en "empezarjuego"
+            startCountdown();
+        }
+        function startCountdown() {
+            countdownElement.textContent = tiempomaximo;
+            countdownInterval = setInterval(function () {
+                tiempomaximo--;
+                countdownElement.textContent = tiempomaximo;
+                if (tiempomaximo === 0) {
+                    clearInterval(countdownInterval);
+                    comprobarSolucion();
+                }
+            }, 1000);
+        }
+
+        function stopCountdown() {
+            clearInterval(countdownInterval);
+        }
+
+        function generarHoraAleatoria() {
+            const hour = Math.floor(Math.random() * 24);
+            const minute = Math.floor(Math.random() * 60);
+            return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        }
+
+        let hora1 = generarHoraAleatoria();
+        let hora2 = generarHoraAleatoria();
+
+        // Ordenar las horas
+        let [hour1, minute1] = hora1.split(':').map(Number);
+        let [hour2, minute2] = hora2.split(':').map(Number);
+
+        if (hour1 * 60 + minute1 < hour2 * 60 + minute2) {
+            [hora1, hora2] = [hora2, hora1];
+        }
+
+        document.getElementById('horaMayor').textContent = hora1;
+        document.getElementById('horaMenor').textContent = hora2;
+
+        function comprobarSolucion() {
+    buttoncomprobar.style.display = "none";
+    stopCountdown();
+    const horasSolucion = parseInt(document.getElementById('horasSolucion').value) || 0;
+    const minutosSolucion = parseInt(document.getElementById('minutosSolucion').value) || 0;
+
+    const [hour1, minute1] = hora1.split(':').map(Number);
+    const [hour2, minute2] = hora2.split(':').map(Number);
+
+    const tiempo1 = hour1 * 60 + minute1;
+    const tiempo2 = hour2 * 60 + minute2;
+
+    const suma = tiempo1 + tiempo2;
+    const solucionEnMinutos = horasSolucion * 60 + minutosSolucion;
+
+    const resultadoElement = document.getElementById('resultado');
+    const videoElement = document.getElementById('videodiv');
+
+    if (solucionEnMinutos === suma) {
+        resultadoElement.textContent = "¡Correcto!";
+        videoElement.innerHTML = '<video id="videoElement" autoplay  style="height: 70%; position: absolute; bottom: 10;" src="noexplota.mp4">';
+        setTimeout(generarInforme, 8000); // 8000 milisegundos = 8 segundos
+    } else {
+        resultadoElement.textContent = `Incorrecto. La solución es ${Math.floor(suma / 60)} horas y ${suma % 60} minutos.`;
+        videoElement.innerHTML = '<video id="videoElement" autoplay  style="height: 70%; position: absolute; bottom: 10;" src="explota.mp4">';
+        resultadoDiv.innerHTML += '<p><strong>Respuesta:</strong> ' + respuesta + '</p>';
+    }
+}
+
+
+        function generarInforme() {
+            const nombredeljugadoractual = document.getElementById('nombrejugadorId').value;
+            const nombredeljuego = "SUMA DE HORAS";
+            const fechaActual = new Date().toLocaleDateString();
+            const horaActual = new Date().toLocaleTimeString();
+
+            const informeTexto = `El jugador ${nombredeljugadoractual} ha desactivado correctamente la bomba del ${nombredeljuego} en el día ${fechaActual} a las ${horaActual}`;
+
+            const blob = new Blob([informeTexto], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'informe.txt';
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+        }
+
+
+    </script>
+</body>
+
+</html>
