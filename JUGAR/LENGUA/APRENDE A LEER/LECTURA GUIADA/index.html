@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es-ES">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LECTURA GUIADA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            width: 80%;
+            /* Cambiamos el ancho a 80% del ancho de pantalla */
+            margin: 10px;
+            font-size: 24px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #translatedText {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 70px;
+            /* Tamaño de fuente deseado para la traducción */
+        }
+    </style>
+</head>
+
+<body>
+    <h1>LECTURA GUIADA</h1>
+    <input type="text" id="inputText" placeholder="Ingresa una frase en español">
+    <button id="translateButton">JUGAR</button>
+
+    <p id="translatedText"></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputText = document.getElementById('inputText');
+            inputText.focus(); // Establece el foco en e
+
+            inputText.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    translateButton.focus(); // Establece el foco en el botón
+                }
+            });
+        });
+
+        const translateButton = document.getElementById('translateButton');
+        const inputText = document.getElementById('inputText');
+        const translatedText = document.getElementById('translatedText');
+
+        function pronunciarPalabra(palabra) {
+            var synth = window.speechSynthesis;
+            var utterance = new SpeechSynthesisUtterance(palabra);
+            utterance.lang = 'es-EN'; // Establecemos el idioma en inglés
+            synth.speak(utterance);
+        }
+
+        translateButton.addEventListener('click', () => {
+            const textToTranslate = inputText.value;
+            const translation = textToTranslate;
+            // Dividir la traducción en palabras
+            const palabras = translation.split(' ');
+
+            // Limpiar el contenido anterior
+            translatedText.innerHTML = '';
+
+            // Crear elementos span para cada palabra
+            palabras.forEach(palabra => {
+                const palabraElement = document.createElement('span');
+                palabraElement.textContent = palabra + ' ';
+                palabraElement.style.cursor = 'pointer';
+
+                palabraElement.addEventListener('mouseover', () => {
+                    pronunciarPalabra(palabra);
+                });
+
+                translatedText.appendChild(palabraElement);
+            });
+        });
+    </script>
+</body>
+
+</html>
