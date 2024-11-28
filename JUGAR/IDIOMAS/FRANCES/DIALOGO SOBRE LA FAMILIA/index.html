@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr-FR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preguntas y Respuestas</title>
+    <style>
+        body {
+            background-color: #333;
+            margin: 0;
+        }
+
+        .elemento {
+            display: inline-block;
+            /* Coloca los elementos uno al lado del otro */
+            margin-right: 10px;
+            /* Agrega un margen derecho para separar los elementos (ajusta según tus necesidades) */
+        }
+
+        #menucabecera {
+            position: fixed;
+            bottom: 0;
+            /* Cambiamos top por bottom */
+            left: 0;
+            right: 0;
+            background-color: #333;
+            color: white;
+            /*display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            z-index: 1000;
+            /*white-space: nowrap;
+            /* Ajusta el valor de z-index según sea necesario para estar por encima del contenido */
+        }
+
+        #botones {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .boton-pregunta {
+            border: none;
+            border-radius: 10px;
+            margin: 10px 0;
+            padding: 20px;
+            cursor: pointer;
+            font-size: 30px;
+        }
+
+        .boton-pregunta-container {
+            display: flex;
+            /* Display the question words in a row */
+            flex-wrap: wrap;
+            /* Allow words to wrap to the next line if needed */
+        }
+
+        .boton-pregunta-word {
+            border: none;
+            border-radius: 10px;
+            margin: 0 5px;
+            /* Add margin between question words */
+            padding: 10px;
+            /* Reduce padding for question words */
+            cursor: pointer;
+            font-size: 20px;
+            /* Reduce font size for question words */
+        }
+
+        .boton-respuesta {
+            border: none;
+            border-radius: 10px;
+            margin: 10px 0;
+            padding: 20px;
+            cursor: pointer;
+            font-size: 30px;
+        }
+
+        .boton-azul {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        .boton-amarillo {
+            background-color: #FFFF00;
+            color: #333;
+        }
+
+        #toggleButton {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+        }
+
+        #tokenizador {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+        }
+
+        #startButton {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+        }
+
+        #result {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+        }
+
+        #Actualizar {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+        }
+
+        #espacio-en-blanco {
+            height: 200px;
+            /* Ajusta la altura según sea necesario para coincidir con la altura del menú */
+        }
+    </style>
+</head>
+<script src="preguntas.js"></script>
+
+<body>
+    <div id="menucabecera">
+
+        <div id="toggleButtondiv"> <button id="toggleButton" class="elemento">Modo Palabra por Palabra:
+                Desactivado</button>
+            <button id="tokenizador" onclick=tokenizar(); class="elemento">Fragmentar en Palabras</button>
+            <button id="startButton" onclick=pronunciar(); class="elemento">Probar Pronunciación</button>
+            <div id="result" class="elemento">.</div>
+        </div>
+    </div>
+    <div id="botones"></div>
+    <div id="espacio-en-blanco"></div>
+    <script>
+        var botonesContainer = document.getElementById('botones');
+        var isAzul = true;
+        var currentUtterance = null;
+        var wordByWordMode = false; // Variable para habilitar/deshabilitar el modo palabra por palabra
+
+        // Obtenemos el botón de alternar
+        var toggleButton = document.getElementById('toggleButton');
+
+        // Establecemos un controlador de eventos para alternar el modo palabra por palabra
+        toggleButton.addEventListener('click', function () {
+            wordByWordMode = !wordByWordMode; // Cambiamos el estado del modo
+            toggleButton.textContent = wordByWordMode ? 'Modo Palabra por Palabra: Activado' : 'Modo Palabra por Palabra: Desactivado';
+        });
+
+        preguntas.forEach(function (item, index) {
+            var div = document.createElement('div');
+            var button = document.createElement('button');
+            button.className = "boton-pregunta " + (isAzul ? "boton-azul" : "boton-amarillo");
+            button.innerHTML = item.respuesta + '<br>' + item.pregunta;
+            button.addEventListener('click', function () {
+                if (currentUtterance) {
+                    window.speechSynthesis.cancel();
+                    currentUtterance = null;
+                }
+                if (wordByWordMode) {
+                    // Si el modo palabra por palabra está habilitado, dividimos y leemos palabra por palabra
+                    speakWordByWord(item.pregunta);
+                } else {
+                    // Si no, leemos la pregunta completa
+                    speakSentence(item.pregunta);
+                }
+            });
+            div.appendChild(button);
+            botonesContainer.appendChild(div);
+
+            isAzul = !isAzul;
+        });
+
+        function speakWordByWord(text) {
+            var words = text.split(' ');
+            var synthesis = window.speechSynthesis;
+
+            words.forEach(function (word, index) {
+                var utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.8;
+                synthesis.speak(utterance);
+                currentUtterance = utterance;
+            });
+        }
+
+        function speakSentence(text) {
+            var utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 0.8;
+            window.speechSynthesis.speak(utterance);
+            currentUtterance = utterance;
+        }
+    </script>
+    <script>
+        function tokenizar() {
+
+            var botonesContainer = document.getElementById('botones');
+            botonesContainer.innerHTML = "";
+            var botontoggle = document.getElementById('toggleButtondiv')
+            botontoggle.innerHTML = "";
+            // <button id="Actualizar" onclick="location.reload();">Volver a Modo Normal</button>
+
+            var codigobotonhtml = '<button id="Actualizar" onclick="location.reload();" class="elemento" >Volver a Modo Normal</button>'
+            var codigopronunciador = '<button id="startButton" onclick=pronunciar(); class="elemento">Probar Pronunciación</button>'
+            var codigocontenedorpronunciador = '<div id="result" class="elemento">.</div>'
+            botontoggle.innerHTML = codigobotonhtml + codigopronunciador + codigocontenedorpronunciador
+            var isAzul = true;
+            var currentUtterance = null;
+
+            preguntas.forEach(function (item, index) {
+                var div = document.createElement('div');
+
+                // Tokenize the question and create tokenized question buttons
+                var questionWords = item.pregunta.split(' ');
+                var questionContainer = document.createElement('div');
+                questionContainer.className = "boton-pregunta-container";
+                questionWords.forEach(function (word) {
+                    var questionButton = document.createElement('button');
+                    questionButton.className = "boton-pregunta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                    questionButton.textContent = word;
+                    questionButton.style.display = 'block'; // Show the question words by default
+                    questionButton.addEventListener('click', function () {
+
+                        if (currentUtterance) {
+                            window.speechSynthesis.cancel();
+                            currentUtterance = null;
+                        }
+
+                        speakWord(word);
+                    });
+                    questionContainer.appendChild(questionButton);
+                });
+
+                // Tokenize the answer and create tokenized answer buttons
+                var answerWords = item.respuesta.split(' ');
+                var answerContainer = document.createElement('div');
+                answerContainer.className = "boton-pregunta-container"; // Use the same class as question container
+                answerWords.forEach(function (word) {
+                    var answerButton = document.createElement('button');
+                    answerButton.className = "boton-respuesta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                    answerButton.textContent = word;
+                    answerButton.style.display = 'block'; // Show the answer words by default
+                    answerButton.addEventListener('click', function () {
+                        if (currentUtterance) {
+                            window.speechSynthesis.cancel();
+                            currentUtterance = null;
+                        }
+                        speakWord(word);
+                    });
+                    answerContainer.appendChild(answerButton);
+                });
+
+                div.appendChild(answerContainer); // Add the tokenized answer buttons
+                div.appendChild(questionContainer); // Add the tokenized question buttons
+                botonesContainer.appendChild(div);
+                isAzul = !isAzul;
+            });
+
+            function speakWord(word) {
+                result.value = "hola";
+                var utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+                currentUtterance = utterance;
+            }
+        }
+    </script>
+    
+    <script>
+        function pronunciar() {
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  const resultDiv = document.getElementById('result');
+            var detecta = 0;
+            recognition.lang = "fr-FR";
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.start();
+            recognition.onresult = function (event) {
+                detecta = 1;
+                const results = event.results;
+                const transcript = results[results.length - 1][0].transcript;
+
+                resultDiv.innerHTML = transcript;
+
+            }
+            recognition.onend = (event) => {
+
+                if (detecta == 0) {
+                    recognition.abort();
+                    recognition.start();
+                } else {
+                    detecta = 0;
+
+
+                    comprobar();
+                    recognition.abort();
+                }
+            }
+        }
+
+    </script>
+</body>
+
+</html>
