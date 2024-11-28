@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Página Web</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Cambié 125vh a 100vh para centrar verticalmente */
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row; /* Cambié a 'row' para que los botones estén uno al lado del otro */
+            justify-content: center; /* Centramos horizontalmente */
+            align-items: center; /* Centramos verticalmente */
+        }
+
+        .boton {
+            width: 300px;
+            height: 300px;
+            margin: 10px;
+            font-size: 35px;
+            border: 2px solid lightgray;
+            background-color: white;
+            color: darkgray;
+            border-radius: 50%;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                flex-direction: column; /* Cambié a 'column' para que los botones estén uno encima del otro en dispositivos móviles */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="boton" href="JUGAR/">JUGAR</a>
+        <a class="boton" href="CREAR/">CREAR</a>
+    </div>
+</body>
+</html>
