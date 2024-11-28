@@ -1,0 +1,179 @@
+<html>
+<title>compara</title>
+
+<head>
+    <meta charset="UTF-8">
+
+    <style>
+        .juegocss {
+            font-size: 200%;
+            height: 25vh;
+            margin: 5%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+
+        .botoneracss {
+
+            min-height: 50px;
+
+            font-size: 100%;
+        }
+
+        .caja_resultadocss {
+            font-size: 200%;
+        }
+    </style>
+</head>
+
+<body>
+    <!--las tres lineas siguientes se pueden borrar cuando el juego este terminado solo es para ver si funciona-->
+
+
+
+    <audio id="z" src="granerror.mp3" preload="auto"></audio>
+    <audio id="k" src="trompetas.mp3" preload="auto"></audio>
+    <audio id="w" src="EMF.mp3" preload="auto"></audio>
+    <audio id="x" src="demasiadoserrores.mp3" preload="auto"></audio>
+
+    <div id="contenedor" class="contenedorcss">
+        <div id="caja_resultado" class="caja_resultadocss" align="center">¿COMO SON ESTOS DOS NUMEROS?</div>
+        <div id="juego" class="juegocss">
+            <div id="caja_1" class="caja_1css"></div><br>
+
+
+            <div id="bontonera" class="botoneracss">
+                <input type="button" id="menor" class="botoneracss" value="<" onclick="elijo_menor()"
+                    style="background:#AED6F1" /><br><br>
+                <input type="button" id="igual" class="botoneracss" value="=" onclick="elijo_igual()"
+                    style="background:#AED6F1" /><br><br>
+                <input type="button" id="mayor" class="botoneracss" value=">" onclick="elijo_mayor()"
+                    style="background:#AED6F1" />
+            </div>
+            <div id="caja_2" class="caja_2css"></div>
+        </div>
+
+
+    </div>
+
+    <center>
+        <div id="muñeco" class="muñecocss">
+
+            <img src="muñeco.gif">
+
+        </div>
+        <div id="divplay"></div>
+    </center>
+    <script>
+        const traduccion = 439042;
+        const numero_veces_juego=10;
+        var d = new Date();
+        var semana = ["8", "2", "3", "4", "5", "6", "7"]
+        var number_a, number_b, como_es, mi_eleccion, maximo, minimo, contador;
+        var contador_de_errores;
+        contador_de_errores = 0;
+        contador = 0;
+        maximo = 99999;
+        minimo = 10000;
+
+
+        juega_la_maquina();
+        function recargar() {
+            location.reload();
+        }
+        function elijo_menor() {
+            mi_eleccion = "menor";
+            comprobar();
+            juego_yo();
+
+            /*esta linea solo es para ver que funciona, borrar la linea de abajo al final*/
+
+        }
+        function elijo_igual() {
+            mi_eleccion = "igual";
+            comprobar();
+            juego_yo();
+
+
+            /*esta linea solo es para ver que funciona, borrar la linea de abajo al final*/
+
+        }
+
+        function elijo_mayor() {
+            mi_eleccion = "mayor";
+            comprobar();
+            juego_yo();
+
+            /*esta linea solo es para ver que funciona, borrar la linea de abajo al final*/
+
+        }
+        function comprobar() {
+            if (mi_eleccion != como_es) {
+                document.getElementById("z").play();
+                contador_de_errores++;
+                /*la siguiente linea solo es para ver que funciona*/
+
+
+            } else {
+                document.getElementById("k").play();
+            }
+        }
+
+        function juega_la_maquina() {
+
+            number_a = Math.floor((Math.random() * (maximo - minimo)) + minimo);
+            number_b = Math.floor((Math.random() * (maximo - minimo)) + minimo);
+            if (number_a > number_b) {
+                como_es = "mayor";
+            }
+            if (number_a < number_b) {
+                como_es = "menor";
+            }
+            if (number_a == number_b) {
+                como_es = "igual";
+            }
+            /*estas cuatro lineas siguientes solo es para ver que funcionan se borran al final*/
+            document.getElementById("caja_1").innerHTML = number_a;
+            document.getElementById("caja_2").innerHTML = number_b;
+
+
+
+
+        }
+
+
+        function juego_yo() {
+            contador++;
+            if (contador != numero_veces_juego) {
+                juega_la_maquina();
+            }
+            else {
+
+                if (contador_de_errores == 0) {
+                    document.getElementById("caja_resultado").innerHTML = "ESTUPENDO HAS ACERTADO Y LA CONTRASEÑA ES " + semana[d.getDay()] * traduccion;
+                    document.getElementById("menor").disabled = true;
+                    document.getElementById("mayor").disabled = true;
+                    document.getElementById("igual").disabled = true;
+                    document.getElementById("w").play();
+                    document.getElementById("muñeco").innerHTML = '<img src="muñeco2.gif">';
+                }
+                else {
+                    document.getElementById("caja_resultado").innerHTML = "HAS COMETIDO DEMASIADOS ERRORES " + '<input type="button"  class="botoneracss" value="INTENTAR DE NUEVO" onclick="recargar()"  style="background:#AED6F1" />';
+                    document.getElementById("menor").disabled = true;
+                    document.getElementById("mayor").disabled = true;
+                    document.getElementById("igual").disabled = true;
+                    document.getElementById("x").play();
+                    document.getElementById("muñeco").innerHTML = '<img src="mal.gif">';
+
+                }
+            }
+
+        }
+
+
+    </script>
+</body>
+
+</html>
