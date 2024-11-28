@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<title>retoresta
+</title>
+<style>
+.contenedor{
+	height: 100vh;/*me ocupa el 100% de la pantalla*/
+	margin: 5%;/*me indica el margen por los dos lados*/
+	display: flex;/*indico que va a ser flexible*/
+	justify-content: center;/*centra horizontalmente*/
+	align-items: center;/*centra verticalmente*/
+	flex-direction: column;/*me pone todos elementos del div uno debajo de otros*/
+	font-size:500%;
+} 
+.btnJugar{
+	background: #AED6F1;
+     	width: 50%;
+	min-height: 50px;
+	cursor: pointer;
+	font-size:150%;
+	
+}
+
+
+    
+.btnJugar:hover {
+      transform: scale(1.05);
+    }
+</style>
+<head>
+    <body>
+<audio id="M" src="recordatorio.mp3" preload="auto"></audio>
+<audio id="W" src="EMF.mp3" preload="auto"></audio>
+<script>
+const traduccion = 1061;
+var d = new Date();
+var semana = ["8","2","3","4","5","6","7"]
+
+var numero_aleatorio_minuendo;
+var maximo_minuendo=10000;
+var minimo_minuendo=5000;
+var numero_aleatorio_sustraendo;
+var maximo_sustraendo=5000;
+var minimo_sustraendo=999;
+var resta;
+var x;
+
+function generar_numero_aleatorio_minuendo(maximo_minuendo,minimo_minuendo){
+numero_aleatorio_minuendo= Math.floor((Math.random() * (maximo_minuendo-minimo_minuendo)) +minimo_minuendo);
+}
+generar_numero_aleatorio_minuendo(maximo_minuendo,minimo_minuendo);
+
+//hago el minuendo
+
+
+
+function generar_numero_aleatorio_sustraendo(maximo_sustraendo,minimo_sustraendo){
+numero_aleatorio_sustraendo= Math.floor((Math.random() * (maximo_sustraendo-minimo_sustraendo)) +minimo_sustraendo);
+}
+generar_numero_aleatorio_sustraendo(maximo_sustraendo,minimo_sustraendo);
+
+//hago el sustraendo
+
+resta=numero_aleatorio_minuendo-numero_aleatorio_sustraendo
+
+function jugar(){
+document.getElementById("M").play();
+    do{
+x=prompt("introduce el resultado");
+    }while(x!=resta);
+document.getElementById("W").play();
+document.getElementById("pancarta").innerHTML ="LA CONTRASEÑA ES "+ semana[d.getDay()]*traduccion;
+}
+
+
+</script>
+<div class="contenedor">
+<script> document.write(numero_aleatorio_minuendo);   </script>-
+<script> document.write(numero_aleatorio_sustraendo);   </script>=<br>
+
+
+<input type=button value="JUGAR" id="comprobar" class="btnJugar" onclick="jugar()">
+<div id="pancarta"></div>
+</div>
+
+    </body>
+
+    </html>
