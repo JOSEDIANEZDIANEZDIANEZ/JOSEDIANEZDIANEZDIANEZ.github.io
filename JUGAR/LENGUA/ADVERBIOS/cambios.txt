@@ -1,0 +1,10 @@
+cuando fallo algunas veces se va directo al play
+
+en la linea 8 pongo estilo.css en vez de prototipo, ya que he cambiado a un estilo sin morfismo
+
+
+sobre la linea 730 quito que se le pueda dar al play
+
+sobre la linea 530 quito que salga la contraseña
+
+

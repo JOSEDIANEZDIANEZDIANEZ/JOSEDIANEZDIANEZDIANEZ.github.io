@@ -1,0 +1,119 @@
+.btnredondo {
+  display: block;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  border-color: gray;
+  color: gray;
+  font-size: 400%;
+  background-color: white;
+  word-wrap: normal;
+  
+}
+
+.btnredondoempezar {
+  display: flex;
+  align-items: top;
+  justify-content: left;
+  width: 100px;
+  height: 100px;
+  border-radius: 10%;
+  border-color: gray;
+  color: gray;
+  font-size: 250%;
+  background-color: white;
+}
+
+.contenedor {
+  height: 100vh;
+
+
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+ 
+  
+}
+#preguntascortas{
+  height: 100vh;
+
+
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+
+}
+.restoClass {
+  font-size: 150%;
+  color: gray;
+}
+
+#contenedorcronometro {
+  margin: 10px auto;
+  width: 540px;
+  height: 115px;
+}
+
+.reloj {
+  float: left;
+  font-size: 80px;
+  font-family: Courier, sans-serif;
+  color: #363431;
+}
+
+.empezardenuevoclass {
+  width: 50px;
+  height: 50px;
+  background-color: #fff;
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  border-radius: 50%;
+
+  /*line-height: 50px;*/
+
+
+}
+
+.cabecera {
+  display: flex;
+  justify-content: top;
+  align-items: top;
+
+
+}
+
+.botonera22class{
+
+ /* height: 100vh;/*me ocupa el 100% de la pantalla*/
+  /*margin: 5%;/*me indica el margen por los dos lados*/
+  display: flex;/*indico que va a ser flexible*/
+  justify-content: center;/*centra horizontalmente*/
+  align-items: center;/*fundamental*/
+  flex-direction: column;/*me pone todos elementos del div uno debajo de otros*/
+
+
+
+
+}
+ .selectero{
+  color:gray;
+
+  border: 10px;
+	text-align: center;
+	font-size: 30px;
+	margin: 30px 0px;
+	cursor: pointer;
+	 line-height: 100px; 
+	 width:350px;
+	height: 100px;
+	white-space: normal;
+} 

@@ -1,0 +1,801 @@
+<html lang="es-ES">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>
+  preguntas cortas
+</title>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="estilo.css">
+  <script src="cronometro.js">   inicio(); </script>
+</head>
+
+<body>
+  <audio id="bien" src="bien.mp3" preload="auto"></audio>
+  <audio id="mal" src="mal.mp3" preload="auto"></audio>
+  <audio id="victoria" src="victoria.mp3" preload="auto"></audio>
+  <div id="provisional" style="display:none;">
+    hola
+  </div>
+  <div class="contenedor" id="preguntascortas" style="display:none;">
+
+    <div id="empezardenuevo" class="empezardenuevoclass"><input type="button" id="botonempezar"
+        class="btnredondoempezar" value="REP" onclick="location.reload()"></div>
+
+
+    <div id="botonera">
+      <input type="button" id="boton" class="btnredondo" value="PLAY" onclick="play()">
+    </div>
+  </div>
+  <div id="contenedorcronometro" style="display:none;">
+    <div class="reloj" id="Horas" style="display:none;">00</div>
+    <div class="reloj" id="Minutos">00</div>
+    <div class="reloj" id="Segundos">:00</div>
+    <div class="reloj" id="Centesimas" style="display:none;">:00</div>
+
+  </div>
+  <div id="botonera22" class="botonera22class"></div>
+
+  <script src="preguntas.js">    </script>
+
+  <script>
+    var boton1storage;
+    var boton2storage;
+    var boton3storage;
+    var boton4storage;
+    var boton5storage;
+    var boton6storage;
+    var boton7storage;
+    var boton8storage;
+    var boton9storage;
+    var boton10storage;
+    var boton11storage;
+    var boton12storage;
+    var boton13storage;
+
+
+
+
+    var botonnivel1;
+    var botonnivel2;
+    var botonnivel3;
+    var botonnivel4;
+    var botonnivel5;
+    var botonnivel6;
+    var botonnivel7;
+    var botonnivel8;
+    var botonnivel9;
+    var botonnivel10;
+    var botonnivel11;
+    var botonnivel12;
+    var botonnivel13;
+    var nivel = 0;
+    var completado = false;
+
+    var juego_de_preguntas;
+    function comprobarlocalstore() {
+      boton1storage = JSON.parse(localStorage.getItem("estado_del_boton1"));
+      boton2storage = JSON.parse(localStorage.getItem("estado_del_boton2"));
+      boton3storage = JSON.parse(localStorage.getItem("estado_del_boton3"));
+      boton4storage = JSON.parse(localStorage.getItem("estado_del_boton4"));
+      boton5storage = JSON.parse(localStorage.getItem("estado_del_boton5"));
+      boton6storage = JSON.parse(localStorage.getItem("estado_del_boton6"));
+      boton7storage = JSON.parse(localStorage.getItem("estado_del_boton7"));
+      boton8storage = JSON.parse(localStorage.getItem("estado_del_boton8"));
+      boton9storage = JSON.parse(localStorage.getItem("estado_del_boton9"));
+      boton10storage = JSON.parse(localStorage.getItem("estado_del_boton10"));
+      boton11storage = JSON.parse(localStorage.getItem("estado_del_boton11"));
+      boton12storage = JSON.parse(localStorage.getItem("estado_del_boton12"));
+      boton13storage = JSON.parse(localStorage.getItem("estado_del_boton13"));
+
+
+      if (boton1storage == "habilitado") {
+
+        botonnivel1.disabled = false;
+      } else {
+        botonnivel1.disabled = false;
+      }
+
+
+      if (boton2storage == "habilitado") {
+
+        botonnivel2.disabled = false;
+      } else {
+        botonnivel2.disabled = true;
+      }
+
+
+      if (boton3storage == "habilitado") {
+        botonnivel3.disabled = false;
+      } else {
+        botonnivel3.disabled = true;
+      }
+
+      if (boton4storage == "habilitado") {
+        botonnivel4.disabled = false;
+      } else {
+        botonnivel4.disabled = true;
+      }
+
+
+      if (boton5storage == "habilitado") {
+        botonnivel5.disabled = false;
+      } else {
+        botonnivel5.disabled = true;
+      }
+
+
+      if (boton6storage == "habilitado") {
+        botonnivel6.disabled = false;
+      } else {
+        botonnivel6.disabled = true;
+      }
+      if (boton7storage == "habilitado") {
+        botonnivel7.disabled = false;
+      } else {
+        botonnivel7.disabled = true;
+      }
+
+
+      if (boton8storage == "habilitado") {
+        botonnivel8.disabled = false;
+      } else {
+        botonnivel8.disabled = true;
+      }
+
+
+      if (boton9storage == "habilitado") {
+        botonnivel9.disabled = false;
+      } else {
+        botonnivel9.disabled = true;
+      }
+      if (boton10storage == "habilitado") {
+        botonnivel10.disabled = false;
+      } else {
+        botonnivel10.disabled = true;
+      }
+
+
+      if (boton11storage == "habilitado") {
+        botonnivel11.disabled = false;
+      } else {
+        botonnivel11.disabled = true;
+      }
+
+
+      if (boton12storage == "habilitado") {
+        botonnivel12.disabled = false;
+      } else {
+        botonnivel12.disabled = true;
+      }
+      if (boton13storage == "habilitado") {
+        botonnivel13.disabled = false;
+      } else {
+        botonnivel13.disabled = true;
+      }
+
+    }
+
+
+
+
+
+
+    function mostrarprovisional() {
+      document.getElementById("provisional").innerHTML = 'ESTAMOS EN EL NIVEL ' + nivel + '  y se ha completado un nivel=' + completado
+    }
+    mostrarprovisional();
+    function ponerbotones() {
+
+      document.getElementById("botonera22").innerHTML =
+        '<input type="button" class="selectero" id="selectero1" onclick="l_uno()" value="LECCION     1"/>     <p>\
+             <input type="button" class="selectero" id="selectero2" onclick="l_dos()" value="LECCION     2" disabled/>   <p>\
+             <input type="button" class="selectero" id="selectero3" onclick="l_tres()" value="LECCION     3" disabled/>  <p>\
+             <input type="button" class="selectero" id="selectero4" onclick="l_cuatro()" value="LECCION     4" disabled/><p>\
+             <input type="button" class="selectero" id="selectero5" onclick="l_cinco()" value="LECCION     5" disabled/> <p>\
+             <input type="button" class="selectero" id="selectero6" onclick="l_seis()" value="LECCION     6" disabled/>  <p>\
+             <input type="button" class="selectero" id="selectero7" onclick="l_siete()" value="LECCION     7" disabled/> <p>\
+             <input type="button" class="selectero" id="selectero8" onclick="l_ocho()" value="LECCION     8" disabled/>  <p>\
+             <input type="button" class="selectero" id="selectero9" onclick="l_nueve()" value="LECCION     9" disabled/> <p>\
+             <input type="button" class="selectero" id="selectero10" onclick="l_diez()" value="LECCION     10" disabled/> <p>\
+             <input type="button" class="selectero" id="selectero11" onclick="l_once()" value="LECCION     11" disabled/> <p>\
+             <input type="button" class="selectero" id="selectero12" onclick="l_doce()" value="LECCION     12" disabled/> <p>\
+             <input type="button" class="selectero" id="selectero13" onclick="l_trece()" value="LECCION     13" disabled/>';
+      botonnivel1 = document.getElementById("selectero1");
+      botonnivel2 = document.getElementById("selectero2");
+      botonnivel3 = document.getElementById("selectero3");
+      botonnivel4 = document.getElementById("selectero4");
+      botonnivel5 = document.getElementById("selectero5");
+      botonnivel6 = document.getElementById("selectero6");
+      botonnivel7 = document.getElementById("selectero7");
+      botonnivel8 = document.getElementById("selectero8");
+      botonnivel9 = document.getElementById("selectero9");
+      botonnivel10 = document.getElementById("selectero10");
+      botonnivel11 = document.getElementById("selectero11");
+      botonnivel12 = document.getElementById("selectero12");
+      botonnivel13 = document.getElementById("selectero13");
+
+      if (preguntas.length <= 10) {
+
+        botonnivel2.hidden = true;
+        botonnivel3.hidden = true;
+        botonnivel4.hidden = true;
+        botonnivel5.hidden = true;
+        botonnivel6.hidden = true;
+        botonnivel7.hidden = true;
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+      }
+      if (preguntas.length > 10 && preguntas.length <= 20) {
+
+
+        botonnivel3.hidden = true;
+        botonnivel4.hidden = true;
+        botonnivel5.hidden = true;
+        botonnivel6.hidden = true;
+        botonnivel7.hidden = true;
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+      }
+      if (preguntas.length > 20 && preguntas.length <= 30) {
+
+
+        botonnivel4.hidden = true;
+        botonnivel5.hidden = true;
+        botonnivel6.hidden = true;
+        botonnivel7.hidden = true;
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+
+
+      }
+      if (preguntas.length > 30 && preguntas.length <= 40) {
+
+        botonnivel5.hidden = true;
+        botonnivel6.hidden = true;
+        botonnivel7.hidden = true;
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+      }
+      if (preguntas.length > 40 && preguntas.length <= 50) {
+
+        botonnivel6.hidden = true;
+        botonnivel7.hidden = true;
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+      }
+      if (preguntas.length > 50 && preguntas.length <= 60) {
+
+        botonnivel7.hidden = true;
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+      }
+      if (preguntas.length > 60 && preguntas.length <= 70) {
+
+        botonnivel8.hidden = true;
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+
+      }
+      if (preguntas.length > 70 && preguntas.length <= 80) {
+
+
+        botonnivel9.hidden = true;
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+      }
+      if (preguntas.length > 80 && preguntas.length <= 90) {
+
+        botonnivel10.hidden = true;
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+      }
+
+      if (preguntas.length > 90 && preguntas.length <= 100) {
+
+        botonnivel11.hidden = true;
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+      }
+      if (preguntas.length > 100 && preguntas.length <= 110) {
+
+        botonnivel12.hidden = true;
+        botonnivel13.hidden = true;
+
+
+      }
+      if (preguntas.length > 110 && preguntas.length <= 120) {
+
+
+        botonnivel13.hidden = true;
+
+
+      }
+      /*if (preguntas.length > 120 && preguntas.length <= 130) {
+
+      }*/
+
+      if (preguntas.length > 130) {
+        alert("demasiadas preguntas");
+      }
+    }
+    function l_uno() {
+      nivel = 1;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(0, 11);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+
+    }
+    function l_dos() {
+      nivel = 2;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(11, 21);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_tres() {
+      nivel = 3;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(21, 31);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_cuatro() {
+      nivel = 4;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(31, 41);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_cinco() {
+      nivel = 5;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(41, 51);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_seis() {
+      nivel = 6;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(51, 61);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_siete() {
+      nivel = 7;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(61, 71);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_ocho() {
+      nivel = 8;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(71, 81);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_nueve() {
+      nivel = 9;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(81, 91);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_diez() {
+      nivel = 10;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(91, 101);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_once() {
+      nivel = 11;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(101, 111);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_doce() {
+      nivel = 12;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(111, 121);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+    function l_trece() {
+      nivel = 13;
+      mostrarprovisional();
+      juego_de_preguntas = preguntas.slice(121, 131);
+      document.getElementById('botonera22').style.display = "none";
+      document.getElementById('preguntascortas').style.display = "flex";
+      console.log(juego_de_preguntas);
+    }
+
+    function volveralmenu() {
+      nivel = 0;
+      completado = false;
+      mostrarprovisional();
+      document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value="PLAY" onclick="play()">';
+      document.getElementById('preguntascortas').style.display = "none";
+      document.getElementById('botonera22').style.display = "flex";
+    }
+
+    ponerbotones();
+
+    comprobarlocalstore();
+
+  </script>
+  <script>
+    const traduccion = 9082164016;
+    var d = new Date();
+    var semana = ["8", "2", "3", "4", "5", "6", "7"]
+    var synth = window.speechSynthesis;
+    var fraseMinusculas;
+    var pregunta_elegida;
+    var respuesta_correcta;
+    var indice_aleatorio;
+    function aleatorio() {
+      indice_aleatorio = Math.floor(Math.random() * juego_de_preguntas.length);
+    }
+    var recognition = new webkitSpeechRecognition();
+    function play() {
+
+      if (juego_de_preguntas.length > 0) {
+
+        aleatorio();
+        document.getElementById("botonera").innerHTML = '<input type="button" id="botonP" class="btnredondo" value="?" >';
+        var voices = synth.getVoices();
+        pregunta_elegida = juego_de_preguntas[indice_aleatorio].pregunta;
+        var utterance = new SpeechSynthesisUtterance(pregunta_elegida);
+        utterance.lang = 'es-ES';
+        utterance.voice = voices[7];
+        utterance.rate = 0.75;
+        speechSynthesis.speak(utterance);
+        utterance.addEventListener('end', (event) => {
+          document.getElementById("botonera").innerHTML = '<input type="button" id="botonE" class="btnredondo" value="ESCUCHANDO" >';
+
+
+
+          escuchar();
+        });
+
+      } else {
+        completado = true;
+        mostrarprovisional();
+        comprobarnivelesterminados();
+
+        document.getElementById("victoria").play();
+        document.getElementById("botonera").innerHTML = '<input type="button" id="botonP" class="btnredondo" value="¡HAS GANADO!"  >';
+        setTimeout(pararymostrartiempo, 2000);
+        //setTimeout(contrasena, 4000);
+        // setTimeout(mostrarbotonregreso, 8000);
+        setTimeout(mostrarbotonregreso, 4000);
+
+      }
+    }
+
+    function comprobarnivelesterminados() {
+
+
+
+      if (nivel == 1 && completado == true) {
+        boton2storage = "habilitado"
+        localStorage.setItem("estado_del_boton2", JSON.stringify(boton2storage))
+        botonnivel2.disabled = false;
+
+      }
+      if (nivel == 2 && completado == true) {
+        boton3storage = "habilitado"
+        localStorage.setItem("estado_del_boton3", JSON.stringify(boton3storage))
+        botonnivel3.disabled = false;
+
+
+      }
+      if (nivel == 3 && completado == true) {
+        boton4storage = "habilitado"
+        localStorage.setItem("estado_del_boton4", JSON.stringify(boton4storage))
+        botonnivel4.disabled = false;
+
+      }
+      if (nivel == 4 && completado == true) {
+        boton5storage = "habilitado"
+        localStorage.setItem("estado_del_boton5", JSON.stringify(boton5storage))
+        botonnivel5.disabled = false;
+
+      }
+      if (nivel == 5 && completado == true) {
+        boton6storage = "habilitado"
+        localStorage.setItem("estado_del_boton6", JSON.stringify(boton6storage))
+        botonnivel6.disabled = false;
+
+      }
+      if (nivel == 6 && completado == true) {
+        boton7storage = "habilitado"
+        localStorage.setItem("estado_del_boton7", JSON.stringify(boton7storage))
+        botonnivel7.disabled = false;
+
+      }
+      if (nivel == 7 && completado == true) {
+        boton8storage = "habilitado"
+        localStorage.setItem("estado_del_boton8", JSON.stringify(boton8storage))
+        botonnivel8.disabled = false;
+
+      }
+      if (nivel == 8 && completado == true) {
+        boton9storage = "habilitado"
+        localStorage.setItem("estado_del_boton9", JSON.stringify(boton9storage))
+        botonnivel9.disabled = false;
+
+      }
+      if (nivel == 9 && completado == true) {
+        boton10storage = "habilitado"
+        localStorage.setItem("estado_del_boton10", JSON.stringify(boton10storage))
+        botonnivel10.disabled = false;
+
+      }
+      if (nivel == 10 && completado == true) {
+        boton11storage = "habilitado"
+        localStorage.setItem("estado_del_boton11", JSON.stringify(boton11storage))
+        botonnivel11.disabled = false;
+
+      }
+      if (nivel == 11 && completado == true) {
+        boton12storage = "habilitado"
+        localStorage.setItem("estado_del_boton12", JSON.stringify(boton12storage))
+        botonnivel12.disabled = false;
+
+      }
+
+      if (nivel == 12 && completado == true) {
+        boton13storage = "habilitado"
+        localStorage.setItem("estado_del_boton13", JSON.stringify(boton13storage))
+        botonnivel13.disabled = false;
+
+      }
+
+
+
+    }
+
+    function escuchar() {
+      var detecta = 0;
+      recognition.lang = "es-Es";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.start();
+      recognition.onresult = function (event) {
+        detecta = 1;
+        const results = event.results;
+        const cadenadetextoescuchadaporchrome = results[results.length - 1][0].transcript;
+        fraseMinusculas = cadenadetextoescuchadaporchrome;
+
+      }
+      recognition.onend = (event) => {
+
+        if (detecta == 0) {
+          recognition.abort();
+          recognition.start();
+        } else {
+          detecta = 0;
+
+
+          comprobar();
+          recognition.abort();
+        }
+      }
+    }
+    function mostrarbotonregreso() {
+      document.getElementById("botonera").innerHTML = '<input type="button" ide="botonP" class="btnredondo" value="SIGUIENTE NIVEL" onclick="volveralmenu()" style="font-size:40px;white-space:normal;">';
+    }
+    function comprobar() {
+      var respuesta_correcta = juego_de_preguntas[indice_aleatorio].respuesta;
+
+      var respuesta_correcta_normalizada = respuesta_correcta.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      
+
+
+
+      var fraseMinusculas_normalizada = fraseMinusculas.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      /*es aqui donde tienes que sustituir lo que tendria que escuchar no arriba*/
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/por que/igm, "porque");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/nino/igm, "nu");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/hola/igm, "ola");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/haro/igm, "aro");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/sumo/igm, "humo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/duke/igm, "duque");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/pizza/igm, "tiza");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/tijeras/igm, "tijera");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/vino/igm, "dino");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/dina/igm, "dino");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/gnomo/igm, "nomo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/sort/igm, "sor");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/zumo/igm, "sumo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/sexo/igm, "seso");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/jaja/igm, "faja");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/paja/igm, "faja");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/caja/igm, "faja");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/fajas/igm, "faja");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/hama/igm, "fama");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/fiso/igm, "fixo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/piso/igm, "fixo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/como/igm, "pomo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/para/igm, "puf");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/puff/igm, "puf");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/va/igm, "puf");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/setter/igm, "seta");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/paz/igm, "puf");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/okay/igm, "oca");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/okey/igm, "oca");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/novia/igm, "noria");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/nada/igm, "nata");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/bata/igm, "nata");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/nopuf/igm, "lupa");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/luca/igm, "lupa");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/loca/igm, "lupa");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/rola/igm, "rulo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/fechas/igm, "flechas");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/zeta/igm, "seta");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/bach/igm, "puf");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/mio/igm, "nu");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/poza/igm, "pozo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/liga/igm, "viga");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/posetao/igm, "pozo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/soft/igm, "sor");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/seda/igm, "seta");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/claro/igm, "aro");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/no/igm, "nu");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/yo/igm, "nu");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/veo/igm, "bio");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/paro/igm, "aro");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/coca/igm, "oca");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/poca/igm, "oca");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/boca/igm, "oca");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/dinu/igm, "dino");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/nuria/igm, "noria");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/nukia/igm, "nokia");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/nace/igm, "nazi");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/numo/igm, "nomo");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/monu/igm, "mono");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/conu/igm, "cono");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/gol/igm, "col");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/finu/igm, "fino");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/chinu/igm, "chino");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/submarinu/igm, "submarino");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/microfonu/igm, "microfono");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/arco iris/igm, "arcoiris");
+
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/cero/igm, "0");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/siete/igm, "7");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/catorce/igm, "14");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/veintiuno/igm, "21");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/veinte y uno/igm, "21");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/veinte y ocho/igm, "28");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/veintiocho/igm, "28");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/treinta y cinco/igm, "35");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/cuarenta y dos/igm, "42");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/cuarenta y nueve/igm, "49");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/cincuenta y seis/igm, "56");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/sesenta y tres/igm, "63");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/setenta/igm, "70");
+      fraseMinusculas_normalizada = fraseMinusculas_normalizada.replace(/veintiunu/igm, "21");
+
+
+
+
+
+
+
+     // alert("ESTA ES LA RESPUESTA CORRECTA   " + respuesta_correcta_normalizada + "   Y ESTO ES LO QUE TU HAS DICHO      " + fraseMinusculas_normalizada);
+
+      if (respuesta_correcta_normalizada == fraseMinusculas_normalizada) {
+        borrar(indice_aleatorio);
+
+        document.getElementById("bien").play();
+        play();
+        //document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value="PLAY" onclick="play()">';
+
+      } else {
+
+
+        document.getElementById("mal").play();
+
+        aleatorio();
+        document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value="' + respuesta_correcta + '"  style="font-size:40px;white-space:normal;">';
+
+        // document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value="' + respuesta_correcta + '" onclick="play()" style="font-size:40px;white-space:normal;">';
+        //version 2: quito de la linea de arriba "onclickplay"
+        setTimeout(cambiar_a_play, 2000)
+
+
+      }
+    }
+    function borrar(indice_aleatorio) {
+      juego_de_preguntas.splice(indice_aleatorio, 1);
+    }
+
+    function contrasena() {
+      var contrasenafinal = semana[d.getDay()] * traduccion;
+      document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value="' + contrasenafinal + '" >';
+
+
+
+    }
+    function cambiar_a_play() {
+      play();
+
+    }
+    function pararymostrartiempo() {
+      /*var reloj=<div id="contenedorcronometro"><div class="reloj" id="Horas" style="display:none;">00</div><div class="reloj" id="Minutos">00</div><div class="reloj" id="Segundos">:00</div><div class="reloj" id="Centesimas" style="display:none;">:00</div></div>;*/
+
+
+      parar();
+      document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value=" ' + minutos + ':' + segundos + '" >';
+    }
+    /*recognition.addEventListener('error', (event) => {
+      document.getElementById("botonera").innerHTML = '<input type="button" id="boton" class="btnredondo" value="DEMASIADO LENTO, DALE A REP PARA EMPEZAR DE NUEVO " style="font-size:40px;white-space:normal;">';
+
+    });*/
+  </script>
+
+</body>
+
+</html>
