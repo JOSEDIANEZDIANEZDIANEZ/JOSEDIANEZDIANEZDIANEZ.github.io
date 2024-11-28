@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "https://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>decenas</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style>
+.pancarta{
+font-size:300%;
+}
+.contenedor{
+font-size:200%;
+height: 100vh;/*me ocupa el 100% de la pantalla*/
+margin: 5%;/*me indica el margen por los dos lados*/
+display: flex;/*indico que va a ser flexible*/
+justify-content: center;/*centra horizontalmente*/
+align-items: center;/*centra verticalmente*/
+flex-direction: column;/*me pone todos elementos del div uno debajo de otros*/
+}
+input{
+width:50% ;
+height:100%;
+
+vertical-align:middle;
+
+}
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+.btnComprobar {
+ background: #AED6F1;
+      width: 50%;
+	/*width: 50vh;*/
+	  min-height: 50px;
+	     cursor: pointer;
+	  font-size:200%;
+border:none;
+
+    }
+.btnComprobar:hover {
+      transform: scale(1.05);
+    }
+</style>
+       <script>
+const traduccion = 1426;
+var d = new Date();
+var semana = ["8","2","3","4","5","6","7"]
+var numero_aleatorio,maximo,minimo;
+maximo=999999;
+minimo=100000;
+
+ function generar_numero_aleatorio(maximo,minimo){
+numero_aleatorio= Math.floor((Math.random() * (maximo-minimo)) +minimo);
+}
+
+</script>
+<script>
+var centenas_de_millar,decenas_de_millar,unidades_de_millar,centenas, decenas, numero, unidades;
+    var centenas_de_millarvp,decenas_de_millarvp,unidades_de_millarvp,centenasvp,decenasvp,unidadesvp;
+function algoritmo()
+{
+    
+	
+
+	
+	numero=numero_aleatorio;
+    centenas_de_millar=(numero%1000000-numero%100000)/100000;	
+    decenas_de_millar=(numero%100000-numero%10000)/10000;
+    unidades_de_millar=(numero%10000-numero%1000)/1000;	
+    centenas=(numero%1000-numero%100)/100;
+    decenas=(numero%100-numero%10)/10;
+    unidades=numero%10;
+	centenas_de_millarvp=centenas_de_millar*100000;	
+	decenas_de_millarvp=decenas_de_millar*10000;
+	unidades_de_millarvp=unidades_de_millar*1000;
+	centenasvp=centenas*100;
+	decenasvp=decenas*10;
+	unidadesvp=unidades*1;
+/*las siguientes lineas solo es para ver que funciona el programa y calcula bien las variables*/
+/*document.formulario1.casillero_1.value = decenas;
+document.formulario1.casillero_2.value = unidades;
+document.formulario1.casillero_3.value = centenas;
+document.formulario1.casillero_4.value = decenas_de_millar;
+document.formulario1.casillero_5.value = unidades_de_millar;
+document.formulario1.casillero_6.value = centenas_de_millar;
+	document.formulario1.casillero_7.value = decenasvp;
+	document.formulario1.casillero_8.value = unidadesvp;
+	document.formulario1.casillero_9.value = centenasvp;
+	document.formulario1.casillero_10.value = decenas_de_millarvp;
+  	document.formulario1.casillero_11.value = unidades_de_millarvp;
+	document.formulario1.casillero_12.value = centenas_de_millarvp;*/
+
+}
+
+ function jugar()
+{
+var cas_uno,cas_dos,cas_tres,cas_cuatro,cas_cinco,cas_seis;
+var cas_siete,cas_ocho,cas_nueve,cas_diez,cas_once,cas_doce;
+cas_uno=document.formulario1.casillero_1.value;
+cas_dos=document.formulario1.casillero_2.value;
+cas_tres=document.formulario1.casillero_3.value;
+
+cas_cuatro=document.formulario1.casillero_4.value;
+cas_cinco=document.formulario1.casillero_5.value;
+cas_seis=document.formulario1.casillero_6.value;
+
+cas_siete=document.formulario1.casillero_7.value;
+cas_ocho=document.formulario1.casillero_8.value;
+cas_nueve=document.formulario1.casillero_9.value;
+
+cas_diez=document.formulario1.casillero_10.value;
+cas_once=document.formulario1.casillero_11.value;
+cas_doce=document.formulario1.casillero_12.value;
+
+if (cas_uno ==decenas&&cas_dos==unidades&&cas_tres==centenas&&cas_cuatro==decenas_de_millar&&cas_cinco==unidades_de_millar&&cas_seis==centenas_de_millar&&cas_siete==decenasvp&&cas_ocho==unidadesvp&&cas_nueve==centenasvp&&cas_diez==decenas_de_millarvp&&cas_once==unidades_de_millarvp&&cas_doce==centenas_de_millarvp){
+			
+document.getElementById("w").play();
+document.getElementById("pancarta").innerHTML ="LA CONTRASEÑA ES "+ semana[d.getDay()]*traduccion;
+
+
+		
+}
+else{
+	alert("NO HAS ESCRITO BIEN EL NUMERO,INTENTALO DE NUEVO");
+}
+
+
+
+}
+        </script>
+
+    </head>
+     <body onload="algoritmo();">
+<audio id="w" src="EMF.mp3" preload="auto"></audio>
+
+<div id="contenido" class="contenedor">
+        <form name="formulario1">
+            <table  style=" margin-left: auto; margin-right: auto; border-collapse:collapse;">
+
+              <tbody>
+
+                 <tr style="text-align:center;" >
+                    
+<td colspan="6" >
+                            <label for="numero" " ><script>
+generar_numero_aleatorio(maximo,minimo);
+document.write(numero_aleatorio);
+</script></label>
+                     </td> 
+                      
+                 </tr>
+                     <tr style="text-align:center; " bgcolor= "#57AEB2" >
+                    
+<td colspan="6" >
+
+<!--style="border: #b2b2b2 1px solid;"en el colspan manda la fila con más columnas,tienes que tener una vision global y final-->
+                            <label  >
+DESCOMPONLO POR ORDENES DE UNIDADES
+</label>
+                     </td> 
+</tr>
+                      
+
+<tr style="text-align:left;" bgcolor= "#57AEB2">
+<td ><!--style="border: #b2b2b2 1px solid;"-->
+D
+</td>
+<td >
+U
+</td>
+<td >
+C
+</td>
+<td >
+DM
+</td>
+<td ">
+UM
+</td>
+<td >
+CM
+</td>
+</tr>
+
+<tr bgcolor= "#57AEB2">
+<td >
+<input name="casillero_1"  type="number" id="casilla_1" /> &nbsp+
+</td>
+<td >
+<input name="casillero_2"  type="number" id="casilla_2" required/> &nbsp+
+</td>
+<td >
+<input name="casillero_3"  type="number" id="casilla_3"/> &nbsp+
+</td>
+<td >
+<input name="casillero_4"  type="number" id="casilla_4"/> &nbsp+
+</td>
+<td >
+<input name="casillero_5"  type="number" id="casilla_5"/> &nbsp+
+</td>
+<td >
+<input name="casillero_6"  type="number" id="casilla_6"/>
+</td>
+</tr>
+   
+<tr bgcolor="#DAF7A6">
+<td >
+<input name="casillero_7"  type="number" id="casilla_7"/> &nbsp+
+</td>
+<td >
+<input name="casillero_8"  type="number" id="casilla_8"/> &nbsp+
+</td>
+<td >
+<input name="casillero_9"  type="number" id="casilla_9"/> &nbsp+
+</td>
+<td >
+<input name="casillero_10"  type="number" id="casilla_10"/> &nbsp+
+</td>
+<td >
+<input name="casillero_11"  type="number" id="casilla_11"/> &nbsp+
+</td>
+<td >
+<input name="casillero_12"  type="number" id="casilla_12"/>
+</td>
+</tr>
+
+    <tr style="text-align:center;" bgcolor="#DAF7A6" >
+                    
+<td colspan="6" >
+
+
+                            <label  >
+DESCOMPONLO POR VALOR POSICIONAL DE CADA UNA DE LAS CASILLAS SUPERIORES
+</label>
+                     </td> 
+</tr>    
+			
+
+			<tr style="text-align:center;">
+			<td colspan="6" rowspan="1">
+                           
+				<input value="Jugar" type="button" onclick="jugar();" class="btnComprobar"/>
+                            <!--<input type="reset" />le pone un boton que resetea los input-->
+                        </td>
+                    </tr>       
+
+              
+	 </tbody>
+            </table>
+        </form>
+<marquee direction="right"><div id="pancarta"></div><img src="avion.gif"></marquee>
+      </div>
+       
+
+    </body>
+</html>
