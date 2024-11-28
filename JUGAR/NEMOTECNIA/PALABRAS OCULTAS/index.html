@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+<style>
+  body{
+    color:rgb(139, 148, 230);
+    background-color: rgb(37, 35, 35);
+  }
+#texto {
+  font-size: 60px;
+}
+
+.keyword {
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+.hide-keyword {
+  opacity: 0;
+}
+
+.show-keyword {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="texto"></div>
+
+<button id="toggle">Esconder</button>
+<button id="escuchar">Escuchar</button>
+<script src="preguntas.js"></script>
+<script>
+let hidden = false;
+
+const texto = document.getElementById('texto');
+const toggle = document.getElementById('toggle');
+const escuchar = document.getElementById('escuchar');
+
+
+toggle.textContent = "Esconder";
+
+// Función para alternar la visibilidad de las palabras clave
+function toggleKeywords() {
+  let spans = texto.querySelectorAll('.keyword');
+  spans.forEach(span => {
+    if (hidden) {
+      span.classList.add('show-keyword');
+      span.classList.remove('hide-keyword');
+    } else {
+      span.classList.add('hide-keyword');
+      span.classList.remove('show-keyword');
+    }
+  });
+  hidden = !hidden;
+  toggle.textContent = hidden ? "Mostrar" : "Esconder";
+}
+
+toggle.addEventListener('click', toggleKeywords);
+
+// Función para inicializar el contenido del texto con palabras clave ocultas
+function initializeText() {
+  
+let html = text.replace(/\b[\wáéíóúüñ]+\b/gi, match => {
+
+    if (keywords.includes(match)) {
+      return `${match[0]}<span class="keyword show-keyword">${match.slice(1)}</span>`;
+    }
+    return match;
+  });
+  texto.innerHTML = html;
+}
+
+initializeText();
+
+function reinitializeText() {
+  let html = text.replace(/\b[\wáéíóúüñ]+\b/gi, match => {
+
+  if (keywords.includes(match)) {
+      return `${match[0]}<span class="keyword hide-keyword">${match.slice(1)}</span>`;
+    }
+    return match;
+  });
+  texto.innerHTML = html;
+}
+
+
+ 
+// Configurar la API SpeechRecognition
+let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+recognition.lang = 'es-ES';
+recognition.interimResults = false;
+recognition.maxAlternatives = 1;
+
+recognition.onresult = function(event) {
+
+  let speechResult = event.results[event.results.length - 1][0].transcript.toLowerCase();
+  //activar esta linea de aquí abajo para afinar la punteria
+ //alert(speechResult);
+  //excepciones
+  speechResult = speechResult.replace(/constitución/g, "Constitución");
+
+  // Comprobar si el resultado del discurso contiene alguna palabra clave
+  keywords.forEach(keyword => {
+    if (speechResult.includes(keyword)) {
+      keywords.splice(keywords.indexOf(keyword), 1);
+      reinitializeText();
+    }
+  });
+};
+
+recognition.onend = function() {
+  recognition.start();
+};
+
+escuchar.addEventListener('click', function() {
+  recognition.start();
+});
+</script>
+</body>
+</html>
