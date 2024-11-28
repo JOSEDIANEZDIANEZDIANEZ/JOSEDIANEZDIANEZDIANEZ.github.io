@@ -1,0 +1,7 @@
+conseguir que salga un audio aleatorio casi sin usar funciones, asignando un numero a un audio aleatorio, se me ocurre se podria hacer lo mismo con imagenes
+
+conseguir inyectar un codigo html dentro de un div y que a su vez el codigo html tenga un trozo de codigo javascript el cual se inyecta entre signos de +codigo+
+
+utilizar la funcion rebobinar y pausa en un audio
+
+alinear en una sola linea dos div, se consigue con el atributo flex en un contenedor
