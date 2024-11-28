@@ -1,0 +1,123 @@
+<html lang="es-ES">
+<head>
+   <title>numerosromanos</title>
+<style>
+.contenedor{
+height: 100vh;   /*me ocupa el 100% de la pantalla*/
+margin: 5%;    /*me indica el margen por los dos lados*/
+display: flex;   /*indico que va a ser flexible*/
+justify-content: flex-start;   /*centra en la linea vertical*/
+align-items:center;   /*centra en la linea horizontal*/
+flex-direction: column;   /*me pone todos elementos del div uno debajo de otros*/
+} 
+
+.btnComprobar {
+ background: #AED6F1;
+      width: 50%;
+	/*width: 50vh;*/
+	  min-height: 50px;
+	     cursor: pointer;
+	  font-size:200%;
+
+    }
+.btnComprobar:hover {
+      transform: scale(1.05);
+    }
+
+.caja_de_texto {
+
+     font-size:250%;
+width: 50%;
+}    
+    .instrucciones{
+font-size:150%;
+}
+manolito{
+
+font-size:150%;
+}
+
+</style> 
+</head>
+<body>
+<audio id="w" src="EMF.mp3" preload="auto"></audio>
+<div id="cajita" class="contenedor">
+<div id="pancarta" class="instrucciones" ><p >ESCRIBE EN NÚMEROS ROMANOS EL SIGUIENTE NÚMERO</P></div>
+
+<script>
+const traduccion = 23060326;
+var d = new Date();
+var semana = ["8","2","3","4","5","6","7"]
+var maximo=3999;
+var resultado="";
+function generateRandomInt(maximo){
+    return Math.floor(Math.random() * maximo);
+	
+}
+let numero_aleatorio=Math.floor(Math.random() * maximo);
+document.write("<font size=100>"+numero_aleatorio+"</font>");
+//alert(numero_aleatorio);
+
+function romanos(numero_aleatorio){
+
+  const romanos = {
+    M: 1000,
+    CM: 900,
+    D: 500,
+    CD: 400,
+    C: 100,
+    XC: 90,
+    L: 50,
+    XL: 40,
+    X: 10,
+    IX: 9,
+    V: 5,
+    IV: 4,
+    I: 1,
+  }
+
+  var resultado = ""
+  for (var r in romanos) {
+    //repeat es parte del iterador y lo que hace es que
+    // repite r las veces que sean necesarias. ( dependiendo la division)
+    resultado += r.repeat(Math.floor( numero_aleatorio / romanos[r]))
+    numero_aleatorio = numero_aleatorio % romanos[r]
+  }
+  return resultado
+}
+let respuestax=romanos(numero_aleatorio)
+
+//document.write(respuestax);
+function comprobar(){
+ var numerito=texto.value;
+ //convierto el valor del texto de entrada en un objeto variable llamado numerito
+ var numeritomayusculas=numerito.toUpperCase()
+ // utilizando el metodo toUpperCase() creo un objeto llamado numeritomayusculas que es numerito con todos los caracteres en mayusculas
+
+if (respuestax ==numeritomayusculas){
+			
+
+document.getElementById("w").play();
+document.getElementById("contenedor_imagen").innerHTML = '<img src="romano.gif">';
+
+document.getElementById("pancarta").innerHTML ="LA CONTRASEÑA ES "+ semana[d.getDay()]*traduccion;
+		
+}
+else{
+	alert("NO HAS ESCRITO BIEN EL NUMERO,INTENTALO DE NUEVO");
+}
+
+}
+
+</script>
+
+<input type="text" id="texto" class="caja_de_texto"></input><br><br>
+
+<button onclick="comprobar()" class="btnComprobar">comprobar</button><br>
+<div id="contenedor_imagen"><img src="romano.jpg"></div><br>
+<div id="contraseña" class="instrucciones"></div>
+</div>
+</body>
+</html>
+
+<!--document.getElementById("respuestas").innerHTML = txt_respuestas;-->
