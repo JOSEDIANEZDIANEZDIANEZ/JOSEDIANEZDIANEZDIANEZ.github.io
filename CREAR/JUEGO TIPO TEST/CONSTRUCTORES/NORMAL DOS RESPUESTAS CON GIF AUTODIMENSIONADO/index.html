@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Mi Aplicación de Preguntas</title>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            font-size: 18px;
+        }
+
+        input[type="text"] {
+            font-size: 18px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Constructor del juego</h1>
+        <label for="pregunta">Pregunta:</label>
+        <input type="text" id="pregunta" />
+
+        <label for="respuestaCorrecta">Respuesta Correcta:</label>
+        <input type="text" id="respuestaCorrecta" />
+
+        <label for="respuestaIncorrecta">Respuesta Incorrecta:</label>
+        <input type="text" id="respuestaIncorrecta" />
+
+        <button id="guardar">Guardar y Nuevo</button>
+        <button id="generar">Generar Juego</button>
+
+        <button id="retroceder">Retroceder</button>
+        <button id="avanzar">Avanzar</button>
+        
+
+    </div>
+    <div id="juego">
+
+
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const preguntaInput = document.getElementById("pregunta");
+            const respuestaCorrectaInput = document.getElementById("respuestaCorrecta");
+            const respuestaIncorrectaInput = document.getElementById("respuestaIncorrecta");
+
+            let spaceBarPressCount = 0;
+
+            preguntaInput.addEventListener("keydown", function (event) {
+                if (event.key === " ") {
+                    spaceBarPressCount++;
+
+                    if (spaceBarPressCount === 2) {
+                        const currentValue = preguntaInput.value.trim();
+                        preguntaInput.value = `¿${currentValue} ?`;
+                        spaceBarPressCount = 0; // Reiniciar el contador
+                    }
+                } else {
+                    spaceBarPressCount = 0; // Reiniciar el contador si se presiona otra tecla
+                }
+            });
+
+            // Función para capitalizar la primera letra
+            function capitalizeFirstLetter(inputElement) {
+                const value = inputElement.value;
+                if (value && value.length > 0) {
+                    inputElement.value = value.charAt(0).toUpperCase() + value.slice(1);
+                }
+            }
+
+            preguntaInput.addEventListener("input", function () {
+                capitalizeFirstLetter(preguntaInput);
+            });
+
+            respuestaCorrectaInput.addEventListener("input", function () {
+                capitalizeFirstLetter(respuestaCorrectaInput);
+            });
+
+            respuestaIncorrectaInput.addEventListener("input", function () {
+                capitalizeFirstLetter(respuestaIncorrectaInput);
+            });
+
+            const guardarButton = document.getElementById("guardar");
+            const generarButton = document.getElementById("generar");
+            const avanzarButton = document.getElementById("avanzar");
+            const retrocederButton = document.getElementById("retroceder");
+            const visualizarButton = document.getElementById("visualizar");
+
+            let registros = [];
+            let indiceActual = -1;
+
+            function avanzarCampo(event) {
+                const inputs = [
+                    preguntaInput,
+                    respuestaCorrectaInput,
+                    respuestaIncorrectaInput,
+                    guardarButton,
+                ];
+
+                const currentIndex = inputs.indexOf(document.activeElement);
+                if (currentIndex !== -1) {
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < inputs.length) {
+                        inputs[nextIndex].focus();
+                        event.preventDefault();
+                    }
+                }
+            }
+
+            preguntaInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    avanzarCampo(event);
+                }
+            });
+
+            respuestaCorrectaInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    avanzarCampo(event);
+                }
+            });
+
+            respuestaIncorrectaInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    avanzarCampo(event);
+                }
+            });
+
+            guardarButton.addEventListener("click", function () {
+                let pregunta = preguntaInput.value;
+                const respuestaCorrecta = respuestaCorrectaInput.value;
+                const respuestaIncorrecta = respuestaIncorrectaInput.value;
+
+                // Agregar un punto al final de la pregunta si no lo tiene
+                if (pregunta && pregunta[pregunta.length - 1] !== '.') {
+                    pregunta += '.';
+                }
+
+                registros.push({ pregunta, respuestaCorrecta, respuestaIncorrecta });
+                indiceActual = registros.length - 1;
+
+                preguntaInput.value = "";
+                respuestaCorrectaInput.value = "";
+                respuestaIncorrectaInput.value = "";
+
+                // Devolver el foco al campo de pregunta
+                preguntaInput.focus();
+            });
+
+            avanzarButton.addEventListener("click", function () {
+                if (indiceActual < registros.length - 1) {
+                    indiceActual++;
+                    mostrarRegistroActual();
+                }
+            });
+
+            retrocederButton.addEventListener("click", function () {
+                if (indiceActual > 0) {
+                    indiceActual--;
+                    mostrarRegistroActual();
+                }
+            });
+           
+
+            function mostrarRegistroActual() {
+                const registro = registros[indiceActual];
+                preguntaInput.value = registro.pregunta;
+                respuestaCorrectaInput.value = registro.respuestaCorrecta;
+                respuestaIncorrectaInput.value = registro.respuestaIncorrecta;
+            }
+
+
+            generarButton.addEventListener("click", function () {
+                const preguntasArray = [];
+                const respuestasArray = [];
+
+                registros.forEach(registro => {
+                    preguntasArray.push(registro.pregunta);
+                    respuestasArray.push([registro.respuestaCorrecta, registro.respuestaIncorrecta]);
+                });
+
+                // Solicitar el nombre del archivo al usuario mediante un cuadro de diálogo
+                const nombreArchivo = prompt("Por favor, ingrese el nombre del archivo :");
+
+                if (nombreArchivo) { // Verificar si el usuario proporcionó un nombre
+                    const preguntasCode = `var preguntas = ${JSON.stringify(preguntasArray)};`;
+                    const respuestasCode = `var respuestas = ${JSON.stringify(respuestasArray)};`;
+
+                    // Obtener el contenido de <XMP>
+                    const contenidoXMP = document.getElementById("textoprimero").textContent;
+                    const contenido2XMP= document.getElementById("partefinal").textContent;
+
+                    // Combinar el contenido de <XMP> con el contenido de preguntas y respuestas
+                    //const contenidoFinal = `${preguntasCode}\n\n${respuestasCode}\n\n${contenidoXMP}`;
+                    const contenidoFinal = `${contenidoXMP}\n\n${preguntasCode}\n\n${respuestasCode}\n\n${contenido2XMP}`;
+
+                    // Crear un Blob con el contenido
+                    const blob = new Blob([contenidoFinal], { type: 'application/javascript' });
+
+                    // Crear un enlace para descargar el archivo
+                    const enlaceDescarga = document.createElement('a');
+                    enlaceDescarga.href = window.URL.createObjectURL(blob);
+
+                    // Agregar la extensión .js al nombre del archivo proporcionado por el usuario
+                    enlaceDescarga.download = `${nombreArchivo}.htm`;
+
+                    // Hacer clic en el enlace para iniciar la descarga
+                    enlaceDescarga.click();
+                }
+            });
+
+
+
+        });
+    </script>
+    <XMP id="textoprimero" hidden>
+
+		<!DOCTYPE html>
+		<html lang="es">
+		
+		<head>
+			<meta name="robots" content="noindex">
+			<meta charset="UTF-8">
+			<style>
+				* {
+					transition: all 0.3s;
+				}
+		
+				body {
+		
+					padding: 0;
+					margin: 0;
+					text-align: center;
+					font-family: calibri;
+					font-size: 100%;
+				}
+		
+		
+				.contenedor {
+					width: 98vw;
+					height: 97vh;
+					flex-direction: column;
+					justify-content: center;
+					align-items: center;
+		
+		
+		
+				}
+		
+		
+				.foto {
+					width: 182px;
+					/* Ancho deseado */
+					height: 226px;
+					/* Alto deseado */
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					overflow: hidden;
+					/* Oculta el contenido que desborda el contenedor */
+					margin: 0 auto;
+					/* Centra horizontalmente el contenedor en la pantalla */
+		
+				}
+		
+				.imagen {
+					max-width: 100%;
+					/* La imagen se ajustará al ancho máximo del contenedor */
+					max-height: 100%;
+					/* La imagen se ajustará al alto máximo del contenedor */
+					width: auto;
+					/* Ancho automático para mantener la relación de aspecto */
+					height: auto;
+					/* Alto automático para mantener la relación de aspecto */
+				}
+		
+		
+		
+		
+		
+		
+		
+		
+				.categoria {
+					opacity: 0.3;
+					text-align: left;
+				}
+		
+				.contenedorpregunta {
+					text-align: center;
+					background: #33ECFF;
+		
+				}
+		
+				.pregunta {
+					padding: 10px;
+				}
+		
+		
+				.btnIniciar {
+					background: #AED6F1;
+					outline: none;
+					width: 95%;
+					min-height: 400px;
+					font-size: 350%;
+		
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+		
+		
+				}
+		
+				.btnIniciar2 {
+		
+					background: #AED6F1;
+					width: 95%;
+					min-height: 400px;
+					font-size: 350%;
+		
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+		
+		
+				}
+		
+				.btnRespuestas {
+					background: #AED6F1;
+					width: 95%;
+					min-height: 100px;
+					cursor: pointer;
+					font-size: 500%;
+					white-space: normal;
+		
+				}
+		
+				.btnRespuestas:hover {
+					transform: scale(1.05);
+				}
+		
+				.center {
+					display: block;
+					margin: auto;
+			</style>
+		
+			<title>juego</title>
+			<meta name="description" content="Cuestionario">
+		
+			<script src="https://code.jquery.com/jquery.js"></script>
+			<script src=" https://unpkg.com/sweetalert/dist/sweetalert.min.js "></script>
+		</head>
+		
+		<body>
+			<button onclick="volverajugar()" class="intentarlodenuevo">EMPEZAR DE NUEVO</button><br>
+			RESPUESTAS FALLADAS<div class="numerodeerrores">0</div>
+		
+			<button id="generarInforme" style="display: none" class="center">Pulsa para generar informe</button>
+		
+			<div id="lacontraseñafinal"></div>
+			<button onclick="inicio()" class="btnIniciar">EMPECEMOS</button>
+		
+			<div class="contenedor">
+				<h1>
+					<div id="pregunta" class="contenedorpregunta">
+					</div>
+				</h1>
+				<div id="foto" class="foto" "></div>
+							<button onclick=" location.reload()" class="btnIniciar2" id="botonfallofinal" disabled="true">
+					VOLVER A INTENTAR</button>
+		
+					<div class="ranita"><img src="ARCHIVOS_COMUNES/IMAGENES/enhorabuena.gif">
+					</div>
+					<!--en esta linea le decimos que la contraseña que saldrá al final esta en una carpeta llamada contraseñas-->
+		
+					<div id="audioBotonPreguntas">
+					</div>
+					<br>
+					<div id="respuestas"></div>
+		
+				</div>
+				
+				<diV id="numerodefallospermitidoscaja" hidden></div>
+				<div id="ayuda"><a href="ayuda.mp3" hidden>AYUDA</a></div>
+		
+				<audio id="x" src="ARCHIVOS_COMUNES/SONIDOS/enhorabuena.mp3" preload="auto"></audio>
+				<audio id="y" src="ARCHIVOS_COMUNES/SONIDOS/trompetas.mp3" preload="auto"></audio>
+				<audio id="z" src="ARCHIVOS_COMUNES/SONIDOS/granerror.mp3" preload="auto"></audio>
+				<audio id="w" src="ARCHIVOS_COMUNES/SONIDOS/demasiadoserrores.mp3" preload="auto"></audio>
+		
+				<script>
+		
+		
+        </XMP>
+
+        <XMP id="partefinal" hidden>
+			
+
+
+
+
+var audioPreguntasStored = [
+
+	"./1",
+	"./2",
+	"./3",
+	"./4",
+	"./5",
+	"./6",
+	"./7",
+	"./8",
+	"./9",
+	"./10",
+	"./11",
+	"./12",
+	"./13",
+	"./14",
+	"./15",
+	"./16",
+	"./17",
+	"./18",
+	"./19",
+	"./20",
+	"./21",
+	"./22",
+	"./23",
+	"./24",
+	"./25",
+	"./26",
+	"./27",
+	"./28",
+	"./29",
+	"./30",
+	"./31",
+	"./32",
+	"./33",
+	"./34",
+	"./35",
+	"./36",
+	"./37",
+	"./38",
+	"./39",
+	"./40",
+	"./41",
+	"./42",
+	"./43",
+	"./44",
+	"./45",
+	"./46",
+	"./47",
+	"./48",
+	"./49",
+	"./50",
+	"./51",
+	"./52",
+	"./53",
+	"./54",
+	"./55",
+	"./56",
+	"./57",
+	"./58",
+	"./59",
+	"./60",
+	"./61",
+	"./62",
+	"./63",
+	"./64",
+	"./65",
+	"./66",
+	"./67",
+	"./68",
+	"./69",
+	"./70",
+	"./71",
+	"./72",
+	"./73",
+	"./74",
+	"./75",
+	"./76",
+	"./77",
+	"./78",
+	"./79",
+	"./80",
+	"./81",
+	"./82",
+	"./83",
+	"./84",
+	"./85",
+	"./86",
+	"./87",
+	"./88",
+	"./89",
+	"./90",
+	"./91",
+	"./92",
+	"./93",
+	"./94",
+	"./95",
+	"./96",
+	"./97",
+	"./98",
+	"./99",
+	"./100"
+
+
+];
+
+
+
+
+const traduccion = 703160
+//creo una constante que es la traduccion a numeros del nombre del juego por reglas de Campayo
+var d = new Date();
+//creo una variable para todo el juego que me da la fecha
+var semana = ["8", "2", "3", "4", "5", "6", "7"]
+//creo una variable general para asignar un numero a cada día de la semana empezando por el domingo
+var numerodefallospermitidos = 0;
+var indicie_respuesta_correcta;
+var pregunta_secleted;
+var ruta = "";
+var rutaRespuesta = "";
+var jugando = false;
+var numerodefallos = 0;
+vericarPreguntasRepetidas();
+var j;
+j = jugar();
+document.getElementById("numerodefallospermitidoscaja").innerHTML = numerodefallospermitidos;
+document.querySelector(".btnIniciar2").style.display = "none";
+
+document.querySelector("#pregunta").style.display = "none";
+document.querySelector(".btnRespuestas").style.display = "none";
+document.querySelector("#respuestas").style.display = "none";
+document.querySelector("#foto").style.display = "none";
+document.querySelector(".ranita").style.display = "none";
+speechSynthesis.cancel()
+
+function activarbotonfallofinal() {
+
+	botonfallofinal.disabled = false;
+
+}
+
+
+
+function vericarPreguntasRepetidas() {
+	var simbolA = "(";
+	var simbolB = ")";
+	for (i in preguntas) {
+		for (var j = 0; j < preguntas.length; j++) {
+			if (i != j && preguntas[i] == preguntas[j]) {
+				preguntas[i] = preguntas[i].concat(simbolA, i, simbolB);
+			}
+		}
+	}
+}
+function removeItemFromArr(arr, item) {
+	var i = arr.indexOf(item);
+
+	if (i !== -1) {
+		arr.splice(i, 1);
+	}
+}
+
+function selectPlay(p) {
+	ruta = p.id;
+	play(ruta);
+}
+function play(r) {
+	if (r == null) {
+		r = ruta;
+	}
+	var audio = new Audio(ruta);
+	audio.play();
+}
+function displayPregunta(cadena) {
+	var longitud = cadena.length;
+	for (letra in cadena) {
+		if (cadena[letra] == "?" || cadena[letra] == "!" || cadena[letra] == ".") {
+			var nuevaLongitud = letra;
+			break;
+		}
+	}
+
+	var n = Number(nuevaLongitud) + 1;
+	let cadenaExtraida = cadena.substring(0, n);
+	return cadenaExtraida;
+}
+function jugar() {
+	if (preguntas.length > 0) {
+		var indice_aleatorio = Math.floor(Math.random() * preguntas.length);
+
+		var respuestas_posibles = respuestas[indice_aleatorio];
+
+
+		var posiciones = [0, 1];
+		var respuestas_reordenadas = [];
+		var audioRespuestas_reordenadas = [];
+
+		var ya_se_metio = false;
+		for (i in respuestas_posibles) {
+			var posicion_aleatoria = Math.floor(Math.random() * posiciones.length);
+			if (posicion_aleatoria == 0 && ya_se_metio == false) {
+				indicie_respuesta_correcta = i;
+				ya_se_metio = true;
+			}
+			respuestas_reordenadas[i] = respuestas_posibles[posiciones[posicion_aleatoria]];
+			posiciones.splice(posicion_aleatoria, 1);
+		}
+
+		var txt_respuestas = "";
+
+		for (i in respuestas_reordenadas) {
+			txt_respuestas += '<input type="button" name="btnRespuestas' + (i) + '" value="' + respuestas_reordenadas[i] + '" onclick="comprobar(this)" class="btnRespuestas"> </br> </br> ';
+		}
+
+		pregunta_secleted = preguntas[indice_aleatorio];
+		var pregunta_displayed = displayPregunta(preguntas[indice_aleatorio]);
+		/*PONER AQUI DEBAJO LA CORRECCION*/
+		var pregunta_secleted_sinindice = pregunta_secleted.replace(/\(\d+\)/g, '').trim();
+					let utterance = new SpeechSynthesisUtterance(pregunta_secleted_sinindice);
+		
+		const synth = window.speechSynthesis;
+
+		var voices = synth.getVoices();
+		utterance.lang = 'es-ES';
+		utterance.voice = voices[7];
+		utterance.rate = 1;
+
+		speechSynthesis.speak(utterance);
+		document.getElementById("respuestas").innerHTML = txt_respuestas;
+		document.getElementById("pregunta").innerHTML = pregunta_secleted_sinindice;
+		document.getElementById("audioBotonPreguntas").innerHTML = '<button id="' + audioPreguntasStored[indice_aleatorio] + '.mp3" " onclick="selectPlay(this)">Pregunta <img src="./sound.jpg" width="40px" height="40px" /></button> <br>';
+
+		ruta = audioPreguntasStored[indice_aleatorio] + '.mp3';
+		document.getElementById("audioBotonPreguntas").onclick = "play(ruta)";
+		document.getElementById('audioBotonPreguntas').style.display = 'none';
+
+		document.getElementById("foto").innerHTML = '<img class="imagen" src="IMAGENES_JUEGO_SUSTITUIRPORNOMBREYCREARCARPETA/' + audioPreguntasStored[indice_aleatorio] + '.gif" alt="ok" >';
+
+		//document.getElementById("foto").innerHTML = '<img src="imagenes/' + audioPreguntasStored[indice_aleatorio] + '.jpg" alt="ok" >';
+
+
+		if (jugando == true) {
+			play(ruta);
+		}
+		return indice_aleatorio;
+	} else {
+		if (numerodefallos > numerodefallospermitidos) {
+			document.getElementById("pregunta").innerHTML = "NO LO HAS HECHO MAL, PERO HAS COMETIDO DEMASIADOS ERRORES ";
+
+			document.getElementById("foto").innerHTML = "PULSA EL BOTON DE ABAJO PARA INTENTARLO DE NUEVO";
+
+
+			document.querySelector("#respuestas").style.display = "none";
+			document.getElementById("w").play();
+
+			document.querySelector(".btnIniciar2").style.display = "block";
+
+			setTimeout(activarbotonfallofinal, 3000)
+
+		} else {
+			const botonGenerarInforme = document.getElementById("generarInforme");
+			botonGenerarInforme.style.display = "block";
+
+			document.getElementById("foto").innerHTML = "ENHORABUENA HAS GANADO";
+
+			document.getElementById("pregunta").innerHTML = "PULSA ARRIBA PARA GENERAR INFORME";
+
+			document.getElementById("x").play();
+			document.querySelector("#respuestas").style.display = "none";
+
+			document.querySelector(".ranita").style.display = "block";
+
+		}
+	}
+}
+
+function comprobar(boton) {
+	speechSynthesis.cancel()
+	var nombreBoton = boton.name
+	var corteCadena = nombreBoton.length - 1;
+	var respuesta = nombreBoton.substring(corteCadena, nombreBoton.length);
+	if (respuesta == indicie_respuesta_correcta) {
+		for (var i = 0; i < preguntas.length; i++) {
+			if (preguntas[i] == pregunta_secleted) {
+				removeItemFromArr(preguntas, preguntas[i]);
+				removeItemFromArr(respuestas, respuestas[i]);
+				removeItemFromArr(audioPreguntasStored, audioPreguntasStored[i]);
+			}
+		}
+		document.getElementById("y").play();
+	} else {
+		document.getElementById("z").play();
+		numerodefallos = numerodefallos + 1;
+		document.querySelector(".numerodeerrores").innerHTML = numerodefallos;
+
+	}
+
+	document.querySelector(".btnIniciar").style.display = "none";
+
+	jugar();
+}
+
+function inicio() {
+	if (jugando == true) {
+		document.querySelector(".btnIniciar").style.display = "none";
+	} else {
+		jugando = true;
+		document.querySelector(".btnIniciar").style.display = "none";
+		document.querySelector("#pregunta").style.display = "block";
+
+		document.querySelector(".btnRespuestas").style.display = "block";
+		document.querySelector("#respuestas").style.display = "block";
+		document.querySelector("#foto").style.display = "block";
+	}
+
+	jugar()
+}
+
+function volverajugar() {
+	location.reload();
+}
+</script>
+<script>
+//este script crea el documento de demostracion de terminacion del juego	
+document.getElementById('generarInforme').addEventListener('click', function () {
+	// Obtener la fecha y hora actual
+	const fechaHora = new Date();
+	const fecha = fechaHora.toLocaleDateString();
+	const hora = fechaHora.toLocaleTimeString();
+
+	// Obtener el nombre del archivo HTML actual
+	const nombreArchivoHTML = window.location.pathname.split('/').pop();
+
+	// Crear el contenido del archivo de texto
+	const contenido = `Informe generado por ${nombreArchivoHTML} el ${fecha} a las ${hora}`;
+
+	// Crear un objeto Blob para el contenido del archivo
+	const blob = new Blob([contenido], { type: 'text/plain' });
+
+	// Crear un enlace de descarga
+	const a = document.createElement('a');
+	a.href = URL.createObjectURL(blob);
+	a.download = nombreArchivoHTML.replace(/\.html$/i, '.txt'); // Cambiar la extensión a .txt
+
+	// Simular un clic en el enlace para iniciar la descarga
+	a.click();
+});
+</script>
+</body>
+
+</html>
+        </XMP>
+
+</body>
+
+</html>
