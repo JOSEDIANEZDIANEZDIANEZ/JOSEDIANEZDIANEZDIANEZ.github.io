@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototipo de Página de Videos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      text-align: center;
+    }
+
+    .miniaturas-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .miniatura {
+      margin: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .miniatura img {
+      width: 200px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .miniatura-title {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+    }
+
+    .developer-mode {
+      position: fixed;
+      bottom: 20px; /* Distancia desde el fondo */
+      right: 20px; /* Distancia desde el lado derecho */
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .developer-mode2 {
+      position: fixed;
+      bottom: 20px; /* Distancia desde el fondo */
+      left: 20px; /* Distancia desde el lado izquierdo */
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .new-video-url {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .new-video-url input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    /* Estilos del menú contextual */
+    .context-menu {
+      display: none;
+      position: absolute;
+      z-index: 1000;
+      background-color: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    .context-menu__item {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    .context-menu__item:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>TODOS MIS VIDEOS (PARA BUSCAR PULSA Ctrl+F)</h1>
+  
+  <div class="new-video-url" id="newVideoUrl">
+    <input type="text" id="videoUrlInput" placeholder="Ingresa la URL del nuevo video" onkeypress="agregarVideo(event)">
+    <input type="text" id="videoTitleInput" placeholder="Ingresa el título del nuevo video" onkeypress="agregarVideo(event)">
+  </div>
+  
+  <div class="miniaturas-container" id="miniaturasContainer"></div>
+
+  <!-- Menú contextual -->
+  <div id="contextMenu" class="context-menu">
+    <div class="context-menu__item" onclick="eliminarMiniatura()">Eliminar</div>
+  </div>
+
+  <button class="developer-mode2" onclick="generarNuevaPagina()">Listado nuevo</button>
+  <button class="developer-mode" onclick="toggleDeveloperMode()">Modo Desarrollador</button>
+  
+  <script src="videos.js"></script>
+  <script>
+    let miniaturaSeleccionada = null;
+
+    function abrirVideo(url) {
+      const width = 600;
+      const height = 400;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+      window.open(url, 'Video de YouTube', `width=${width}, height=${height}, left=${left}, top=${top}`);
+    }
+
+    function toggleDeveloperMode() {
+      const newVideoUrl = document.getElementById('newVideoUrl');
+      if (newVideoUrl.style.display === 'none' || newVideoUrl.style.display === '') {
+        newVideoUrl.style.display = 'block';
+      } else {
+        newVideoUrl.style.display = 'none';
+      }
+    }
+
+    function agregarVideo(event) {
+      if (event.key === 'Enter') {
+        const url = document.getElementById('videoUrlInput').value;
+        const title = document.getElementById('videoTitleInput').value; // Obtener el título del video
+        if (url.trim() !== '' && title.trim() !== '') {
+          const videoId = url.split('v=')[1];
+          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+
+          const newMiniatura = document.createElement('div');
+          newMiniatura.className = 'miniatura';
+          newMiniatura.setAttribute('data-title', title); // Almacenar el título como atributo personalizado
+          newMiniatura.setAttribute('data-url', url); // Almacenar la URL del video como atributo personalizado
+          newMiniatura.onclick = () => abrirVideo(url);
+          newMiniatura.oncontextmenu = (event) => mostrarMenuContextual(event, newMiniatura);
+
+          const newImage = document.createElement('img');
+          newImage.src = thumbnailUrl;
+          newImage.alt = 'Miniatura del video';
+
+          const newTitle = document.createElement('div');
+          newTitle.className = 'miniatura-title';
+          newTitle.textContent = title; // Mostrar el título debajo de la miniatura
+
+          newMiniatura.appendChild(newImage);
+          newMiniatura.appendChild(newTitle);
+
+          const miniaturasContainer = document.getElementById('miniaturasContainer');
+          miniaturasContainer.appendChild(newMiniatura);
+
+          document.getElementById('videoUrlInput').value = '';
+          document.getElementById('videoTitleInput').value = ''; // Limpiar el campo de título
+        }
+      }
+    }
+
+    function mostrarMenuContextual(event, miniatura) {
+      event.preventDefault();
+      miniaturaSeleccionada = miniatura;
+      const contextMenu = document.getElementById('contextMenu');
+      contextMenu.style.top = `${event.clientY}px`;
+      contextMenu.style.left = `${event.clientX}px`;
+      contextMenu.style.display = 'block';
+      document.addEventListener('click', ocultarMenuContextual);
+    }
+
+    function ocultarMenuContextual() {
+      const contextMenu = document.getElementById('contextMenu');
+      contextMenu.style.display = 'none';
+      document.removeEventListener('click', ocultarMenuContextual);
+    }
+
+    function eliminarMiniatura() {
+      if (miniaturaSeleccionada) {
+        miniaturaSeleccionada.remove();
+        miniaturaSeleccionada = null;
+        ocultarMenuContextual();
+      }
+    }
+
+    // Añadir el evento de clic derecho a las miniaturas iniciales
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarVideos();
+      document.querySelectorAll('.miniatura').forEach(miniatura => {
+        miniatura.oncontextmenu = (event) => mostrarMenuContextual(event, miniatura);
+      });
+    });
+
+    // Función para cargar los videos desde videos.js
+    function cargarVideos() {
+      const miniaturasContainer = document.getElementById('miniaturasContainer');
+      miniaturasContainer.innerHTML = ''; // Limpiar el contenedor antes de cargar
+
+      if (typeof videos !== 'undefined') {
+        videos.forEach(video => {
+          const newMiniatura = document.createElement('div');
+          newMiniatura.className = 'miniatura';
+          newMiniatura.setAttribute('data-title', video.title);
+          newMiniatura.setAttribute('data-url', video.url); // Almacenar la URL del video como atributo personalizado
+          newMiniatura.onclick = () => abrirVideo(video.url);
+          newMiniatura.oncontextmenu = (event) => mostrarMenuContextual(event, newMiniatura);
+
+          const newImage = document.createElement('img');
+          newImage.src = video.thumbnail;
+          newImage.alt = 'Miniatura del video';
+
+          const newTitle = document.createElement('div');
+          newTitle.className = 'miniatura-title';
+          newTitle.textContent = video.title;
+
+          newMiniatura.appendChild(newImage);
+          newMiniatura.appendChild(newTitle);
+
+          miniaturasContainer.appendChild(newMiniatura);
+        });
+      }
+    }
+
+    // Función para generar y descargar el archivo videos.js
+    function generarNuevaPagina() {
+      const miniaturas = document.querySelectorAll('.miniatura');
+      const videosActualizados = [];
+
+      miniaturas.forEach(miniatura => {
+        const title = miniatura.getAttribute('data-title');
+        const url = miniatura.getAttribute('data-url'); // Obtener la URL del atributo personalizado
+        const thumbnail = miniatura.querySelector('img').src;
+
+        videosActualizados.push({ title, url, thumbnail });
+      });
+
+      const contenido = `const videos = ${JSON.stringify(videosActualizados, null, 2)};`;
+      const blob = new Blob([contenido], { type: 'application/javascript' });
+
+      // Crear un objeto URL para el Blob
+      const url = URL.createObjectURL(blob);
+
+      // Crear un elemento <a> temporal para iniciar la descarga
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'videos.txt';
+
+      // Agregar el elemento <a> al DOM y simular un clic en él
+      document.body.appendChild(a);
+      a.click();
+
+      // Limpiar
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
