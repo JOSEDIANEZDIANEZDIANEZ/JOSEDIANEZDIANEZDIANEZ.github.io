@@ -1,0 +1,3 @@
+var nombreDelJuego = "";
+
+var absolutamentetodaslaspreguntas = [];
