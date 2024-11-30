@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Traductor simultáneo</title>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            font-size: 18px;
+        }
+
+        input[type="text"] {
+            font-size: 18px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Traductor simultáneo</h1>
+
+
+        <label for="fraseEnEspanolId">Mi frase:</label>
+        <input type="text" id="fraseEnEspanolId" />
+
+        <label for="fraseEnFrancesId">En francés es:</label>
+        <input type="text" id="fraseEnFrancesId" />
+
+        <label for="fraseEnInglesId">En Inglés es:</label>
+        <input type="text" id="fraseEnInglesId" />
+
+        <button id="traducirId" onclick="traducir();">Traducir</button>
+        <button id="guardarId">Guardar y Nuevo</button>
+        <button id="generarId">Generar Juego</button>
+        <button id="retrocederId">Retroceder</button>
+        <button id="avanzarId">Avanzar</button>
+
+    </div>
+
+    <script>
+        // Función para traducir el texto
+        function traducir() {
+
+
+            const guardarButton = document.getElementById("guardarId");
+            guardarButton.focus();
+            const fraseEnEspanol = document.getElementById("fraseEnEspanolId");
+            // Esto es lo que va a traducir
+            const fraseParaTraducir = fraseEnEspanol.value;
+
+            fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(fraseParaTraducir)}&langpair=es|fr`, {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const textoTraducidoAlFrances = data.responseData.translatedText;
+
+
+                    const fraseEnFrancesInput = document.getElementById("fraseEnFrancesId");
+                    fraseEnFrancesInput.value = textoTraducidoAlFrances;
+
+                })
+                .catch(error => {
+                    console.error('Error al traducir:', error);
+                });
+
+
+            fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(fraseParaTraducir)}&langpair=es|en`, {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const textoTraducidoAlIngles = data.responseData.translatedText;
+
+
+                    const fraseEnInglesInput = document.getElementById("fraseEnInglesId");
+                    fraseEnInglesInput.value = textoTraducidoAlIngles;
+
+                })
+                .catch(error => {
+                    console.error('Error al traducir:', error);
+                });
+
+
+
+
+
+
+
+
+
+
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const fraseEnFrancesInput = document.getElementById("fraseEnFrancesId");
+            const fraseEnInglesInput = document.getElementById("fraseEnInglesId");
+            const fraseEnEspanolInput = document.getElementById("fraseEnEspanolId");
+
+
+
+            // Función para capitalizar la primera letra
+            function capitalizeFirstLetter(inputElement) {
+                const value = inputElement.value;
+                if (value && value.length > 0) {
+                    inputElement.value = value.charAt(0).toUpperCase() + value.slice(1);
+                }
+            }
+
+            fraseEnFrancesInput.addEventListener("input", function () {
+                capitalizeFirstLetter(fraseEnFrancesInput);
+            });
+
+            fraseEnEspanolInput.addEventListener("input", function () {
+                capitalizeFirstLetter(fraseEnEspanolInput);
+            });
+            fraseEnInglesInput.addEventListener("input", function () {
+                capitalizeFirstLetter(fraseEnInglesInput);
+            });
+
+
+            const guardarButton = document.getElementById("guardarId");
+            const generarButton = document.getElementById("generarId");
+            const avanzarButton = document.getElementById("avanzarId");
+            const retrocederButton = document.getElementById("retrocederId");
+
+            const traducirButton = document.getElementById("traducirId");
+            let registrosParteFrancesa = [];
+            let registrosParteInglesa = [];
+            let indiceActual = -1;
+
+            function avanzarCampo(event) {
+                const inputs = [
+                    fraseEnEspanolInput,
+                    traducirButton,
+                    guardarButton,
+                ];
+
+                const currentIndex = inputs.indexOf(document.activeElement);
+                if (currentIndex !== -1) {
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < inputs.length) {
+                        inputs[nextIndex].focus();
+                        event.preventDefault();
+                    }
+                }
+            }
+
+            fraseEnFrancesInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    avanzarCampo(event);
+                }
+            });
+
+            fraseEnEspanolInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    avanzarCampo(event);
+                }
+            });
+
+            guardarButton.addEventListener("click", function () {
+                const fraseEnFrances = fraseEnFrancesInput.value;
+                const fraseEnIngles = fraseEnInglesInput.value;
+                const fraseEnEspanol = fraseEnEspanolInput.value;
+
+                registrosParteFrancesa.push({ fraseEnFrances, fraseEnEspanol });
+                indiceActual = registrosParteFrancesa.length - 1;
+
+                registrosParteInglesa.push({ fraseEnIngles, fraseEnEspanol });
+                //indiceActual = registrosParteInglesa.length - 1;
+
+
+                fraseEnFrancesInput.value = "";
+                fraseEnEspanolInput.value = "";
+                fraseEnInglesInput.value = "";
+
+                fraseEnEspanolInput.focus();
+            });
+
+            avanzarButton.addEventListener("click", function () {
+                if (indiceActual < registrosParteFrancesa.length - 1) {
+                    indiceActual++;
+                    moversePorRegistros();
+                }
+
+
+
+            });
+
+            retrocederButton.addEventListener("click", function () {
+                if (indiceActual > 0) {
+                    indiceActual--;
+                    moversePorRegistros();
+                }
+
+            });
+
+            function moversePorRegistros() {
+                const registroEnElQueSeEncuentraFrances = registrosParteFrancesa[indiceActual];
+                const registroEnElQueSeEncuentraIngles = registrosParteInglesa[indiceActual];
+
+                fraseEnFrancesInput.value = registroEnElQueSeEncuentraFrances.fraseEnFrances;
+                fraseEnEspanolInput.value = registroEnElQueSeEncuentraFrances.fraseEnEspanol;
+                fraseEnInglesInput.value = registroEnElQueSeEncuentraIngles.fraseEnIngles;
+
+
+            }
+
+            generarButton.addEventListener("click", function () {
+                const preguntasArrayFrances = registrosParteFrancesa.map(registroEnElQueSeEncuentraFrances => {
+                    return {
+                        "pregunta": `${registroEnElQueSeEncuentraFrances.fraseEnFrances}`,
+                        "respuesta": registroEnElQueSeEncuentraFrances.fraseEnEspanol
+                    };
+                });
+
+                const nombreArchivo = prompt("Por favor, ingrese el nombre del archivo :");
+
+                if (nombreArchivo) {
+                    const preguntasCodeFrances = `var preguntas = ${JSON.stringify(preguntasArrayFrances, null, 4)};`;
+
+
+
+                    // const contenidoFinalFrances = `${contenidoJuegoEnFrancesHtml}\n\n${preguntasCodeFrances}\n\n${contenidoJuegoEnInglesHtml}`;
+                    const contenidoFinalFrances = `${preguntasCodeFrances}`;
+                    const blobFrances = new Blob([contenidoFinalFrances], { type: 'application/javascript' });
+
+                    const enlaceDescargaFrances = document.createElement('a');
+                    enlaceDescargaFrances.href = window.URL.createObjectURL(blobFrances);
+                    enlaceDescargaFrances.download = `${nombreArchivo}_en_frances.js`;
+
+                    enlaceDescargaFrances.click();
+                }
+
+
+
+
+                const preguntasArrayIngles = registrosParteInglesa.map(registroEnElQueSeEncuentraIngles => {
+                    return {
+                        "pregunta": `${registroEnElQueSeEncuentraIngles.fraseEnIngles}`,
+                        "respuesta": registroEnElQueSeEncuentraIngles.fraseEnEspanol
+                    };
+                });
+
+                //const nombreArchivoIngles = prompt("Por favor, ingrese el nombre del archivo inglés:");
+
+                if (nombreArchivo) {
+                    const preguntasCodeIngles = `var preguntas = ${JSON.stringify(preguntasArrayIngles, null, 4)};`;
+
+
+
+                    //const contenidoFinalIngles = `${contenidoJuegoEnFrancesHtml}\n\n${preguntasCodeIngles}\n\n${contenidoJuegoEnInglesHtml}`;
+                    const contenidoFinalIngles = `${preguntasCodeIngles}`;
+                    const blobIngles = new Blob([contenidoFinalIngles], { type: 'application/javascript' });
+
+                    const enlaceDescargaIngles = document.createElement('a');
+                    enlaceDescargaIngles.href = window.URL.createObjectURL(blobIngles);
+                    enlaceDescargaIngles.download = `${nombreArchivo}_en_ingles.js`;
+
+                    enlaceDescargaIngles.click();
+                }
+                //GENERANDO JUEGO HTML EN FRANCES
+                if (nombreArchivo) {
+                    //const contenidoJuegoEnFrancesHtml = document.getElementById("juegoEnFrancesHtmlParteUnoId").textContent;
+                    const contenidoJuegoEnFrancesParteUnoHtml = document.getElementById("juegoEnFrancesHtmlParteUnoId").textContent;
+                    const contenidoJuegoEnFrancesParteDosHtml = document.getElementById("juegoEnFrancesHtmlParteDosId").textContent;
+                   // const contenidoJuegoEnFrancesHtml= `${contenidoJuegoEnFrancesParteUnoHtml}\n\n${nombreArchivo}\n\n${contenidoJuegoEnFrancesParteDosHtml}`;
+                    const contenidoJuegoEnFrancesHtml= `${contenidoJuegoEnFrancesParteUnoHtml}<script src="${nombreArchivo}_en_frances.js">${contenidoJuegoEnFrancesParteDosHtml}`;
+                    const blobJuegoEnFrances = new Blob([contenidoJuegoEnFrancesHtml], { type: 'application/html' });
+
+                    const enlaceDescargaJuegoEnFrances = document.createElement('a');
+                    enlaceDescargaJuegoEnFrances.href = window.URL.createObjectURL(blobJuegoEnFrances);
+                    enlaceDescargaJuegoEnFrances.download = `${nombreArchivo}_en_francés.htm`;
+
+                    enlaceDescargaJuegoEnFrances.click();
+
+                }
+                //GENERANDO JUEGO HTML EN INGLES TERMINANDOLO
+                if (nombreArchivo) {
+                    //const contenidoJuegoEnFrancesHtml = document.getElementById("juegoEnFrancesHtmlParteUnoId").textContent;
+                    const contenidoJuegoEnInglesParteUnoHtml = document.getElementById("juegoEnInglesHtmlParteUnoId").textContent;
+                    const contenidoJuegoEnInglesParteDosHtml = document.getElementById("juegoEnInglesHtmlParteDosId").textContent;
+                   // const contenidoJuegoEnFrancesHtml= `${contenidoJuegoEnFrancesParteUnoHtml}\n\n${nombreArchivo}\n\n${contenidoJuegoEnFrancesParteDosHtml}`;
+                    const contenidoJuegoEnInglesHtml= `${contenidoJuegoEnInglesParteUnoHtml}<script src="${nombreArchivo}_en_ingles.js">${contenidoJuegoEnInglesParteDosHtml}`;
+                    const blobJuegoEnIngles = new Blob([contenidoJuegoEnInglesHtml], { type: 'application/html' });
+
+                    const enlaceDescargaJuegoEnIngles = document.createElement('a');
+                    enlaceDescargaJuegoEnIngles.href = window.URL.createObjectURL(blobJuegoEnIngles);
+                    enlaceDescargaJuegoEnIngles.download = `${nombreArchivo}_en_ingles.htm`;
+
+                    enlaceDescargaJuegoEnIngles.click();
+
+                }
+
+
+            });
+        });
+    </script>
+    <XMP id="juegoEnFrancesHtmlParteUnoId" hidden>
+        <!DOCTYPE html>
+        <html lang="fr-FR">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Preguntas y Respuestas</title>
+            <style>
+                body {
+                    background-color: #333;
+                    margin: 0;
+                }
+
+                .elemento {
+                    display: inline-block;
+                    /* Coloca los elementos uno al lado del otro */
+                    margin-right: 10px;
+                    /* Agrega un margen derecho para separar los elementos (ajusta según tus necesidades) */
+                }
+
+                #menucabecera {
+                    position: fixed;
+                    bottom: 0;
+                    /* Cambiamos top por bottom */
+                    left: 0;
+                    right: 0;
+                    background-color: #333;
+                    color: white;
+                    /*display: flex;
+                    justify-content: space-between;
+                    padding: 10px;
+                    z-index: 1000;
+                    /*white-space: nowrap;
+                    /* Ajusta el valor de z-index según sea necesario para estar por encima del contenido */
+                }
+
+                #botones {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .boton-pregunta {
+                    border: none;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    padding: 20px;
+                    cursor: pointer;
+                    font-size: 30px;
+                }
+
+                .boton-pregunta-container {
+                    display: flex;
+                    /* Display the question words in a row */
+                    flex-wrap: wrap;
+                    /* Allow words to wrap to the next line if needed */
+                }
+
+                .boton-pregunta-word {
+                    border: none;
+                    border-radius: 10px;
+                    margin: 0 5px;
+                    /* Add margin between question words */
+                    padding: 10px;
+                    /* Reduce padding for question words */
+                    cursor: pointer;
+                    font-size: 20px;
+                    /* Reduce font size for question words */
+                }
+
+                .boton-respuesta {
+                    border: none;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    padding: 20px;
+                    cursor: pointer;
+                    font-size: 30px;
+                }
+
+                .boton-azul {
+                    background-color: #007BFF;
+                    color: white;
+                }
+
+                .boton-amarillo {
+                    background-color: #FFFF00;
+                    color: #333;
+                }
+
+                #toggleButton {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #tokenizador {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #startButton {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #result {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #Actualizar {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #espacio-en-blanco {
+                    height: 200px;
+                    /* Ajusta la altura según sea necesario para coincidir con la altura del menú */
+                }
+            </style>
+        </head>
+        
+    </XMP>
+            <XMP id="juegoEnFrancesHtmlParteDosId" hidden>
+        </script>
+
+        <body>
+            <div id="menucabecera">
+
+                <div id="toggleButtondiv"> <button id="toggleButton" class="elemento">Modo Palabra por Palabra:
+                        Desactivado</button>
+                    <button id="tokenizador" onclick=tokenizar(); class="elemento">Fragmentar en Palabras</button>
+                    <button id="startButton" onclick=pronunciar(); class="elemento">Probar Pronunciación</button>
+                    <div id="result" class="elemento">.</div>
+                </div>
+            </div>
+            <div id="botones"></div>
+            <div id="espacio-en-blanco"></div>
+            <script>
+                var botonesContainer = document.getElementById('botones');
+                var isAzul = true;
+                var currentUtterance = null;
+                var wordByWordMode = false; // Variable para habilitar/deshabilitar el modo palabra por palabra
+
+                // Obtenemos el botón de alternar
+                var toggleButton = document.getElementById('toggleButton');
+
+                // Establecemos un controlador de eventos para alternar el modo palabra por palabra
+                toggleButton.addEventListener('click', function () {
+                    wordByWordMode = !wordByWordMode; // Cambiamos el estado del modo
+                    toggleButton.textContent = wordByWordMode ? 'Modo Palabra por Palabra: Activado' : 'Modo Palabra por Palabra: Desactivado';
+                });
+
+                preguntas.forEach(function (item, index) {
+                    var div = document.createElement('div');
+                    var button = document.createElement('button');
+                    button.className = "boton-pregunta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                    button.innerHTML = item.respuesta + '<br>' + item.pregunta;
+                    button.addEventListener('click', function () {
+                        if (currentUtterance) {
+                            window.speechSynthesis.cancel();
+                            currentUtterance = null;
+                        }
+                        if (wordByWordMode) {
+                            // Si el modo palabra por palabra está habilitado, dividimos y leemos palabra por palabra
+                            speakWordByWord(item.pregunta);
+                        } else {
+                            // Si no, leemos la pregunta completa
+                            speakSentence(item.pregunta);
+                        }
+                    });
+                    div.appendChild(button);
+                    botonesContainer.appendChild(div);
+
+                    isAzul = !isAzul;
+                });
+
+                function speakWordByWord(text) {
+                    var words = text.split(' ');
+                    var synthesis = window.speechSynthesis;
+
+                    words.forEach(function (word, index) {
+                        var utterance = new SpeechSynthesisUtterance(word);
+                        utterance.lang = 'fr-FR';
+                        utterance.rate = 0.8;
+                        synthesis.speak(utterance);
+                        currentUtterance = utterance;
+                    });
+                }
+
+                function speakSentence(text) {
+                    var utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'fr-FR';
+                    utterance.rate = 0.8;
+                    window.speechSynthesis.speak(utterance);
+                    currentUtterance = utterance;
+                }
+            </script>
+            <script>
+                function tokenizar() {
+
+                    var botonesContainer = document.getElementById('botones');
+                    botonesContainer.innerHTML = "";
+                    var botontoggle = document.getElementById('toggleButtondiv')
+                    botontoggle.innerHTML = "";
+                    // <button id="Actualizar" onclick="location.reload();">Volver a Modo Normal</button>
+
+                    var codigobotonhtml = '<button id="Actualizar" onclick="location.reload();" class="elemento" >Volver a Modo Normal</button>'
+                    var codigopronunciador = '<button id="startButton" onclick=pronunciar(); class="elemento">Probar Pronunciación</button>'
+                    var codigocontenedorpronunciador = '<div id="result" class="elemento">.</div>'
+                    botontoggle.innerHTML = codigobotonhtml + codigopronunciador + codigocontenedorpronunciador
+                    var isAzul = true;
+                    var currentUtterance = null;
+
+                    preguntas.forEach(function (item, index) {
+                        var div = document.createElement('div');
+
+                        // Tokenize the question and create tokenized question buttons
+                        var questionWords = item.pregunta.split(' ');
+                        var questionContainer = document.createElement('div');
+                        questionContainer.className = "boton-pregunta-container";
+                        questionWords.forEach(function (word) {
+                            var questionButton = document.createElement('button');
+                            questionButton.className = "boton-pregunta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                            questionButton.textContent = word;
+                            questionButton.style.display = 'block'; // Show the question words by default
+                            questionButton.addEventListener('click', function () {
+
+                                if (currentUtterance) {
+                                    window.speechSynthesis.cancel();
+                                    currentUtterance = null;
+                                }
+
+                                speakWord(word);
+                            });
+                            questionContainer.appendChild(questionButton);
+                        });
+
+                        // Tokenize the answer and create tokenized answer buttons
+                        var answerWords = item.respuesta.split(' ');
+                        var answerContainer = document.createElement('div');
+                        answerContainer.className = "boton-pregunta-container"; // Use the same class as question container
+                        answerWords.forEach(function (word) {
+                            var answerButton = document.createElement('button');
+                            answerButton.className = "boton-respuesta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                            answerButton.textContent = word;
+                            answerButton.style.display = 'block'; // Show the answer words by default
+                            answerButton.addEventListener('click', function () {
+                                if (currentUtterance) {
+                                    window.speechSynthesis.cancel();
+                                    currentUtterance = null;
+                                }
+                                speakWord(word);
+                            });
+                            answerContainer.appendChild(answerButton);
+                        });
+
+                        div.appendChild(answerContainer); // Add the tokenized answer buttons
+                        div.appendChild(questionContainer); // Add the tokenized question buttons
+                        botonesContainer.appendChild(div);
+                        isAzul = !isAzul;
+                    });
+
+                    function speakWord(word) {
+                        result.value = "hola";
+                        var utterance = new SpeechSynthesisUtterance(word);
+                        utterance.lang = 'fr-FR';
+                        utterance.rate = 0.8;
+                        window.speechSynthesis.speak(utterance);
+                        currentUtterance = utterance;
+                    }
+                }
+            </script>
+
+            <script>
+                function pronunciar() {
+                    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                    const resultDiv = document.getElementById('result');
+                    var detecta = 0;
+                    recognition.lang = "fr-FR";
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                    recognition.start();
+                    recognition.onresult = function (event) {
+                        detecta = 1;
+                        const results = event.results;
+                        const transcript = results[results.length - 1][0].transcript;
+
+                        resultDiv.innerHTML = transcript;
+
+                    }
+                    recognition.onend = (event) => {
+
+                        if (detecta == 0) {
+                            recognition.abort();
+                            recognition.start();
+                        } else {
+                            detecta = 0;
+
+
+                            comprobar();
+                            recognition.abort();
+                        }
+                    }
+                }
+
+            </script>
+        </body>
+
+        </html>
+    </XMP>
+
+    <XMP id="juegoEnInglesHtmlParteUnoId" hidden>
+        <!DOCTYPE html>
+        <html lang="en-EN">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Preguntas y Respuestas</title>
+            <style>
+                body {
+                    background-color: #333;
+                    margin: 0;
+                }
+
+                .elemento {
+                    display: inline-block;
+                    /* Coloca los elementos uno al lado del otro */
+                    margin-right: 10px;
+                    /* Agrega un margen derecho para separar los elementos (ajusta según tus necesidades) */
+                }
+
+                #menucabecera {
+                    position: fixed;
+                    bottom: 0;
+                    /* Cambiamos top por bottom */
+                    left: 0;
+                    right: 0;
+                    background-color: #333;
+                    color: white;
+                    /*display: flex;
+                    justify-content: space-between;
+                    padding: 10px;
+                    z-index: 1000;
+                    /*white-space: nowrap;
+                    /* Ajusta el valor de z-index según sea necesario para estar por encima del contenido */
+                }
+
+                #botones {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .boton-pregunta {
+                    border: none;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    padding: 20px;
+                    cursor: pointer;
+                    font-size: 30px;
+                }
+
+                .boton-pregunta-container {
+                    display: flex;
+                    /* Display the question words in a row */
+                    flex-wrap: wrap;
+                    /* Allow words to wrap to the next line if needed */
+                }
+
+                .boton-pregunta-word {
+                    border: none;
+                    border-radius: 10px;
+                    margin: 0 5px;
+                    /* Add margin between question words */
+                    padding: 10px;
+                    /* Reduce padding for question words */
+                    cursor: pointer;
+                    font-size: 20px;
+                    /* Reduce font size for question words */
+                }
+
+                .boton-respuesta {
+                    border: none;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    padding: 20px;
+                    cursor: pointer;
+                    font-size: 30px;
+                }
+
+                .boton-azul {
+                    background-color: #007BFF;
+                    color: white;
+                }
+
+                .boton-amarillo {
+                    background-color: #FFFF00;
+                    color: #333;
+                }
+
+                #toggleButton {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #tokenizador {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #startButton {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #result {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #Actualizar {
+                    margin: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: #333;
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                }
+
+                #espacio-en-blanco {
+                    height: 200px;
+                    /* Ajusta la altura según sea necesario para coincidir con la altura del menú */
+                }
+            </style>
+        </head>
+        
+        </xmp>
+        <XMP id="juegoEnInglesHtmlParteDosId" hidden></script>
+        </script>
+
+        <body>
+            <div id="menucabecera">
+
+                <div id="toggleButtondiv"> <button id="toggleButton" class="elemento">Modo Palabra por Palabra:
+                        Desactivado</button>
+                    <button id="tokenizador" onclick=tokenizar(); class="elemento">Fragmentar en Palabras</button>
+                    <button id="startButton" onclick=pronunciar(); class="elemento">Probar Pronunciación</button>
+                    <div id="result" class="elemento">.</div>
+                </div>
+            </div>
+            <div id="botones"></div>
+            <div id="espacio-en-blanco"></div>
+            <script>
+                var botonesContainer = document.getElementById('botones');
+                var isAzul = true;
+                var currentUtterance = null;
+                var wordByWordMode = false; // Variable para habilitar/deshabilitar el modo palabra por palabra
+
+                // Obtenemos el botón de alternar
+                var toggleButton = document.getElementById('toggleButton');
+
+                // Establecemos un controlador de eventos para alternar el modo palabra por palabra
+                toggleButton.addEventListener('click', function () {
+                    wordByWordMode = !wordByWordMode; // Cambiamos el estado del modo
+                    toggleButton.textContent = wordByWordMode ? 'Modo Palabra por Palabra: Activado' : 'Modo Palabra por Palabra: Desactivado';
+                });
+
+                preguntas.forEach(function (item, index) {
+                    var div = document.createElement('div');
+                    var button = document.createElement('button');
+                    button.className = "boton-pregunta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                    button.innerHTML = item.respuesta + '<br>' + item.pregunta;
+                    button.addEventListener('click', function () {
+                        if (currentUtterance) {
+                            window.speechSynthesis.cancel();
+                            currentUtterance = null;
+                        }
+                        if (wordByWordMode) {
+                            // Si el modo palabra por palabra está habilitado, dividimos y leemos palabra por palabra
+                            speakWordByWord(item.pregunta);
+                        } else {
+                            // Si no, leemos la pregunta completa
+                            speakSentence(item.pregunta);
+                        }
+                    });
+                    div.appendChild(button);
+                    botonesContainer.appendChild(div);
+
+                    isAzul = !isAzul;
+                });
+
+                function speakWordByWord(text) {
+                    var words = text.split(' ');
+                    var synthesis = window.speechSynthesis;
+
+                    words.forEach(function (word, index) {
+                        var utterance = new SpeechSynthesisUtterance(word);
+                        utterance.lang = 'en-EN';
+                        utterance.rate = 0.8;
+                        synthesis.speak(utterance);
+                        currentUtterance = utterance;
+                    });
+                }
+
+                function speakSentence(text) {
+                    var utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-EN';
+                    utterance.rate = 0.8;
+                    window.speechSynthesis.speak(utterance);
+                    currentUtterance = utterance;
+                }
+            </script>
+            <script>
+                function tokenizar() {
+
+                    var botonesContainer = document.getElementById('botones');
+                    botonesContainer.innerHTML = "";
+                    var botontoggle = document.getElementById('toggleButtondiv')
+                    botontoggle.innerHTML = "";
+                    // <button id="Actualizar" onclick="location.reload();">Volver a Modo Normal</button>
+
+                    var codigobotonhtml = '<button id="Actualizar" onclick="location.reload();" class="elemento" >Volver a Modo Normal</button>'
+                    var codigopronunciador = '<button id="startButton" onclick=pronunciar(); class="elemento">Probar Pronunciación</button>'
+                    var codigocontenedorpronunciador = '<div id="result" class="elemento">.</div>'
+                    botontoggle.innerHTML = codigobotonhtml + codigopronunciador + codigocontenedorpronunciador
+                    var isAzul = true;
+                    var currentUtterance = null;
+
+                    preguntas.forEach(function (item, index) {
+                        var div = document.createElement('div');
+
+                        // Tokenize the question and create tokenized question buttons
+                        var questionWords = item.pregunta.split(' ');
+                        var questionContainer = document.createElement('div');
+                        questionContainer.className = "boton-pregunta-container";
+                        questionWords.forEach(function (word) {
+                            var questionButton = document.createElement('button');
+                            questionButton.className = "boton-pregunta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                            questionButton.textContent = word;
+                            questionButton.style.display = 'block'; // Show the question words by default
+                            questionButton.addEventListener('click', function () {
+
+                                if (currentUtterance) {
+                                    window.speechSynthesis.cancel();
+                                    currentUtterance = null;
+                                }
+
+                                speakWord(word);
+                            });
+                            questionContainer.appendChild(questionButton);
+                        });
+
+                        // Tokenize the answer and create tokenized answer buttons
+                        var answerWords = item.respuesta.split(' ');
+                        var answerContainer = document.createElement('div');
+                        answerContainer.className = "boton-pregunta-container"; // Use the same class as question container
+                        answerWords.forEach(function (word) {
+                            var answerButton = document.createElement('button');
+                            answerButton.className = "boton-respuesta " + (isAzul ? "boton-azul" : "boton-amarillo");
+                            answerButton.textContent = word;
+                            answerButton.style.display = 'block'; // Show the answer words by default
+                            answerButton.addEventListener('click', function () {
+                                if (currentUtterance) {
+                                    window.speechSynthesis.cancel();
+                                    currentUtterance = null;
+                                }
+                                speakWord(word);
+                            });
+                            answerContainer.appendChild(answerButton);
+                        });
+
+                        div.appendChild(answerContainer); // Add the tokenized answer buttons
+                        div.appendChild(questionContainer); // Add the tokenized question buttons
+                        botonesContainer.appendChild(div);
+                        isAzul = !isAzul;
+                    });
+
+                    function speakWord(word) {
+                        result.value = "hola";
+                        var utterance = new SpeechSynthesisUtterance(word);
+                        utterance.lang = 'en-EN';
+                        utterance.rate = 0.8;
+                        window.speechSynthesis.speak(utterance);
+                        currentUtterance = utterance;
+                    }
+                }
+            </script>
+
+            <script>
+                function pronunciar() {
+                    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                    const resultDiv = document.getElementById('result');
+                    var detecta = 0;
+                    recognition.lang = "en-EN";
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                    recognition.start();
+                    recognition.onresult = function (event) {
+                        detecta = 1;
+                        const results = event.results;
+                        const transcript = results[results.length - 1][0].transcript;
+
+                        resultDiv.innerHTML = transcript;
+
+                    }
+                    recognition.onend = (event) => {
+
+                        if (detecta == 0) {
+                            recognition.abort();
+                            recognition.start();
+                        } else {
+                            detecta = 0;
+
+
+                            comprobar();
+                            recognition.abort();
+                        }
+                    }
+                }
+
+            </script>
+        </body>
+
+        </html>
+    </XMP>
+</body>
+
+</html>
