@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+
+    <style>
+        #articulo, #palabrasclave {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<button onclick="formatear()">FORMATEAR</button>
+<textarea id="articulo" placeholder="Escribe aquí...Las comas y los puntos deben estar separadas por espacios de las palabras"></textarea>
+<button onclick="tokenizar()">TOKENIZAR</button>
+<textarea id="palabrasclave" readonly></textarea>
+<button onclick="descargar()">GENERAR ARCHIVO.JS</button>
+
+<script>
+    function formatear() {
+        var texto = document.getElementById("articulo").value;
+        var textoFormateado = texto.replace(/([.,-/()?¿!])/g, ' $1 ');
+        document.getElementById("articulo").value = textoFormateado;
+    }
+
+    function tokenizar() {
+        var texto = document.getElementById("articulo").value;
+        var palabrasClave = document.getElementById("palabrasclave");
+        
+        // Tokenizamos el texto
+        var palabras = texto.split(' ');
+        
+        // Limpiamos el textarea
+        palabrasClave.value = '';
+        
+        // Creamos los botones para cada palabra
+        palabras.forEach(function(palabra) {
+            var boton = document.createElement("button");
+            boton.innerHTML = palabra;
+            boton.onclick = function() { palabrasClave.value += this.innerHTML + ' '; };
+            
+            document.body.appendChild(boton);
+        });
+    }
+
+    function descargar() {
+        var texto = document.getElementById("articulo").value;
+        var palabrasClave = document.getElementById("palabrasclave").value.split(' ');
+
+        // Creamos el contenido del archivo
+        var contenido = 'var text = `' + texto + '`;\n';
+        contenido += 'var keywords = ' + JSON.stringify(palabrasClave) + ';';
+
+        // Creamos un elemento 'a' invisible
+        var elemento = document.createElement('a');
+        elemento.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(contenido));
+        elemento.setAttribute('download', "preguntas.js");
+
+        // Lo añadimos al body y simulamos un click
+        elemento.style.display = 'none';
+        document.body.appendChild(elemento);
+        elemento.click();
+
+        // Lo eliminamos del body
+        document.body.removeChild(elemento);
+    }
+</script>
+
+</body>
+</html>
