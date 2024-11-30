@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizarra Vectorial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+        }
+
+        .controls {
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <canvas id="pizarra" width="800" height="600"></canvas>
+        <div class="controls">
+            <button id="pintarBtn">Pintar</button>
+            <button id="gomaBtn">Goma de borrar</button>
+            <button id="vectorizarBtn">Vectorizar</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("pizarra");
+        const ctx = canvas.getContext("2d");
+
+        let dibujoActivo = false;
+        let modoPintar = true; // por defecto, modo pintar
+        let ultimaPosicion = { x: 0, y: 0 };
+        let trazos = []; // para almacenar los vectores
+
+        const pintarBtn = document.getElementById("pintarBtn");
+        const gomaBtn = document.getElementById("gomaBtn");
+        const vectorizarBtn = document.getElementById("vectorizarBtn");
+
+        pintarBtn.addEventListener("click", () => modoPintar = true);
+        gomaBtn.addEventListener("click", () => modoPintar = false);
+        vectorizarBtn.addEventListener("click", vectorizar);
+
+        canvas.addEventListener("mousedown", (e) => {
+            dibujoActivo = true;
+            ultimaPosicion = { x: e.offsetX, y: e.offsetY };
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (!dibujoActivo) return;
+            const nuevaPosicion = { x: e.offsetX, y: e.offsetY };
+
+            if (modoPintar) {
+                // Dibujar vector
+                ctx.beginPath();
+                ctx.moveTo(ultimaPosicion.x, ultimaPosicion.y);
+                ctx.lineTo(nuevaPosicion.x, nuevaPosicion.y);
+                ctx.stroke();
+
+                // Guardar el trazo
+                trazos.push({
+                    tipo: 'line',
+                    inicio: ultimaPosicion,
+                    fin: nuevaPosicion,
+                    borrado: false // Nuevo campo para indicar si el trazo ha sido borrado
+                });
+            } else {
+                // Si estamos en el modo goma, borramos el trazo
+                borrar(nuevaPosicion);
+            }
+            ultimaPosicion = nuevaPosicion;
+        });
+
+        canvas.addEventListener("mouseup", () => {
+            dibujoActivo = false;
+        });
+
+        function borrar(posicion) {
+            ctx.clearRect(posicion.x - 10, posicion.y - 10, 20, 20);
+            
+            // Marca los trazos afectados por el borrado
+            trazos.forEach(trazo => {
+                if (trazo.tipo === 'line') {
+                    // Comprobar si el trazo está cerca del área que estamos borrando
+                    const distanceStart = Math.sqrt(Math.pow(trazo.inicio.x - posicion.x, 2) + Math.pow(trazo.inicio.y - posicion.y, 2));
+                    const distanceEnd = Math.sqrt(Math.pow(trazo.fin.x - posicion.x, 2) + Math.pow(trazo.fin.y - posicion.y, 2));
+
+                    // Si el trazo está cerca del área borrada, lo marcamos como "borrado"
+                    if (distanceStart < 20 || distanceEnd < 20) {
+                        trazo.borrado = true;
+                    }
+                }
+            });
+        }
+
+        function vectorizar() {
+            let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.width} ${canvas.height}">`;
+
+            trazos.forEach(trazo => {
+                if (trazo.tipo === 'line' && !trazo.borrado) { // Solo añadir los trazos no borrados
+                    svgContent += `<line x1="${trazo.inicio.x}" y1="${trazo.inicio.y}" x2="${trazo.fin.x}" y2="${trazo.fin.y}" stroke="black" stroke-width="2" />`;
+                }
+            });
+
+            svgContent += `</svg>`;
+
+            // Crear el archivo SVG
+            const blob = new Blob([svgContent], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "dibujo.svg";
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
