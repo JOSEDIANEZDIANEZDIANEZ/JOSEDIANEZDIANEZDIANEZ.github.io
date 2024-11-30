@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargar Archivo .zip</title>
+    <style>
+        /* Estilos para el botón */
+        #descargarButton {
+            background-color: blue; /* Color de fondo azul */
+            color: white; /* Color del texto blanco */
+            border: none; /* Sin borde */
+            border-radius: 10px; /* Esquinas redondeadas */
+            padding: 20px 40px; /* Aumentar el tamaño del botón */
+            font-size: 20px; /* Tamaño de fuente */
+            cursor: pointer; /* Cambiar el cursor al pasar el ratón */
+            display: block; /* Hacer que el botón sea un bloque */
+            margin: 0 auto; /* Centrar el botón horizontalmente */
+        }
+    </style>
+</head>
+<body>
+    <h1>Modificando el index podrás hacer otro juego de este tipo.</h1>
+   
+    <button id="descargarButton">Descargar</button>
+
+    <script>
+        // JavaScript para manejar el clic en el botón
+        document.getElementById("descargarButton").addEventListener("click", function() {
+            // URL del archivo .zip en el servidor
+            var archivoURL = "mision.zip";
+
+            // Crear un enlace invisible para descargar el archivo
+            var enlace = document.createElement("a");
+            enlace.href = archivoURL;
+            enlace.style.display = "none";
+            enlace.download = "mision.zip"; // Nombre del archivo que se descargará
+
+            // Agregar el enlace al cuerpo del documento
+            document.body.appendChild(enlace);
+
+            // Simular un clic en el enlace para iniciar la descarga
+            enlace.click();
+
+            // Eliminar el enlace después de la descarga
+            document.body.removeChild(enlace);
+        });
+    </script>
+</body>
+</html>
