@@ -1,0 +1,23 @@
+const questions = [
+  { question: "¿En qué año se fundó el Real Betis Balompié?", answers: ["1907", "1910", "1899"], correct: "1907" },
+  { question: "¿Cómo se llama la famosa catedral de Sevilla?", answers: ["Catedral de Santa María", "Catedral de Sevilla", "Catedral de la Sagrada Familia"], correct: "Catedral de Sevilla" },
+  { question: "¿Qué río atraviesa la ciudad de Sevilla?", answers: ["Río Guadalquivir", "Río Tajo", "Río Ebro"], correct: "Río Guadalquivir" },
+  { question: "¿Quién fue el famoso pintor sevillano que pintó 'Las Meninas'?", answers: ["Diego Velázquez", "Francisco de Goya", "El Greco"], correct: "Diego Velázquez" },
+  { question: "¿Cómo se llama la famosa plaza sevillana donde se celebran las corridas de toros?", answers: ["Plaza de España", "Plaza de Toros de la Maestranza", "Plaza del Salvador"], correct: "Plaza de Toros de la Maestranza" },
+  { question: "¿Qué monumento sevillano fue construido para la Exposición Iberoamericana de 1929?", answers: ["Plaza de España", "Torre del Oro", "Metropol Parasol"], correct: "Plaza de España" },
+  { question: "¿Cuál es el nombre del famoso parque que se encuentra cerca de la Plaza de España?", answers: ["Parque de María Luisa", "Parque de la Alamedilla", "Parque de la Victoria"], correct: "Parque de María Luisa" },
+  { question: "¿En qué siglo se construyó la Giralda de Sevilla?", answers: ["Siglo XII", "Siglo XV", "Siglo XIII"], correct: "Siglo XII" },
+  { question: "¿Cómo se llama el famoso barrio sevillano conocido por su ambiente flamenco y sus estrechas calles?", answers: ["Triana", "Santa Cruz", "La Macarena"], correct: "Triana" },
+  { question: "¿Qué evento importante se celebra en Sevilla durante la Semana Santa?", answers: ["Procesiones religiosas", "Carnaval", "Feria de Abril"], correct: "Procesiones religiosas" },
+  { question: "¿Qué fiesta sevillana es conocida por sus casetas y su ambiente festivo?", answers: ["Feria de Abril", "Semana Santa", "Navidad Sevillana"], correct: "Feria de Abril" },
+  { question: "¿Qué antiguo palacio árabe se encuentra en Sevilla y es Patrimonio de la Humanidad?", answers: ["Alcázar de Sevilla", "La Alhambra", "La Mezquita de Córdoba"], correct: "Alcázar de Sevilla" },
+  { question: "¿Qué famosa calle de Sevilla es conocida por sus bares de tapas y su vida nocturna?", answers: ["Calle Betis", "Calle Sierpes", "Calle de la Alfalfa"], correct: "Calle Betis" },
+  { question: "¿Cómo se llama el estadio de fútbol del Sevilla FC?", answers: ["Estadio Ramón Sánchez Pizjuán", "Estadio Benito Villamarín", "Estadio Olímpico de Sevilla"], correct: "Estadio Ramón Sánchez Pizjuán" },
+  { question: "¿En qué año ganó el Sevilla FC su primera Europa League?", answers: ["2006", "2000", "2014"], correct: "2006" },
+  { question: "¿Qué evento internacional se celebra anualmente en Sevilla y es famoso por su ambiente taurino?", answers: ["Feria de Abril", "Feria del Toro", "Feria de San Isidro"], correct: "Feria de Abril" },
+  { question: "¿Cómo se llama el puente más famoso de Sevilla, que conecta la ciudad con Triana?", answers: ["Puente de Triana", "Puente de Isabel II", "Puente del Alamillo"], correct: "Puente de Isabel II" },
+  { question: "¿En qué siglo fue construida la Torre del Oro?", answers: ["Siglo XIII", "Siglo XV", "Siglo XVI"], correct: "Siglo XIII" },
+  { question: "¿Qué tipo de arquitectura destaca en el barrio de Santa Cruz?", answers: ["Mudéjar", "Barroca", "Renacentista"], correct: "Mudéjar" },
+  { question: "¿Cuál es el nombre del flamenco más famoso nacido en Sevilla y conocido por su gran influencia?", answers: ["Camarón de la Isla", "Paco de Lucía", "Tomatito"], correct: "Camarón de la Isla" },
+  { question: "¿Qué famosa feria se celebra en Sevilla en honor a la Virgen de los Remedios?", answers: ["Feria de Abril", "Feria de San Sebastián", "Romería del Rocío"], correct: "Feria de Abril" }
+];
