@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego de las Puertas</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: url('fondo.jpg') no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    color: white;
+    overflow: hidden;
+  }
+  h1 {
+    text-align: center;
+    color: yellow;
+    text-shadow: 0 0 10px yellow;
+  }
+  #game-container {
+    display: flex;
+    justify-content: space-around;
+    width: 80%;
+    display: none;
+  }
+  .door {
+    width: 120px;
+    height: 250px;
+    background: linear-gradient(to bottom, #5a2d0c, #3e1f07);
+    border: 5px solid #8b4513;
+    border-radius: 8px;
+    position: relative;
+    cursor: pointer;
+  }
+  .door::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    width: 15px;
+    height: 15px;
+    background-color: #ffebcd;
+    border-radius: 50%;
+    border: 2px solid black;
+  }
+  .door-text {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    overflow: hidden;  /* Evita que el texto sobresalga */
+    text-overflow: ellipsis;  /* Añade "..." si el texto es demasiado largo */
+    white-space: normal;  /* Permite que el texto se ajuste al contenedor */
+    word-wrap: break-word;  /* Permite que el texto se divida en palabras cuando sea necesario */
+    padding: 0 5px;  /* Añade algo de espacio al lado para evitar que el texto toque los bordes */
+  }
+  #question {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 5px;
+    width: 80%;
+    text-align: center;
+    box-shadow: 0 0 15px yellow;
+  }
+  #gif-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 15;
+    display: none;
+  }
+  #gif-container img {
+    max-width: 80%;
+    max-height: 80%;
+  }
+  #start-button {
+    padding: 15px 30px;
+    font-size: 1.5rem;
+    background-color: yellow;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 0 10px yellow;
+    transition: transform 0.2s;
+  }
+  #start-button:hover {
+    transform: scale(1.1);
+  }
+</style>
+</head>
+<body>
+
+<h1>Juego de las Puertas </h1>
+<div id="question">Presiona el botón para comenzar</div>
+<button id="start-button">Empezar a Jugar</button>
+<div id="game-container">
+  <div class="door" data-answer="incorrecta">
+    <div class="door-text">Opción 1</div>
+  </div>
+  <div class="door" data-answer="correcta">
+    <div class="door-text">Opción 2</div>
+  </div>
+  <div class="door" data-answer="incorrecta">
+    <div class="door-text">Opción 3</div>
+  </div>
+</div>
+
+<div id="gif-container">
+  <img id="feedback-gif" src="" alt="feedback gif">
+</div>
+
+<audio id="sound-correct" src="trompetas.mp3"></audio>
+<audio id="sound-error" src="granerror.mp3"></audio>
+<audio id="sound-victory" src="enhorabuena.mp3"></audio>
+
+<script src="preguntas.js"></script>
+<script>
+let currentQuestionIndex = 0;
+let fallos = 0;
+
+function speakQuestion(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'es-ES';
+  window.speechSynthesis.speak(utterance);
+}
+
+function shuffle(array) {
+  array.sort(() => Math.random() - 0.5);
+}
+
+function loadQuestion() {
+  const { question, answers, correct } = questions[currentQuestionIndex];
+  document.getElementById("question").textContent = question;
+  speakQuestion(question);
+  shuffle(answers);
+  const doors = document.querySelectorAll(".door");
+  doors.forEach((door, index) => {
+    door.querySelector('.door-text').textContent = answers[index];
+    door.dataset.answer = answers[index] === correct ? "correcta" : "incorrecta";
+  });
+}
+
+function playSound(audioId) {
+  document.getElementById(audioId).play();
+}
+
+function showGif(isCorrect) {
+  const gifIndex = isCorrect ? Math.floor(Math.random() * 10) + 11 : Math.floor(Math.random() * 10) + 1;
+  const gifPath = `${gifIndex}.gif`;
+  const gifContainer = document.getElementById("gif-container");
+  const feedbackGif = document.getElementById("feedback-gif");
+
+  feedbackGif.src = gifPath;
+  gifContainer.style.display = "flex";
+
+  setTimeout(() => {
+    gifContainer.style.display = "none";
+    if (isCorrect) {
+      if (++currentQuestionIndex < questions.length) {
+        loadQuestion();
+      } else {
+        showVictory();
+      }
+    } else {
+      document.getElementById("game-container").classList.remove("hidden");
+    }
+  }, 3000);
+}
+
+function loadResetMode() {
+  const doors = document.querySelectorAll(".door");
+  doors.forEach(door => {
+    door.dataset.answer = "reset";
+    door.querySelector('.door-text').textContent = "Volver a jugar";
+    door.addEventListener("click", () => location.reload());
+  });
+}
+
+function showVictory() {
+  playSound("sound-victory");
+  document.getElementById("question").textContent = `¡Enhorabuena, has ganado teniendo un total de ${fallos} fallos!`;
+  const gifContainer = document.getElementById("gif-container");
+  const feedbackGif = document.getElementById("feedback-gif");
+  feedbackGif.src = "genial.gif";
+  gifContainer.style.display = "flex";
+  setTimeout(() => {
+    gifContainer.style.display = "none";
+    loadResetMode();
+  }, 5000);
+}
+
+document.getElementById("start-button").addEventListener("click", () => {
+  document.getElementById("start-button").style.display = "none";
+  document.getElementById("game-container").style.display = "flex";
+  loadQuestion();
+});
+
+document.querySelectorAll(".door").forEach(door => {
+  door.addEventListener("click", () => {
+    if (door.dataset.answer === "correcta") {
+      playSound("sound-correct");
+      showGif(true);
+    } else {
+      playSound("sound-error");
+      fallos++;
+      document.getElementById("game-container").classList.add("hidden");
+      showGif(false);
+    }
+  });
+});
+
+// Función para verificar si el fondo de imagen carga correctamente
+function checkBackgroundImage() {
+  const img = new Image();
+  img.onload = function() {
+    // Si la imagen se carga correctamente, no hacemos nada
+  };
+  img.onerror = function() {
+    // Si ocurre un error cargando la imagen, cambiamos el fondo a negro
+    document.body.style.backgroundColor = "black";
+  };
+  img.src = 'fondo.jpg';
+}
+
+// Comprobamos el fondo de la imagen cuando la página carga
+checkBackgroundImage();
+</script>
+
+</body>
+</html>

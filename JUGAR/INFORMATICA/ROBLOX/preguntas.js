@@ -1,0 +1,23 @@
+const questions = [
+  { question: "¿Qué lenguaje de programación se utiliza principalmente en Roblox Studio?", answers: ["Lua", "Python", "JavaScript"], correct: "Lua" },
+  { question: "¿Cómo se llama el servicio de Roblox que permite ejecutar el código en el servidor?", answers: ["Script", "LocalScript", "ServerScriptService"], correct: "ServerScriptService" },
+  { question: "¿Qué tipo de objeto se utiliza para ejecutar un código en el cliente (en la computadora del jugador)?", answers: ["Script", "LocalScript", "ModuleScript"], correct: "LocalScript" },
+  { question: "¿Cómo se llama el contenedor que almacena scripts y objetos del servidor en Roblox Studio?", answers: ["Explorer", "Workspace", "ServerScriptService"], correct: "ServerScriptService" },
+  { question: "¿Qué comando se usa para mostrar mensajes en la consola de Roblox Studio?", answers: ["print()", "echo()", "log()"], correct: "print()" },
+  { question: "¿Cómo se llama la propiedad que permite detectar cuándo un jugador ha tocado un objeto?", answers: ["Touched", "Click", "TouchedEvent"], correct: "Touched" },
+  { question: "¿Qué función se usa para crear un nuevo objeto en Roblox Studio?", answers: ["Instance.new()", "Object.create()", "CreateObject()"], correct: "Instance.new()" },
+  { question: "¿Qué servicio de Roblox permite almacenar datos de los jugadores entre sesiones?", answers: ["DataStoreService", "PlayerService", "StorageService"], correct: "DataStoreService" },
+  { question: "¿Qué tipo de objeto se utiliza para almacenar scripts que pueden ser reutilizados en múltiples lugares?", answers: ["ModuleScript", "LocalScript", "Script"], correct: "ModuleScript" },
+  { question: "¿Qué evento se dispara cuando un jugador se une a un juego?", answers: ["PlayerAdded", "PlayerJoin", "PlayerEntered"], correct: "PlayerAdded" },
+  { question: "¿Cómo puedes crear un bucle que repita un bloque de código por un número determinado de veces en Lua?", answers: ["for", "while", "repeat"], correct: "for" },
+  { question: "¿Qué evento se dispara cuando un jugador hace clic en una parte del juego?", answers: ["MouseClick", "ClickEvent", "MouseButton1Click"], correct: "MouseButton1Click" },
+  { question: "¿Qué propiedad de un objeto puedes modificar para cambiar su color en Roblox Studio?", answers: ["Color", "Color3", "ColorValue"], correct: "Color3" },
+  { question: "¿Cuál es la forma correcta de crear una nueva instancia de una parte en Roblox Studio?", answers: ["local part = Instance.new('Part')", "local part = new Part()", "part = Instance.create('Part')"], correct: "local part = Instance.new('Part')" },
+  { question: "¿Cómo se llama el servicio que se utiliza para acceder a las propiedades de los jugadores, como su nivel o puntaje?", answers: ["PlayerService", "Leaderboards", "PlayerDataService"], correct: "PlayerService" },
+  { question: "¿Qué tipo de variable se utiliza para almacenar un valor booleano (verdadero o falso) en Lua?", answers: ["bool", "boolean", "boolValue"], correct: "boolean" },
+  { question: "¿Qué comando te permite pausar la ejecución del script durante un tiempo específico?", answers: ["wait()", "pause()", "sleep()"], correct: "wait()" },
+  { question: "¿Cómo se llama el servicio que permite manipular las luces y el ambiente del juego en Roblox Studio?", answers: ["Lighting", "Environment", "Ambience"], correct: "Lighting" },
+  { question: "¿Qué tipo de script se utiliza para crear herramientas que los jugadores pueden usar, como espadas o pistolas?", answers: ["Tool", "Script", "LocalScript"], correct: "Tool" },
+  { question: "¿Cómo se accede al valor de una propiedad de un objeto en Roblox Studio?", answers: ["object.Property", "object.GetProperty()", "object:SetProperty()"], correct: "object.Property" },
+  { question: "¿Cómo se llama el evento que se dispara cuando un jugador toca una parte en el juego?", answers: ["Touched", "OnTouch", "TouchEvent"], correct: "Touched" }
+];
