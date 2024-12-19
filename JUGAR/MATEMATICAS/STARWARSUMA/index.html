@@ -27,7 +27,7 @@
 
         #avion {
             position: absolute;
-            bottom: 100px;
+            bottom: 150px; /* Ajustado desde 100px */
             left: 50%;
             transform: translateX(-50%);
             width: 80px;
@@ -66,7 +66,7 @@
 
         .controles {
             position: absolute;
-            bottom: 20px;
+            bottom: 80px; /* Ajustado desde 20px */
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -88,7 +88,6 @@
 </head>
 
 <body>
-
     <div id="juego">
         <div id="marcador">Puntos: 0</div>
         <button id="start-button">Start</button>
@@ -167,7 +166,7 @@
             let disparo = document.createElement('div');
             disparo.classList.add('disparo');
             disparo.style.position = 'absolute';
-            disparo.style.bottom = '100px';
+            disparo.style.bottom = '150px';
             disparo.style.left = avion.offsetLeft + avion.offsetWidth / 2 - 5 + 'px';
             disparo.style.width = '10px';
             disparo.style.height = '30px';
@@ -264,7 +263,6 @@
             }
         });
     </script>
-
 </body>
 
 </html>
