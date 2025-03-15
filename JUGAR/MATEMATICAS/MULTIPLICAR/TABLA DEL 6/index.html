@@ -2,7 +2,7 @@
 
         <!DOCTYPE html>
         <html lang="es">
-        
+
         <head>
             <meta name="robots" content="noindex">
             <meta charset="UTF-8">
@@ -10,82 +10,82 @@
                 * {
                     transition: all 0.3s;
                 }
-        
+
                 body {
-        
+
                     padding: 0;
                     margin: 0;
                     text-align: center;
                     font-family: calibri;
                     font-size: 100%;
                 }
-        
-        
+
+
                 .contenedor {
                     width: 98vw;
                     height: 97vh;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-        
-        
-        
+
+
+
                 }
-        
-        
-        
+
+
+
                 .foto {
                     text-align: center;
                     background: white;
-        
+
                 }
-        
+
                 .categoria {
                     opacity: 0.3;
                     text-align: left;
                 }
-        
+
                 .contenedorpregunta {
                     text-align: center;
                     background: #33ECFF;
-        
+
                 }
-        
+
                 .pregunta {
                     padding: 10px;
                 }
-        
-        
+
+
                 .btnIniciar {
                     background: #AED6F1;
                     outline: none;
                     width: 95%;
                     min-height: 400px;
                     font-size: 350%;
-        
+
                     position: absolute;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-        
-        
+
+
                 }
-        
+
                 .btnIniciar2 {
-        
+
                     background: #AED6F1;
                     width: 95%;
                     min-height: 400px;
                     font-size: 350%;
-        
+
                     position: absolute;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-        
-        
+
+
                 }
-        
+
                 .btnRespuestas {
                     background: #AED6F1;
                     width: 95%;
@@ -93,72 +93,75 @@
                     cursor: pointer;
                     font-size: 500%;
                     white-space: normal;
-        
+
                 }
-        
+
                 .btnRespuestas:hover {
                     transform: scale(1.05);
                 }
-        .center {
+
+                .center {
                     display: block;
                     margin: auto;
             </style>
-        
+
             <title>juego</title>
             <meta name="description" content="Cuestionario">
-        
+
             <script src="https://code.jquery.com/jquery.js"></script>
-            <script src="modulodecontrol.js"></script> <!-- Importamos el archivo externo -->
+            <script src="nombredeljueguito.js"></script> <!-- Importamos el archivo externo -->
 
         </head>
-        
+
         <body>
             <button onclick="volverajugar()" class="intentarlodenuevo">EMPEZAR DE NUEVO</button><br>
             RESPUESTAS FALLADAS<div class="numerodeerrores">0</div>
-        
-            <button id="generarInforme" style="display: none" class="center" >Pulsa para generar informe</button>
-        
+
+            <button id="generarInforme" style="display: none" class="center">Pulsa para generar informe</button>
+
             <div id="lacontraseñafinal"></div>
             <button onclick="inicio()" class="btnIniciar">EMPECEMOS</button>
-        
+
             <div class="contenedor">
                 <h1>
                     <div id="pregunta" class="contenedorpregunta">
                     </div>
                 </h1>
                 <div id="foto" class="foto" "></div>
-                            <button onclick=" location.reload()" class="btnIniciar2" id="botonfallofinal" disabled="true">
+                            <button onclick=" location.reload()" class="btnIniciar2" id="botonfallofinal"
+                    disabled="true">
                     VOLVER A INTENTAR</button>
-        
+
                     <div class="ranita"><img src="ARCHIVOS_COMUNES//IMAGENES/enhorabuena.gif">
                     </div>
                     <!--en esta linea le decimos que la contraseña que saldrá al final esta en una carpeta llamada contraseñas-->
-        
+
                     <div id="audioBotonPreguntas">
                     </div>
                     <br>
                     <div id="respuestas"></div>
-        
+
                 </div>
-                
+
                 <diV id="numerodefallospermitidoscaja" hidden></div>
                 <div id="ayuda"><a href="ayuda.mp3" hidden>AYUDA</a></div>
-        
+
                 <audio id="x" src="ARCHIVOS_COMUNES/SONIDOS/enhorabuena.mp3" preload="auto"></audio>
                 <audio id="y" src="ARCHIVOS_COMUNES/SONIDOS/trompetas.mp3" preload="auto"></audio>
                 <audio id="z" src="ARCHIVOS_COMUNES/SONIDOS/granerror.mp3" preload="auto"></audio>
                 <audio id="w" src="ARCHIVOS_COMUNES/SONIDOS/demasiadoserrores.mp3" preload="auto"></audio>
-        
+
                 <script>
-                    
+
 
         
 
 var preguntas = ["6x0.","6x1.","6x2.","6x3.","6x4.","6x5.","6x6.","6x7.","6x8.","6x9."];
 
-var respuestas = [["0","6","1"],["6","1","0"],["12","14","62"],["18","24","36"],["24","22","64"],["30","35","65"],["36","34","30"],["42","44","40"],["48","38","46"],["54","56","58"]];
+var respuestas = [["0","6","1"],["6","1","0"],["12","14","26"],["18","12","15"],["24","20","22"],["30","35","25"],["36","34","38"],["42","44","48"],["48","46","44"],["54","56","58"]];
 
 
+           
             var audioPreguntasStored = [
 
 "./1",
@@ -264,6 +267,8 @@ var respuestas = [["0","6","1"],["6","1","0"],["12","14","62"],["18","24","36"],
 
 
 ];
+
+
 
 
 const traduccion = 703160
@@ -399,89 +404,89 @@ if (preguntas.length > 0) {
     //document.getElementById("foto").innerHTML = '<img src="imagenes/' + audioPreguntasStored[indice_aleatorio] + '.jpg" alt="ok" >';
 
 
-    if (jugando == true) {
-        play(ruta);
+                                    if (jugando == true) {
+                                        play(ruta);
     }
-    return indice_aleatorio;
+                                    return indice_aleatorio;
 } else {
     if (numerodefallos > numerodefallospermitidos) {
-        document.getElementById("pregunta").innerHTML = "NO LO HAS HECHO MAL, PERO HAS COMETIDO DEMASIADOS ERRORES ";
+                                        document.getElementById("pregunta").innerHTML = "NO LO HAS HECHO MAL, PERO HAS COMETIDO DEMASIADOS ERRORES ";
 
-        document.getElementById("foto").innerHTML = "PULSA EL BOTON DE ABAJO PARA INTENTARLO DE NUEVO";
+                                    document.getElementById("foto").innerHTML = "PULSA EL BOTON DE ABAJO PARA INTENTARLO DE NUEVO";
 
 
-        document.querySelector("#respuestas").style.display = "none";
-        document.getElementById("w").play();
+                                    document.querySelector("#respuestas").style.display = "none";
+                                    document.getElementById("w").play();
 
-        document.querySelector(".btnIniciar2").style.display = "block";
-        generarArchivoErrores();
-        setTimeout(activarbotonfallofinal, 3000)
+                                    document.querySelector(".btnIniciar2").style.display = "block";
+                                    generarArchivoErrores();
+                                    setTimeout(activarbotonfallofinal, 3000)
 
     } else {
 const botonGenerarInforme = document.getElementById("generarInforme");
-botonGenerarInforme.style.display = "block";
+                                    botonGenerarInforme.style.display = "block";
 
-        document.getElementById("foto").innerHTML = "ENHORABUENA HAS GANADO";
+                                    document.getElementById("foto").innerHTML = "ENHORABUENA HAS GANADO";
 
-        document.getElementById("pregunta").innerHTML = "PULSA ARRIBA PARA GENERAR INFORME";
+                                    document.getElementById("pregunta").innerHTML = "PULSA ARRIBA PARA GENERAR INFORME";
 
-        document.getElementById("x").play();
-        document.querySelector("#respuestas").style.display = "none";
-        
-        document.querySelector(".ranita").style.display = "block";
+                                    document.getElementById("x").play();
+                                    document.querySelector("#respuestas").style.display = "none";
+
+                                    document.querySelector(".ranita").style.display = "block";
 
     }
 }
 }
 
-function comprobar(boton) {
-speechSynthesis.cancel()
+                                    function comprobar(boton) {
+                                        speechSynthesis.cancel()
 var nombreBoton = boton.name
-var corteCadena = nombreBoton.length - 1;
-var respuesta = nombreBoton.substring(corteCadena, nombreBoton.length);
-if (respuesta == indicie_respuesta_correcta) {
+                                    var corteCadena = nombreBoton.length - 1;
+                                    var respuesta = nombreBoton.substring(corteCadena, nombreBoton.length);
+                                    if (respuesta == indicie_respuesta_correcta) {
     for (var i = 0; i < preguntas.length; i++) {
         if (preguntas[i] == pregunta_secleted) {
-            removeItemFromArr(preguntas, preguntas[i]);
-            removeItemFromArr(respuestas, respuestas[i]);
-            removeItemFromArr(audioPreguntasStored, audioPreguntasStored[i]);
+                                        removeItemFromArr(preguntas, preguntas[i]);
+                                    removeItemFromArr(respuestas, respuestas[i]);
+                                    removeItemFromArr(audioPreguntasStored, audioPreguntasStored[i]);
         }
     }
-    document.getElementById("y").play();
+                                    document.getElementById("y").play();
 } else {
-    document.getElementById("z").play();
-    numerodefallos = numerodefallos + 1;
-    document.querySelector(".numerodeerrores").innerHTML = numerodefallos;
-    registrarPreguntaIncorrecta(pregunta_secleted);
+                                        document.getElementById("z").play();
+                                    numerodefallos = numerodefallos + 1;
+                                    document.querySelector(".numerodeerrores").innerHTML = numerodefallos;
+                                    registrarPreguntaIncorrecta(pregunta_secleted);
 
 }
 
-document.querySelector(".btnIniciar").style.display = "none";
+                                    document.querySelector(".btnIniciar").style.display = "none";
 
-jugar();
+                                    jugar();
 }
 
-function inicio() {
+                                    function inicio() {
 if (jugando == true) {
-    document.querySelector(".btnIniciar").style.display = "none";
+                                        document.querySelector(".btnIniciar").style.display = "none";
 } else {
-    jugando = true;
-    document.querySelector(".btnIniciar").style.display = "none";
-    document.querySelector("#pregunta").style.display = "block";
+                                        jugando = true;
+                                    document.querySelector(".btnIniciar").style.display = "none";
+                                    document.querySelector("#pregunta").style.display = "block";
 
-    document.querySelector(".btnRespuestas").style.display = "block";
-    document.querySelector("#respuestas").style.display = "block";
-    document.querySelector("#foto").style.display = "block";
+                                    document.querySelector(".btnRespuestas").style.display = "block";
+                                    document.querySelector("#respuestas").style.display = "block";
+                                    document.querySelector("#foto").style.display = "block";
 }
 
-jugar()
+                                    jugar()
 }
 
-function volverajugar() {
-location.reload();
+                                    function volverajugar() {
+                                        location.reload();
 }
-</script>
-<script>
+                </script>
+                <script>
 //este script crea el documento de demostracion de terminacion del juego	
 document.getElementById('generarInforme').addEventListener('click', function () {
 // Obtener la fecha y hora actual
@@ -490,10 +495,10 @@ const fecha = fechaHora.toLocaleDateString();
 const hora = fechaHora.toLocaleTimeString();
 
 // Obtener el nombre del archivo HTML actual
-const nombreArchivoHTML = window.location.pathname.split('/').pop();
+const nombreArchivoHTML = nombredeljueguito;
 
 // Crear el contenido del archivo de texto
-const contenido = `Informe generado por ${nombreArchivoHTML} el ${fecha} a las ${hora}`;
+const contenido = `Enhorabuena.El concursante ha ganado el juego ${nombreArchivoHTML} el ${fecha} a las ${hora}`;
 
 // Crear un objeto Blob para el contenido del archivo
 const blob = new Blob([contenido], { type: 'text/plain' });
@@ -506,6 +511,7 @@ a.download = nombreArchivoHTML.replace(/\.htm$/i, '.txt'); // Cambiar la extensi
 // Simular un clic en el enlace para iniciar la descarga
 a.click();
 });
+
 </script>
 <script>
 const preguntasmalrespondidas = [];
@@ -525,8 +531,10 @@ function generarArchivoErrores() {
     a.click();
 }
 
-</script>
-</body>
 
-</html>
-        
+
+                </script>
+        </body>
+
+        </html>
+    
