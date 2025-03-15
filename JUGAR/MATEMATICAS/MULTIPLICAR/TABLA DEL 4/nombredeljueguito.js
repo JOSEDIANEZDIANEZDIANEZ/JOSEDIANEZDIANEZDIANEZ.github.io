@@ -1,0 +1,1 @@
+var nombredeljueguito = "TABLA DEL 4";
