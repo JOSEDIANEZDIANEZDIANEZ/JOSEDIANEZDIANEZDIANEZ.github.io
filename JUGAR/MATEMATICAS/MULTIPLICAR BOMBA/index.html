@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Tablas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #comenzar {
+            font-size: 24px;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+        #input1, #input2 {
+            font-size: 24px;
+            width: 300px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        #calculadora {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 10px;
+            margin: 20px 0;
+        }
+        .boton {
+            font-size: 24px;
+            padding: 20px;
+            text-align: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .boton:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <button id="comenzar">COMENZAR</button>
+    <input type="text" id="input1" placeholder="Operación" readonly>
+    <div id="calculadora">
+        <button class="boton">7</button>
+        <button class="boton">8</button>
+        <button class="boton">9</button>
+        <button class="boton">4</button>
+        <button class="boton">5</button>
+        <button class="boton">6</button>
+        <button class="boton">1</button>
+        <button class="boton">2</button>
+        <button class="boton">3</button>
+        <button class="boton" id="clear">C</button>
+        <button class="boton">0</button>
+        <button class="boton" id="ok">OK</button>
+    </div>
+    <input type="text" id="input2" placeholder="Tiempo restante" readonly>
+
+    <script>
+        const comenzarBtn = document.getElementById('comenzar');
+        const input1 = document.getElementById('input1');
+        const input2 = document.getElementById('input2');
+        const botones = document.querySelectorAll('.boton');
+        const botonClear = document.getElementById('clear');
+        const botonOK = document.getElementById('ok');
+        let tabla = 0;
+        let tiempo = 60;
+        let operaciones = [];
+        let respuestasCorrectas = new Set();
+
+        comenzarBtn.addEventListener('click', () => {
+            comenzarBtn.disabled = true; // Desactiva el botón después de pulsarlo
+            tabla = parseInt(prompt("Escribe un número entre 1 y 9:"));
+            if (isNaN(tabla) || tabla < 1 || tabla > 9) {
+                alert("Número inválido. Debes introducir un número entre 1 y 9.");
+                comenzarBtn.disabled = false; // Reactivar en caso de error
+                return;
+            }
+            operaciones = Array.from({ length: 9 }, (_, i) => tabla * (i + 1));
+            playSound('sonidocomienzo.mp3');
+            iniciarJuego();
+        });
+
+        function iniciarJuego() {
+            input2.value = tiempo;
+            const timer = setInterval(() => {
+                tiempo--;
+                input2.value = tiempo;
+                if (tiempo <= 0) {
+                    clearInterval(timer);
+                    mostrarVideo('explosion.mp4');
+                }
+            }, 1000);
+            generarOperacion();
+        }
+
+        function generarOperacion() {
+            const pendientes = operaciones.filter(op => !respuestasCorrectas.has(op));
+            if (pendientes.length === 0) {
+                mostrarVideo('desactivación.mp4');
+                generarArchivoTXT();
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * pendientes.length);
+            const operacion = pendientes[randomIndex];
+            input1.dataset.operacion = operacion; 
+            input1.value = `${tabla}x${operacion / tabla}`;
+            setTimeout(() => input1.value = '', 1000);
+        }
+
+        botones.forEach(boton => {
+            boton.addEventListener('click', () => {
+                const valor = boton.textContent;
+                if (valor === 'C') {
+                    input1.value = '';
+                } else if (valor === 'OK') {
+                    verificarRespuesta();
+                } else {
+                    input1.value += valor;
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key >= '0' && event.key <= '9') {
+                input1.value += event.key;
+            } else if (event.key === 'c' || event.key === 'C') {
+                input1.value = '';
+            } else if (event.key === 'Enter') {
+                verificarRespuesta();
+            }
+        });
+
+        function verificarRespuesta() {
+            const respuesta = parseInt(input1.value);
+            const operacionActual = parseInt(input1.dataset.operacion);
+            if (respuesta === operacionActual) {
+                playSound('sonidobien.mp3');
+                document.body.style.backgroundColor = 'green';
+                respuestasCorrectas.add(operacionActual);
+            } else {
+                playSound('sonidomal.mp3');
+                document.body.style.backgroundColor = 'red';
+            }
+            setTimeout(() => {
+                document.body.style.backgroundColor = '#f0f0f0';
+                generarOperacion();
+            }, 2000);
+        }
+
+        function playSound(audioFile) {
+            const audio = new Audio(audioFile);
+            audio.play();
+        }
+
+        function mostrarVideo(videoFile) {
+            window.location.href = videoFile;
+        }
+
+        function generarArchivoTXT() {
+            const contenido = `El jugador ha completado el juego de la tabla de ${tabla}.`;
+            const blob = new Blob([contenido], { type: 'text/plain' });
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = `tabla-${tabla}-completada.txt`;
+            enlace.click();
+        }
+    </script>
+</body>
+</html>
