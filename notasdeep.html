@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas por Voz</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #grabar {
+            background-color: #f44336;
+        }
+        #grabar:hover {
+            background-color: #d32f2f;
+        }
+        #grabar.recording {
+            animation: pulse 1.5s infinite;
+        }
+        #status {
+            text-align: center;
+            margin: 10px 0;
+            min-height: 24px;
+            color: #666;
+        }
+        #notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .note {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .note:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .note-date {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .note-content {
+            word-wrap: break-word;
+        }
+        @keyframes pulse {
+            0% { background-color: #f44336; }
+            50% { background-color: #ff6b6b; }
+            100% { background-color: #f44336; }
+        }
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .controls, button {
+                display: none;
+            }
+            .note {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Notas por Voz</h1>
+    
+    <div class="controls">
+        <button id="grabar">Grabar Nota</button>
+        <button id="imprimir">Imprimir Notas</button>
+        <button id="compartir">Compartir por Correo</button>
+        <button id="deshacer">Deshacer Borrado</button>
+    </div>
+    
+    <div id="status"></div>
+    
+    <div id="notes-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const grabarBtn = document.getElementById('grabar');
+            const imprimirBtn = document.getElementById('imprimir');
+            const compartirBtn = document.getElementById('compartir');
+            const deshacerBtn = document.getElementById('deshacer');
+            const statusEl = document.getElementById('status');
+            const notesContainer = document.getElementById('notes-container');
+            
+            let recognition;
+            let isRecording = false;
+            let lastDeletedNote = null;
+            
+            // Inicializar reconocimiento de voz
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'es-ES';
+                
+                recognition.onstart = function() {
+                    isRecording = true;
+                    grabarBtn.classList.add('recording');
+                    statusEl.textContent = "Escuchando... Habla ahora.";
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    addNote(transcript);
+                };
+                
+                recognition.onerror = function(event) {
+                    statusEl.textContent = "Error: " + event.error;
+                    isRecording = false;
+                    grabarBtn.classList.remove('recording');
+                };
+                
+                recognition.onend = function() {
+                    isRecording = false;
+                    grabarBtn.classList.remove('recording');
+                    statusEl.textContent = "Presiona 'Grabar Nota' para grabar una nueva nota.";
+                };
+            } catch(e) {
+                statusEl.textContent = "El reconocimiento de voz no es compatible con tu navegador.";
+                grabarBtn.disabled = true;
+            }
+            
+            // Cargar notas guardadas
+            loadNotes();
+            
+            // Event listeners
+            grabarBtn.addEventListener('click', toggleRecording);
+            imprimirBtn.addEventListener('click', printNotes);
+            compartirBtn.addEventListener('click', shareByEmail);
+            deshacerBtn.addEventListener('click', undoDelete);
+            
+            // Funciones
+            function toggleRecording() {
+                if (!recognition) return;
+                
+                if (isRecording) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            }
+            
+            function addNote(content) {
+                if (!content.trim()) return;
+                
+                const notes = getNotes();
+                const newNote = {
+                    id: Date.now(),
+                    content: content,
+                    date: new Date().toLocaleString()
+                };
+                
+                notes.unshift(newNote);
+                saveNotes(notes);
+                renderNotes();
+            }
+            
+            function getNotes() {
+                const notesJson = localStorage.getItem('voiceNotes');
+                return notesJson ? JSON.parse(notesJson) : [];
+            }
+            
+            function saveNotes(notes) {
+                localStorage.setItem('voiceNotes', JSON.stringify(notes));
+            }
+            
+            function loadNotes() {
+                renderNotes();
+            }
+            
+            function renderNotes() {
+                const notes = getNotes();
+                notesContainer.innerHTML = '';
+                
+                if (notes.length === 0) {
+                    notesContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay notas aún. Haz clic en "Grabar Nota" para comenzar.</p>';
+                    return;
+                }
+                
+                notes.forEach(note => {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note';
+                    noteEl.innerHTML = `
+                        <div class="note-date">${note.date}</div>
+                        <div class="note-content">${note.content}</div>
+                    `;
+                    
+                    noteEl.addEventListener('click', () => deleteNote(note.id));
+                    notesContainer.appendChild(noteEl);
+                });
+            }
+            
+            function deleteNote(id) {
+                const notes = getNotes();
+                const noteIndex = notes.findIndex(note => note.id === id);
+                
+                if (noteIndex !== -1) {
+                    lastDeletedNote = notes[noteIndex];
+                    notes.splice(noteIndex, 1);
+                    saveNotes(notes);
+                    renderNotes();
+                }
+            }
+            
+            function undoDelete() {
+                if (!lastDeletedNote) return;
+                
+                const notes = getNotes();
+                notes.unshift(lastDeletedNote);
+                saveNotes(notes);
+                lastDeletedNote = null;
+                renderNotes();
+            }
+            
+            function printNotes() {
+                window.print();
+            }
+            
+            function shareByEmail() {
+                const notes = getNotes();
+                if (notes.length === 0) {
+                    statusEl.textContent = "No hay notas para compartir.";
+                    return;
+                }
+                
+                let emailBody = "Mis notas por voz:\n\n";
+                notes.forEach(note => {
+                    emailBody += `[${note.date}]\n${note.content}\n\n`;
+                });
+                
+                const subject = "Mis notas por voz";
+                const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+                window.location.href = mailtoLink;
+            }
+        });
+    </script>
+</body>
+</html>
