@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas por Voz</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { margin: 10px; padding: 10px; font-size: 16px; }
+        #notas { margin-top: 20px; text-align: left; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Notas por Voz</h1>
+    <button onclick="iniciarReconocimiento()">Grabar Nota</button>
+    <button onclick="imprimirNotas()">Imprimir Notas</button>
+    <button onclick="compartirNotas()">Compartir por Correo</button>
+    <button onclick="deshacerBorrar()">Deshacer Borrar</button>
+    <div id="notas"></div>
+
+    <script>
+        let ultimaNotaBorrada = null;
+
+        function iniciarReconocimiento() {
+            const reconocimiento = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            reconocimiento.lang = 'es-ES';
+            reconocimiento.start();
+            
+            reconocimiento.onresult = function(event) {
+                const texto = event.results[0][0].transcript;
+                guardarNota(texto);
+            };
+        }
+
+        function guardarNota(texto) {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            notas.push(texto);
+            localStorage.setItem('notas', JSON.stringify(notas));
+            mostrarNotas();
+        }
+
+        function mostrarNotas() {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            document.getElementById('notas').innerHTML = notas.map((nota, index) => 
+                `<p onclick="borrarNota(${index})">- ${nota}</p>`
+            ).join('');
+        }
+
+        function borrarNota(index) {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            ultimaNotaBorrada = notas[index];
+            notas.splice(index, 1);
+            localStorage.setItem('notas', JSON.stringify(notas));
+            mostrarNotas();
+        }
+
+        function deshacerBorrar() {
+            if (ultimaNotaBorrada !== null) {
+                guardarNota(ultimaNotaBorrada);
+                ultimaNotaBorrada = null;
+            }
+        }
+
+        function imprimirNotas() {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            let contenido = notas.join('\n');
+            let ventana = window.open('', '', 'width=600,height=400');
+            ventana.document.write('<pre>' + contenido + '</pre>');
+            ventana.document.close();
+            ventana.print();
+        }
+
+        function compartirNotas() {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            let cuerpoCorreo = encodeURIComponent(notas.join('\n'));
+            window.location.href = `mailto:?subject=Mis Notas&body=${cuerpoCorreo}`;
+        }
+
+        mostrarNotas();
+    </script>
+</body>
+</html>
