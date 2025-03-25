@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas y Fotos</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { margin: 10px; padding: 10px; font-size: 16px; }
+        #notas, #fotos { margin-top: 20px; text-align: left; cursor: pointer; }
+        img { max-width: 100px; max-height: 100px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Notas y Fotos</h1>
+    <button onclick="iniciarReconocimiento()">Grabar Nota</button>
+    <button onclick="tomarFoto()">Tomar Foto</button>
+    <button onclick="imprimirNotas()">Imprimir Notas</button>
+    <button onclick="compartirNotas()">Compartir por Correo</button>
+    <button onclick="deshacerBorrar()">Deshacer Borrar</button>
+    <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none" onchange="guardarFoto(event)">
+    <div id="notas"></div>
+    <div id="fotos"></div>
+
+    <script>
+        let ultimaNotaBorrada = null;
+        let ultimaFotoBorrada = null;
+
+        function iniciarReconocimiento() {
+            const reconocimiento = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            reconocimiento.lang = 'es-ES';
+            reconocimiento.start();
+            
+            reconocimiento.onresult = function(event) {
+                const texto = event.results[0][0].transcript;
+                guardarNota(texto);
+            };
+        }
+
+        function guardarNota(texto) {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            notas.push(texto);
+            localStorage.setItem('notas', JSON.stringify(notas));
+            mostrarNotas();
+        }
+
+        function mostrarNotas() {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            document.getElementById('notas').innerHTML = notas.map((nota, index) => 
+                `<p onclick="borrarNota(${index})">- ${nota}</p>`
+            ).join('');
+        }
+
+        function borrarNota(index) {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            ultimaNotaBorrada = notas[index];
+            notas.splice(index, 1);
+            localStorage.setItem('notas', JSON.stringify(notas));
+            mostrarNotas();
+        }
+
+        function tomarFoto() {
+            document.getElementById('inputFoto').click();
+        }
+
+        function guardarFoto(event) {
+            let archivo = event.target.files[0];
+            if (archivo) {
+                let lector = new FileReader();
+                lector.onload = function(e) {
+                    let fotos = JSON.parse(localStorage.getItem('fotos')) || [];
+                    fotos.push(e.target.result);
+                    localStorage.setItem('fotos', JSON.stringify(fotos));
+                    mostrarFotos();
+                };
+                lector.readAsDataURL(archivo);
+            }
+        }
+
+        function mostrarFotos() {
+            let fotos = JSON.parse(localStorage.getItem('fotos')) || [];
+            document.getElementById('fotos').innerHTML = fotos.map((foto, index) => 
+                `<img src="${foto}" onclick="borrarFoto(${index})">`
+            ).join('');
+        }
+
+        function borrarFoto(index) {
+            let fotos = JSON.parse(localStorage.getItem('fotos')) || [];
+            ultimaFotoBorrada = fotos[index];
+            fotos.splice(index, 1);
+            localStorage.setItem('fotos', JSON.stringify(fotos));
+            mostrarFotos();
+        }
+
+        function deshacerBorrar() {
+            if (ultimaNotaBorrada !== null) {
+                guardarNota(ultimaNotaBorrada);
+                ultimaNotaBorrada = null;
+            }
+            if (ultimaFotoBorrada !== null) {
+                let fotos = JSON.parse(localStorage.getItem('fotos')) || [];
+                fotos.push(ultimaFotoBorrada);
+                localStorage.setItem('fotos', JSON.stringify(fotos));
+                mostrarFotos();
+                ultimaFotoBorrada = null;
+            }
+        }
+
+        function imprimirNotas() {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            let contenido = notas.join('\n');
+            let ventana = window.open('', '', 'width=600,height=400');
+            ventana.document.write('<pre>' + contenido + '</pre>');
+            ventana.document.close();
+            ventana.print();
+        }
+
+        function compartirNotas() {
+            let notas = JSON.parse(localStorage.getItem('notas')) || [];
+            let cuerpoCorreo = encodeURIComponent(notas.join('\n'));
+            window.location.href = `mailto:?subject=Mis Notas&body=${cuerpoCorreo}`;
+        }
+
+        mostrarNotas();
+        mostrarFotos();
+    </script>
+</body>
+</html>
