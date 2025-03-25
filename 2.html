@@ -3,97 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notas por Voz con Fotos</title>
+    <title>Super Notas con Fotos</title>
     <style>
+        :root {
+            --color-primary: #4361ee;
+            --color-danger: #f72585;
+            --color-success: #4cc9f0;
+            --color-warning: #f8961e;
+            --color-dark: #212529;
+        }
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
+            color: var(--color-dark);
         }
         h1 {
-            color: #333;
+            color: var(--color-primary);
             text-align: center;
+            margin-bottom: 1.5rem;
         }
         .controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
             justify-content: center;
         }
         button {
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
+            padding: 12px 18px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        button:hover {
-            background-color: #45a049;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+        button i {
+            font-size: 18px;
         }
         #grabar {
-            background-color: #f44336;
-        }
-        #grabar:hover {
-            background-color: #d32f2f;
-        }
-        #grabar.recording {
-            animation: pulse 1.5s infinite;
+            background-color: var(--color-danger);
+            color: white;
         }
         #foto {
-            background-color: #2196F3;
+            background-color: var(--color-primary);
+            color: white;
         }
-        #foto:hover {
-            background-color: #0b7dda;
+        #imprimir, #compartir {
+            background-color: var(--color-dark);
+            color: white;
+        }
+        #deshacer {
+            background-color: var(--color-warning);
+            color: white;
         }
         #status {
             text-align: center;
-            margin: 10px 0;
+            margin: 16px 0;
             min-height: 24px;
-            color: #666;
+            color: #6c757d;
+            font-style: italic;
         }
         #notes-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
         .note {
             background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
             position: relative;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
         }
         .note:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        }
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
         .note-date {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 8px;
+            font-size: 13px;
+            color: #adb5bd;
         }
         .note-content {
             word-wrap: break-word;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .note-image-container {
+            position: relative;
+            margin-top: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f1f3f5;
+            min-height: 100px;
         }
         .note-image {
-            max-width: 100%;
-            max-height: 150px;
-            border-radius: 4px;
-            margin-top: 10px;
+            width: 100%;
+            height: auto;
+            max-height: 200px;
             object-fit: contain;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        .note:hover .note-image {
+            transform: scale(1.02);
+        }
+        .note-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .note:hover .note-actions {
+            opacity: 1;
+        }
+        .note-action-btn {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .note-action-btn:hover {
+            background: var(--color-primary);
+            transform: scale(1.1);
         }
         #camera-modal {
             display: none;
@@ -102,39 +158,72 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.9);
             z-index: 1000;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
+        .camera-wrapper {
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
         #camera-view {
             width: 100%;
-            max-width: 500px;
             background-color: black;
+            border-radius: 12px;
+            overflow: hidden;
         }
         #camera-controls {
             margin-top: 20px;
             display: flex;
-            gap: 10px;
+            gap: 16px;
+            justify-content: center;
+        }
+        .camera-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         #capture-btn {
-            background-color: #f44336;
-            padding: 15px;
-            border-radius: 50%;
+            background-color: var(--color-danger);
+            border: 4px solid white;
         }
-        #close-camera {
-            background-color: #333;
+        #retake-btn, #save-btn, #close-camera {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
         }
         #image-preview {
             display: none;
             max-width: 100%;
-            margin-top: 10px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            color: #adb5bd;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
         @keyframes pulse {
-            0% { background-color: #f44336; }
-            50% { background-color: #ff6b6b; }
-            100% { background-color: #f44336; }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .recording {
+            animation: pulse 1.5s infinite;
         }
         @media print {
             body {
@@ -148,44 +237,53 @@
                 page-break-inside: avoid;
                 box-shadow: none;
                 border: 1px solid #ddd;
-                margin-bottom: 10px;
+                margin-bottom: 15px;
             }
             .note-image {
                 max-width: 300px;
             }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <h1>Notas por Voz con Fotos</h1>
+    <h1><i class="fas fa-microphone-alt"></i> Super Notas con Fotos</h1>
     
     <div class="controls">
-        <button id="grabar">Grabar Nota</button>
-        <button id="foto">Tomar Foto</button>
-        <button id="imprimir">Imprimir Notas</button>
-        <button id="compartir">Compartir por Correo</button>
-        <button id="deshacer">Deshacer Borrado</button>
+        <button id="grabar"><i class="fas fa-microphone"></i> Grabar Nota</button>
+        <button id="foto"><i class="fas fa-camera"></i> Tomar Foto</button>
+        <button id="imprimir"><i class="fas fa-print"></i> Imprimir</button>
+        <button id="compartir"><i class="fas fa-share"></i> Compartir</button>
+        <button id="deshacer"><i class="fas fa-undo"></i> Deshacer</button>
     </div>
     
-    <div id="status"></div>
+    <div id="status">Presiona el botón para comenzar</div>
     
-    <div id="notes-container"></div>
+    <div id="notes-container">
+        <div class="empty-state">
+            <i class="fas fa-sticky-note"></i>
+            <p>No hay notas aún. ¡Agrega tu primera nota!</p>
+        </div>
+    </div>
 
     <!-- Modal para la cámara -->
     <div id="camera-modal">
-        <video id="camera-view" autoplay playsinline></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-        <img id="image-preview" alt="Vista previa de la foto">
+        <div class="camera-wrapper">
+            <video id="camera-view" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <img id="image-preview" alt="Vista previa de la foto">
+        </div>
         <div id="camera-controls">
-            <button id="capture-btn">Capturar</button>
-            <button id="retake-btn" style="display:none;">Volver a tomar</button>
-            <button id="save-btn" style="display:none;">Guardar Foto</button>
-            <button id="close-camera">Cerrar</button>
+            <button id="close-camera" class="camera-btn"><i class="fas fa-times"></i></button>
+            <button id="capture-btn" class="camera-btn"><i class="fas fa-camera"></i></button>
+            <button id="retake-btn" class="camera-btn" style="display:none;"><i class="fas fa-sync-alt"></i></button>
+            <button id="save-btn" class="camera-btn" style="display:none;"><i class="fas fa-save"></i></button>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Elementos del DOM
             const grabarBtn = document.getElementById('grabar');
             const fotoBtn = document.getElementById('foto');
             const imprimirBtn = document.getElementById('imprimir');
@@ -204,184 +302,451 @@
             const saveBtn = document.getElementById('save-btn');
             const closeCameraBtn = document.getElementById('close-camera');
             
+            // Variables de estado
             let recognition;
             let isRecording = false;
             let lastDeletedNote = null;
             let stream = null;
             let currentPhoto = null;
-            let notes = JSON.parse(localStorage.getItem('voiceNotes')) || [];
+            let db = null;
+            
+            // Inicializar IndexedDB
+            const initDB = () => {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('SuperNotesDB', 2);
+                    
+                    request.onerror = (event) => {
+                        console.error("Error al abrir la base de datos:", event.target.error);
+                        reject("Error al inicializar la base de datos");
+                    };
+                    
+                    request.onsuccess = (event) => {
+                        db = event.target.result;
+                        resolve(db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('notes')) {
+                            const store = db.createObjectStore('notes', { keyPath: 'id' });
+                            store.createIndex('date', 'date', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('photos')) {
+                            db.createObjectStore('photos', { keyPath: 'id' });
+                        }
+                    };
+                });
+            };
             
             // Inicializar reconocimiento de voz
-            try {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'es-ES';
-                
-                recognition.onstart = function() {
-                    isRecording = true;
-                    grabarBtn.classList.add('recording');
-                    statusEl.textContent = "Escuchando... Habla ahora.";
-                };
-                
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript;
-                    addNote(transcript);
-                };
-                
-                recognition.onerror = function(event) {
-                    statusEl.textContent = "Error: " + event.error;
-                    isRecording = false;
-                    grabarBtn.classList.remove('recording');
-                };
-                
-                recognition.onend = function() {
-                    isRecording = false;
-                    grabarBtn.classList.remove('recording');
-                    statusEl.textContent = "Presiona 'Grabar Nota' para grabar una nueva nota.";
-                };
-            } catch(e) {
-                statusEl.textContent = "El reconocimiento de voz no es compatible con tu navegador.";
-                grabarBtn.disabled = true;
-            }
-            
-            // Cargar notas guardadas
-            loadNotes();
-            
-            // Event listeners
-            grabarBtn.addEventListener('click', toggleRecording);
-            fotoBtn.addEventListener('click', openCamera);
-            imprimirBtn.addEventListener('click', printNotes);
-            compartirBtn.addEventListener('click', shareByEmail);
-            deshacerBtn.addEventListener('click', undoDelete);
-            captureBtn.addEventListener('click', capturePhoto);
-            retakeBtn.addEventListener('click', retakePhoto);
-            saveBtn.addEventListener('click', savePhotoNote);
-            closeCameraBtn.addEventListener('click', closeCamera);
-            
-            // Funciones
-            function toggleRecording() {
-                if (!recognition) return;
-                
-                if (isRecording) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
+            const initVoiceRecognition = () => {
+                try {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    recognition = new SpeechRecognition();
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                    recognition.lang = 'es-ES';
+                    
+                    recognition.onstart = () => {
+                        isRecording = true;
+                        grabarBtn.classList.add('recording');
+                        statusEl.textContent = "Escuchando... Habla ahora.";
+                    };
+                    
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        addNote(transcript);
+                    };
+                    
+                    recognition.onerror = (event) => {
+                        statusEl.textContent = "Error: " + event.error;
+                        isRecording = false;
+                        grabarBtn.classList.remove('recording');
+                    };
+                    
+                    recognition.onend = () => {
+                        isRecording = false;
+                        grabarBtn.classList.remove('recording');
+                        statusEl.textContent = "Presiona 'Grabar Nota' para grabar una nueva nota.";
+                    };
+                } catch(e) {
+                    statusEl.textContent = "El reconocimiento de voz no es compatible con tu navegador.";
+                    grabarBtn.disabled = true;
                 }
-            }
+            };
             
-            function addNote(content, imageData = null) {
+            // Optimizar imagen
+            const optimizeImage = (imageData, quality = 0.7, maxWidth = 800, maxHeight = 800) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Calcular nuevas dimensiones manteniendo la relación de aspecto
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height *= maxWidth / width;
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width *= maxHeight / height;
+                                height = maxHeight;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convertir a JPEG con calidad especificada
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.src = imageData;
+                });
+            };
+            
+            // Guardar nota en IndexedDB
+            const saveNoteToDB = (note) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['notes'], 'readwrite');
+                    const store = transaction.objectStore('notes');
+                    
+                    const request = store.put(note);
+                    
+                    request.onsuccess = () => resolve();
+                    request.onerror = (event) => {
+                        console.error("Error al guardar nota:", event.target.error);
+                        reject("Error al guardar nota");
+                    };
+                });
+            };
+            
+            // Obtener todas las notas
+            const getAllNotes = () => {
+                return new Promise((resolve) => {
+                    const transaction = db.transaction(['notes'], 'readonly');
+                    const store = transaction.objectStore('notes');
+                    const index = store.index('date');
+                    const request = index.getAll();
+                    
+                    request.onsuccess = () => {
+                        // Ordenar por fecha (más reciente primero)
+                        const notes = request.result.sort((a, b) => new Date(b.date) - new Date(a.date));
+                        resolve(notes);
+                    };
+                    
+                    request.onerror = (event) => {
+                        console.error("Error al obtener notas:", event.target.error);
+                        resolve([]);
+                    };
+                });
+            };
+            
+            // Eliminar nota
+            const deleteNoteFromDB = (id) => {
+                return new Promise((resolve) => {
+                    const transaction = db.transaction(['notes'], 'readwrite');
+                    const store = transaction.objectStore('notes');
+                    
+                    // Primero obtenemos la nota para poder recuperarla si es necesario
+                    const getRequest = store.get(id);
+                    
+                    getRequest.onsuccess = () => {
+                        lastDeletedNote = getRequest.result;
+                        
+                        // Luego eliminamos
+                        const deleteRequest = store.delete(id);
+                        
+                        deleteRequest.onsuccess = () => resolve(true);
+                        deleteRequest.onerror = () => resolve(false);
+                    };
+                    
+                    getRequest.onerror = () => resolve(false);
+                });
+            };
+            
+            // Agregar nota
+            const addNote = async (content, imageData = null) => {
                 if (!content && !imageData) return;
                 
-                const newNote = {
-                    id: Date.now(),
-                    content: content || "",
-                    date: new Date().toLocaleString(),
-                    image: imageData || null
-                };
-                
-                notes.unshift(newNote);
-                saveNotes();
-                renderNotes();
-            }
+                try {
+                    let optimizedImage = null;
+                    if (imageData) {
+                        optimizedImage = await optimizeImage(imageData);
+                    }
+                    
+                    const newNote = {
+                        id: Date.now(),
+                        content: content || "",
+                        date: new Date().toISOString(),
+                        hasImage: !!optimizedImage,
+                        imageData: optimizedImage || null
+                    };
+                    
+                    await saveNoteToDB(newNote);
+                    await loadNotes();
+                    statusEl.textContent = "Nota guardada correctamente!";
+                    
+                    // Mostrar animación de éxito
+                    const successMsg = document.createElement('div');
+                    successMsg.textContent = "✓ Nota guardada";
+                    successMsg.style.position = 'fixed';
+                    successMsg.style.bottom = '20px';
+                    successMsg.style.left = '50%';
+                    successMsg.style.transform = 'translateX(-50%)';
+                    successMsg.style.backgroundColor = 'rgba(76, 201, 240, 0.9)';
+                    successMsg.style.color = 'white';
+                    successMsg.style.padding = '10px 20px';
+                    successMsg.style.borderRadius = '20px';
+                    successMsg.style.zIndex = '1000';
+                    successMsg.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                    document.body.appendChild(successMsg);
+                    
+                    setTimeout(() => {
+                        successMsg.style.transition = 'opacity 0.5s';
+                        successMsg.style.opacity = '0';
+                        setTimeout(() => successMsg.remove(), 500);
+                    }, 2000);
+                } catch (error) {
+                    console.error("Error al agregar nota:", error);
+                    statusEl.textContent = "Error al guardar la nota. Intenta nuevamente.";
+                }
+            };
             
-            function getNotes() {
-                return notes;
-            }
+            // Cargar notas
+            const loadNotes = async () => {
+                try {
+                    const notes = await getAllNotes();
+                    renderNotes(notes);
+                } catch (error) {
+                    console.error("Error al cargar notas:", error);
+                }
+            };
             
-            function saveNotes() {
-                localStorage.setItem('voiceNotes', JSON.stringify(notes));
-            }
-            
-            function loadNotes() {
-                notes = JSON.parse(localStorage.getItem('voiceNotes')) || [];
-                renderNotes();
-            }
-            
-            function renderNotes() {
+            // Renderizar notas
+            const renderNotes = (notes) => {
                 notesContainer.innerHTML = '';
                 
                 if (notes.length === 0) {
-                    notesContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay notas aún. Haz clic en "Grabar Nota" o "Tomar Foto" para comenzar.</p>';
+                    notesContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-sticky-note"></i>
+                            <p>No hay notas aún. ¡Agrega tu primera nota!</p>
+                        </div>
+                    `;
                     return;
                 }
-                
-                // Ordenar notas por fecha (más reciente primero)
-                notes.sort((a, b) => b.id - a.id);
                 
                 notes.forEach(note => {
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note';
                     
                     let imageHtml = '';
-                    if (note.image) {
-                        imageHtml = `<img src="${note.image}" class="note-image" alt="Nota con imagen">`;
+                    if (note.hasImage && note.imageData) {
+                        imageHtml = `
+                            <div class="note-image-container">
+                                <img src="${note.imageData}" class="note-image" alt="Nota con imagen">
+                                <div class="note-actions">
+                                    <button class="note-action-btn" title="Ampliar imagen" onclick="event.stopPropagation(); showFullImage('${note.imageData}')">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
                     }
                     
                     noteEl.innerHTML = `
-                        <div class="note-date">${note.date}</div>
-                        <div class="note-content">${note.content}</div>
+                        <div class="note-header">
+                            <div class="note-date">${new Date(note.date).toLocaleString()}</div>
+                        </div>
+                        <div class="note-content">${note.content || '<i>Nota visual</i>'}</div>
                         ${imageHtml}
                     `;
                     
                     noteEl.addEventListener('click', () => deleteNote(note.id));
                     notesContainer.appendChild(noteEl);
                 });
-            }
+            };
             
-            function deleteNote(id) {
-                const noteIndex = notes.findIndex(note => note.id === id);
+            // Mostrar imagen en tamaño completo
+            window.showFullImage = (imageSrc) => {
+                const overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
+                overlay.style.zIndex = '2000';
+                overlay.style.display = 'flex';
+                overlay.style.alignItems = 'center';
+                overlay.style.justifyContent = 'center';
+                overlay.style.cursor = 'zoom-out';
                 
-                if (noteIndex !== -1) {
-                    lastDeletedNote = notes[noteIndex];
-                    notes.splice(noteIndex, 1);
-                    saveNotes();
-                    renderNotes();
-                }
-            }
+                const img = document.createElement('img');
+                img.src = imageSrc;
+                img.style.maxWidth = '90%';
+                img.style.maxHeight = '90%';
+                img.style.objectFit = 'contain';
+                img.style.borderRadius = '8px';
+                
+                overlay.appendChild(img);
+                overlay.addEventListener('click', () => overlay.remove());
+                
+                document.body.appendChild(overlay);
+            };
             
-            function undoDelete() {
+            // Eliminar nota
+            const deleteNote = async (id) => {
+                const success = await deleteNoteFromDB(id);
+                if (success) {
+                    await loadNotes();
+                    
+                    // Mostrar notificación de eliminación
+                    const undoNotification = document.createElement('div');
+                    undoNotification.innerHTML = `
+                        <span>Nota eliminada</span>
+                        <button onclick="window.undoLastDelete()" style="margin-left: 10px; background: transparent; border: none; color: var(--color-warning); font-weight: bold; cursor: pointer;">
+                            Deshacer
+                        </button>
+                    `;
+                    undoNotification.style.position = 'fixed';
+                    undoNotification.style.bottom = '20px';
+                    undoNotification.style.left = '50%';
+                    undoNotification.style.transform = 'translateX(-50%)';
+                    undoNotification.style.backgroundColor = 'rgba(33, 37, 41, 0.9)';
+                    undoNotification.style.color = 'white';
+                    undoNotification.style.padding = '10px 20px';
+                    undoNotification.style.borderRadius = '20px';
+                    undoNotification.style.zIndex = '1000';
+                    undoNotification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                    undoNotification.style.display = 'flex';
+                    undoNotification.style.alignItems = 'center';
+                    document.body.appendChild(undoNotification);
+                    
+                    setTimeout(() => {
+                        undoNotification.style.transition = 'opacity 0.5s';
+                        undoNotification.style.opacity = '0';
+                        setTimeout(() => undoNotification.remove(), 500);
+                    }, 3000);
+                }
+            };
+            
+            // Deshacer borrado
+            window.undoLastDelete = async () => {
                 if (!lastDeletedNote) return;
                 
-                notes.unshift(lastDeletedNote);
-                saveNotes();
-                lastDeletedNote = null;
-                renderNotes();
-            }
+                try {
+                    await saveNoteToDB(lastDeletedNote);
+                    await loadNotes();
+                    lastDeletedNote = null;
+                    
+                    // Mostrar notificación de éxito
+                    const successMsg = document.createElement('div');
+                    successMsg.textContent = "✓ Nota recuperada";
+                    successMsg.style.position = 'fixed';
+                    successMsg.style.bottom = '20px';
+                    successMsg.style.left = '50%';
+                    successMsg.style.transform = 'translateX(-50%)';
+                    successMsg.style.backgroundColor = 'rgba(76, 201, 240, 0.9)';
+                    successMsg.style.color = 'white';
+                    successMsg.style.padding = '10px 20px';
+                    successMsg.style.borderRadius = '20px';
+                    successMsg.style.zIndex = '1000';
+                    successMsg.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                    document.body.appendChild(successMsg);
+                    
+                    setTimeout(() => {
+                        successMsg.style.transition = 'opacity 0.5s';
+                        successMsg.style.opacity = '0';
+                        setTimeout(() => successMsg.remove(), 500);
+                    }, 2000);
+                } catch (error) {
+                    console.error("Error al recuperar nota:", error);
+                }
+            };
             
-            function printNotes() {
-                window.print();
-            }
+            // Imprimir notas
+            const printNotes = async () => {
+                const notes = await getAllNotes();
+                const printWindow = window.open('', '', 'width=800,height=600');
+                
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Mis Notas</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            .note { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+                            .note-date { color: #666; font-size: 12px; margin-bottom: 5px; }
+                            .note-image { max-width: 300px; max-height: 300px; margin-top: 10px; }
+                            @page { size: auto; margin: 10mm; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Mis Notas</h1>
+                `;
+                
+                notes.forEach(note => {
+                    html += `
+                        <div class="note">
+                            <div class="note-date">${new Date(note.date).toLocaleString()}</div>
+                            <div class="note-content">${note.content || ''}</div>
+                            ${note.hasImage ? `<img src="${note.imageData}" class="note-image">` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</body></html>`;
+                
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+                
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
+            };
             
-            function shareByEmail() {
+            // Compartir por correo
+            const shareByEmail = async () => {
+                const notes = await getAllNotes();
                 if (notes.length === 0) {
                     statusEl.textContent = "No hay notas para compartir.";
                     return;
                 }
                 
-                let emailBody = "Mis notas con fotos:\n\n";
+                let emailBody = "Mis notas:\n\n";
                 notes.forEach(note => {
-                    emailBody += `[${note.date}]\n${note.content}\n\n`;
+                    emailBody += `[${new Date(note.date).toLocaleString()}]\n${note.content || "Nota visual"}\n\n`;
                 });
                 
-                const subject = "Mis notas con fotos";
-                const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
-                window.location.href = mailtoLink;
-            }
+                const subject = "Mis Notas";
+                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+            };
             
             // Funciones para la cámara
-            async function openCamera() {
+            const openCamera = async () => {
                 try {
                     cameraModal.style.display = 'flex';
                     stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment' },
+                        video: { 
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
                         audio: false 
                     });
                     cameraView.srcObject = stream;
                     
                     // Mostrar controles iniciales
-                    captureBtn.style.display = 'block';
+                    captureBtn.style.display = 'flex';
                     retakeBtn.style.display = 'none';
                     saveBtn.style.display = 'none';
                     imagePreview.style.display = 'none';
@@ -389,10 +754,31 @@
                 } catch (err) {
                     console.error("Error al acceder a la cámara:", err);
                     statusEl.textContent = "No se pudo acceder a la cámara. Asegúrate de permitir el acceso.";
+                    
+                    // Mostrar notificación de error
+                    const errorMsg = document.createElement('div');
+                    errorMsg.textContent = "Error al acceder a la cámara";
+                    errorMsg.style.position = 'fixed';
+                    errorMsg.style.bottom = '20px';
+                    errorMsg.style.left = '50%';
+                    errorMsg.style.transform = 'translateX(-50%)';
+                    errorMsg.style.backgroundColor = 'rgba(247, 37, 133, 0.9)';
+                    errorMsg.style.color = 'white';
+                    errorMsg.style.padding = '10px 20px';
+                    errorMsg.style.borderRadius = '20px';
+                    errorMsg.style.zIndex = '1000';
+                    errorMsg.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                    document.body.appendChild(errorMsg);
+                    
+                    setTimeout(() => {
+                        errorMsg.style.transition = 'opacity 0.5s';
+                        errorMsg.style.opacity = '0';
+                        setTimeout(() => errorMsg.remove(), 500);
+                    }, 2000);
                 }
-            }
+            };
             
-            function capturePhoto() {
+            const capturePhoto = () => {
                 // Ajustar el canvas al tamaño del video
                 const width = cameraView.videoWidth;
                 const height = cameraView.videoHeight;
@@ -403,74 +789,77 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(cameraView, 0, 0, width, height);
                 
-                // Reducir tamaño de la imagen antes de guardar
-                const MAX_WIDTH = 800;
-                const MAX_HEIGHT = 800;
-                let newWidth = width;
-                let newHeight = height;
-                
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        newHeight = height * MAX_WIDTH / width;
-                        newWidth = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        newWidth = width * MAX_HEIGHT / height;
-                        newHeight = MAX_HEIGHT;
-                    }
-                }
-                
-                // Crear otro canvas para la imagen reducida
-                const resizedCanvas = document.createElement('canvas');
-                resizedCanvas.width = newWidth;
-                resizedCanvas.height = newHeight;
-                const resizedCtx = resizedCanvas.getContext('2d');
-                resizedCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
-                
-                // Obtener la imagen como base64 con calidad del 80%
-                currentPhoto = resizedCanvas.toDataURL('image/jpeg', 0.8);
-                
                 // Mostrar la vista previa
+                currentPhoto = canvas.toDataURL('image/jpeg');
                 imagePreview.src = currentPhoto;
                 imagePreview.style.display = 'block';
                 cameraView.style.display = 'none';
                 
                 // Cambiar controles
                 captureBtn.style.display = 'none';
-                retakeBtn.style.display = 'block';
-                saveBtn.style.display = 'block';
-            }
+                retakeBtn.style.display = 'flex';
+                saveBtn.style.display = 'flex';
+            };
             
-            function retakePhoto() {
+            const retakePhoto = () => {
                 imagePreview.style.display = 'none';
                 cameraView.style.display = 'block';
-                captureBtn.style.display = 'block';
+                captureBtn.style.display = 'flex';
                 retakeBtn.style.display = 'none';
                 saveBtn.style.display = 'none';
                 currentPhoto = null;
-            }
+            };
             
-            function savePhotoNote() {
+            const savePhotoNote = () => {
                 closeCamera();
                 
                 // Preguntar por texto adicional
                 const noteText = prompt("¿Quieres añadir texto a esta nota con foto? (Opcional)");
                 
                 if (noteText !== null) { // Solo añadir si no se canceló
-                    addNote(noteText, currentPhoto);
+                    addNote(noteText || "", currentPhoto);
                 }
                 
                 currentPhoto = null;
-            }
+            };
             
-            function closeCamera() {
+            const closeCamera = () => {
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
                 cameraModal.style.display = 'none';
                 currentPhoto = null;
-            }
+            };
+            
+            // Inicializar la aplicación
+            const initApp = async () => {
+                await initDB();
+                initVoiceRecognition();
+                await loadNotes();
+                
+                // Event listeners
+                grabarBtn.addEventListener('click', () => {
+                    if (!isRecording) {
+                        recognition.start();
+                    }
+                });
+                
+                fotoBtn.addEventListener('click', openCamera);
+                imprimirBtn.addEventListener('click', printNotes);
+                compartirBtn.addEventListener('click', shareByEmail);
+                deshacerBtn.addEventListener('click', window.undoLastDelete);
+                captureBtn.addEventListener('click', capturePhoto);
+                retakeBtn.addEventListener('click', retakePhoto);
+                saveBtn.addEventListener('click', savePhotoNote);
+                closeCameraBtn.addEventListener('click', closeCamera);
+                
+                // Mostrar mensaje de bienvenida
+                setTimeout(() => {
+                    statusEl.textContent = "Aplicación lista. ¡Empieza a crear notas!";
+                }, 1000);
+            };
+            
+            initApp();
         });
     </script>
 </body>
