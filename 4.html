@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas con Fotos</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            position: sticky;
+            top: 0;
+            background: #f5f5f5;
+            padding: 10px 0;
+            z-index: 100;
+        }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #007AFF;
+            color: white;
+            font-size: 14px;
+            width: 48%;
+        }
+        #foto { background: #34C759; }
+        #enviarCorreo { background: #5856D6; }
+        #status {
+            padding: 10px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .note {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .note img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: block;
+        }
+        .note-date {
+            color: #8E8E93;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .photo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .photo-modal img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="foto">📸 Tomar Foto</button>
+        <button id="enviarCorreo">✉️ Enviar por Correo</button>
+    </div>
+    
+    <div id="status">Presiona 📸 para agregar una nueva nota con foto</div>
+    
+    <div id="notes-container"></div>
+
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const fotoBtn = document.getElementById('foto');
+            const enviarCorreoBtn = document.getElementById('enviarCorreo');
+            const cameraInput = document.getElementById('camera-input');
+            const notesContainer = document.getElementById('notes-container');
+            const statusEl = document.getElementById('status');
+            
+            // Cargar notas al iniciar
+            loadNotes();
+            
+            // Evento para tomar foto
+            fotoBtn.addEventListener('click', function() {
+                cameraInput.click();
+            });
+            
+            // Manejar la foto capturada
+            cameraInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        // Optimizar imagen para móvil
+                        optimizeImageForMobile(event.target.result, function(optimizedImage) {
+                            // Pedir texto opcional
+                            const noteText = prompt("Añade una descripción (opcional):");
+                            addNote(noteText || "", optimizedImage);
+                        });
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Función para enviar por correo
+            enviarCorreoBtn.addEventListener('click', function() {
+                const notes = getNotes();
+                
+                if (notes.length === 0) {
+                    statusEl.textContent = "No hay notas para enviar";
+                    return;
+                }
+                
+                // Crear cuerpo del correo
+                let emailBody = "Mis notas con fotos:\n\n";
+                
+                notes.forEach((note, index) => {
+                    emailBody += `Nota ${index + 1} - ${note.date}:\n`;
+                    emailBody += `${note.text || "Nota visual"}\n\n`;
+                });
+                
+                emailBody += "\n\n---\nEnviado desde mi aplicación de notas con fotos";
+                
+                // Crear enlace de correo
+                const subject = "Mis Notas con Fotos";
+                const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+                
+                // Abrir cliente de correo
+                window.location.href = mailtoLink;
+            });
+            
+            // Función para optimizar imágenes en móviles
+            function optimizeImageForMobile(imageData, callback) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Tamaño máximo para móviles
+                    const maxSize = 1024;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convertir a JPEG con calidad del 70% para móviles
+                    const optimizedImage = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(optimizedImage);
+                };
+                img.src = imageData;
+            }
+            
+            // Añadir nueva nota
+            function addNote(text, image) {
+                const notes = getNotes();
+                const newNote = {
+                    id: Date.now(),
+                    text: text,
+                    image: image,
+                    date: new Date().toLocaleString()
+                };
+                
+                notes.unshift(newNote);
+                saveNotes(notes);
+                renderNotes();
+                statusEl.textContent = "¡Nota guardada correctamente!";
+            }
+            
+            // Obtener notas guardadas
+            function getNotes() {
+                const notesJson = localStorage.getItem('mobileNotes') || '[]';
+                return JSON.parse(notesJson);
+            }
+            
+            // Guardar notas
+            function saveNotes(notes) {
+                // Filtrar notas muy grandes (para evitar problemas en móviles)
+                const filteredNotes = notes.filter(note => {
+                    if (note.image && note.image.length > 5000000) { // 5MB
+                        console.warn("Nota demasiado grande omitida:", note.id);
+                        return false;
+                    }
+                    return true;
+                });
+                
+                localStorage.setItem('mobileNotes', JSON.stringify(filteredNotes));
+            }
+            
+            // Cargar y mostrar notas
+            function loadNotes() {
+                const notes = getNotes();
+                renderNotes(notes);
+            }
+            
+            // Mostrar notas en pantalla
+            function renderNotes(notes = getNotes()) {
+                notesContainer.innerHTML = '';
+                
+                if (notes.length === 0) {
+                    notesContainer.innerHTML = '<div class="note">No hay notas aún. Toma tu primera foto!</div>';
+                    return;
+                }
+                
+                notes.forEach(note => {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note';
+                    noteEl.innerHTML = `
+                        <div class="note-date">${note.date}</div>
+                        <div>${note.text || '<i>Nota visual</i>'}</div>
+                        ${note.image ? `<img src="${note.image}" onclick="showFullImage('${note.image}')">` : ''}
+                    `;
+                    
+                    // Eliminar al hacer clic prolongado
+                    noteEl.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        if (confirm('¿Eliminar esta nota?')) {
+                            deleteNote(note.id);
+                        }
+                    });
+                    
+                    notesContainer.appendChild(noteEl);
+                });
+            }
+            
+            // Eliminar nota
+            function deleteNote(id) {
+                const notes = getNotes().filter(note => note.id !== id);
+                saveNotes(notes);
+                renderNotes(notes);
+                statusEl.textContent = "Nota eliminada";
+            }
+            
+            // Función global para mostrar imagen completa
+            window.showFullImage = function(src) {
+                const modal = document.createElement('div');
+                modal.className = 'photo-modal';
+                modal.innerHTML = `<img src="${src}" onclick="this.parentNode.remove()">`;
+                document.body.appendChild(modal);
+            };
+        });
+    </script>
+</body>
+</html>
