@@ -272,13 +272,13 @@
             }
             
             function addNote(content, imageData = null) {
-                if (!content.trim() && !imageData) return;
+                if (!content && !imageData) return;
                 
                 const newNote = {
                     id: Date.now(),
                     content: content || "",
                     date: new Date().toLocaleString(),
-                    image: imageData
+                    image: imageData || null
                 };
                 
                 notes.unshift(newNote);
@@ -458,7 +458,7 @@
                 const noteText = prompt("¿Quieres añadir texto a esta nota con foto? (Opcional)");
                 
                 if (noteText !== null) { // Solo añadir si no se canceló
-                    addNote(noteText || "", currentPhoto);
+                    addNote(noteText, currentPhoto);
                 }
                 
                 currentPhoto = null;
