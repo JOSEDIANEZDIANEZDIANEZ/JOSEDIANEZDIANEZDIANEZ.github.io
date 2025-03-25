@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documento a PDF con Voz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        #camera {
+            width: 100%;
+            max-width: 600px;
+            background-color: #eee;
+            margin: 20px auto;
+            position: relative;
+        }
+        #camera video, #camera canvas {
+            width: 100%;
+            display: block;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { background-color: #ffebee; }
+            50% { background-color: #ffcdd2; }
+            100% { background-color: #ffebee; }
+        }
+        #fileName {
+            margin: 20px 0;
+            font-weight: bold;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <h1>Documento a PDF con Voz</h1>
+    <p>Captura tu documento y guárdalo como PDF usando comandos de voz</p>
+    
+    <div class="container">
+        <div id="camera">
+            <video autoplay playsinline></video>
+            <canvas style="display: none;"></canvas>
+        </div>
+        
+        <button id="startCamera">Iniciar Cámara</button>
+        <button id="captureBtn" disabled>Capturar Documento</button>
+        <button id="voiceBtn" disabled>Nombrar con Voz</button>
+        <button id="downloadBtn" disabled>Descargar PDF</button>
+        
+        <div id="status">Esperando inicio de cámara...</div>
+        <div id="fileName"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Variables globales
+        let stream = null;
+        let capturedImage = null;
+        let fileName = "documento";
+        const { jsPDF } = window.jspdf;
+        
+        // Elementos del DOM
+        const startCameraBtn = document.getElementById('startCamera');
+        const captureBtn = document.getElementById('captureBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const statusDiv = document.getElementById('status');
+        const fileNameDiv = document.getElementById('fileName');
+        const video = document.querySelector('video');
+        const canvas = document.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Reconocimiento de voz
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.interimResults = false;
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                fileName = transcript.trim().toLowerCase().replace(/\s+/g, '_');
+                fileNameDiv.textContent = `Archivo: ${fileName}.pdf`;
+                statusDiv.textContent = "Nombre reconocido. Listo para descargar.";
+                downloadBtn.disabled = false;
+            };
+            
+            recognition.onerror = (event) => {
+                statusDiv.textContent = `Error en reconocimiento: ${event.error}`;
+                voiceBtn.disabled = false;
+            };
+            
+            recognition.onend = () => {
+                voiceBtn.disabled = false;
+            };
+        } else {
+            voiceBtn.disabled = true;
+            statusDiv.textContent = "Reconocimiento de voz no soportado en este navegador.";
+        }
+        
+        // Event listeners
+        startCameraBtn.addEventListener('click', startCamera);
+        captureBtn.addEventListener('click', captureImage);
+        voiceBtn.addEventListener('click', startVoiceRecognition);
+        downloadBtn.addEventListener('click', downloadPDF);
+        
+        // Funciones
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+                .then((mediaStream) => {
+                    stream = mediaStream;
+                    video.srcObject = stream;
+                    startCameraBtn.disabled = true;
+                    captureBtn.disabled = false;
+                    voiceBtn.disabled = false;
+                    statusDiv.textContent = "Cámara activa. Coloca el documento frente a la cámara y haz clic en Capturar.";
+                })
+                .catch((err) => {
+                    console.error("Error al acceder a la cámara:", err);
+                    statusDiv.textContent = "Error al acceder a la cámara. Asegúrate de permitir el acceso.";
+                });
+        }
+        
+        function captureImage() {
+            if (!stream) return;
+            
+            // Ajustar el canvas al tamaño del video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Dibujar el frame actual del video en el canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Obtener la imagen como data URL
+            capturedImage = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Detener la cámara
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+            
+            // Actualizar UI
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+            captureBtn.disabled = true;
+            startCameraBtn.disabled = false;
+            statusDiv.textContent = "Documento capturado. Haz clic en 'Nombrar con Voz' para asignar un nombre al archivo.";
+        }
+        
+        function startVoiceRecognition() {
+            if (!recognition) {
+                statusDiv.textContent = "Reconocimiento de voz no disponible.";
+                return;
+            }
+            
+            voiceBtn.disabled = true;
+            statusDiv.textContent = "Escuchando... Por favor, di el nombre del documento.";
+            statusDiv.classList.add('recording');
+            
+            try {
+                recognition.start();
+            } catch (err) {
+                statusDiv.textContent = "Error al iniciar el reconocimiento de voz: " + err.message;
+                voiceBtn.disabled = false;
+                statusDiv.classList.remove('recording');
+            }
+        }
+        
+        function downloadPDF() {
+            if (!capturedImage) {
+                statusDiv.textContent = "No hay documento capturado.";
+                return;
+            }
+            
+            // Crear PDF
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                unit: 'mm'
+            });
+            
+            // Calcular dimensiones para que la imagen ocupe toda la página
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            
+            const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight) * 0.95;
+            const finalWidth = imgWidth * ratio;
+            const finalHeight = imgHeight * ratio;
+            
+            const x = (pageWidth - finalWidth) / 2;
+            const y = (pageHeight - finalHeight) / 2;
+            
+            // Agregar imagen al PDF
+            pdf.addImage(capturedImage, 'JPEG', x, y, finalWidth, finalHeight);
+            
+            // Descargar PDF
+            pdf.save(fileName + '.pdf');
+            
+            // Resetear UI
+            statusDiv.textContent = "PDF descargado. Puedes iniciar la cámara nuevamente para capturar otro documento.";
+            statusDiv.classList.remove('recording');
+            fileNameDiv.textContent = "";
+            canvas.style.display = 'none';
+            video.style.display = 'block';
+            downloadBtn.disabled = true;
+            capturedImage = null;
+        }
+    </script>
+</body>
+</html>
