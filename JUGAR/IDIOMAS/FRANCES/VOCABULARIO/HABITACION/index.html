@@ -178,6 +178,27 @@
             noise.stop(ctx.currentTime + 0.5);
         }
 
+        // Función para leer texto en francés
+        function speakFrench(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'fr-FR'; // Configura el idioma a francés
+                utterance.rate = 0.9; // Velocidad un poco más lenta para mejor comprensión
+                
+                // Buscamos una voz francesa disponible
+                const voices = window.speechSynthesis.getVoices();
+                const frenchVoice = voices.find(voice => voice.lang === 'fr-FR' || voice.lang.startsWith('fr-'));
+                
+                if (frenchVoice) {
+                    utterance.voice = frenchVoice;
+                }
+                
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.log("La síntesis de voz no está soportada en este navegador.");
+            }
+        }
+
         // Función para mostrar la carta actual (MODIFICADA)
         function showCard() {
             const currentWord = vocabulary[currentCardIndex];
@@ -209,6 +230,15 @@
             generateFlipSound();
             card.classList.toggle('flipped');
             isFlipped = !isFlipped;
+            
+            // Si la carta está volteada (mostrando el francés), leer el texto
+            if (isFlipped) {
+                const currentWord = vocabulary[currentCardIndex];
+                speakFrench(currentWord.french);
+            } else {
+                // Si vuelve al español, cancelar cualquier voz en curso
+                window.speechSynthesis.cancel();
+            }
         });
 
         // Eventos para el desplazamiento
@@ -251,6 +281,11 @@
                 prevCard();
             }
         });
+
+        // Cargamos las voces disponibles cuando estén listas
+        window.speechSynthesis.onvoiceschanged = function() {
+            // Voces cargadas y listas para usar
+        };
 
         // Mostrar la primera carta
         showCard();
