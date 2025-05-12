@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Batalla de Islas - Fuerza 140</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      font-family: sans-serif;
+      text-align: center;
+      background: #87CEEB;
+    }
+    canvas {
+      display: block;
+    }
+    #info {
+      position: center;
+      font-size: 20px;
+      background: rgba(255,255,255,0.7);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.7);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 300px;
+    }
+    #fullscreenBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      font-size: 16px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .player-indicator {
+      position: absolute;
+      top: 50px;
+      font-size: 18px;
+      background: rgba(255,255,255,0.7);
+      padding: 5px 10px;
+      border-radius: 8px;
+    }
+    #player1-indicator {
+      left: 10px;
+      color: red;
+    }
+    #player2-indicator {
+      right: 10px;
+      color: blue;
+    }
+    #player3-indicator {
+      left: 50%;
+      transform: translateX(-50%);
+      color: green;
+    }
+    #restartBtn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 15px 30px;
+      font-size: 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+      z-index: 100;
+    }
+    /* Estilo personalizado para el control deslizante de ángulo */
+    #angulo {
+      width: 100%;
+      background: linear-gradient(to right, 
+        #0000ff 0%, 
+        #00ff00 50%, 
+        #ff0000 100%);
+      height: 10px;
+      border-radius: 5px;
+      outline: none;
+    }
+    #angulo::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #333;
+      cursor: pointer;
+    }
+    #angulo::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #333;
+      cursor: pointer;
+    }
+    .angle-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 15px;
+      background: #000;
+      top: -2px;
+    }
+    .angle-marks {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 5px;
+      font-size: 12px;
+    }
+    /* Estilos para los botones de selección de jugadores */
+    #playerSelection {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    .playerOption {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .playerOption:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div id="playerSelection">
+    <h2>Selecciona número de jugadores</h2>
+    <button class="playerOption" id="twoPlayers">2 Jugadores</button>
+    <button class="playerOption" id="threePlayers">3 Jugadores</button>
+  </div>
+
+  <div id="info">¡Preparados!</div>
+  <div id="player1-indicator" class="player-indicator">Jugador Rojo</div>
+  <div id="player2-indicator" class="player-indicator">Jugador Azul</div>
+  <div id="player3-indicator" class="player-indicator">Jugador Verde</div>
+  
+  <div class="controls">
+    Fuerza: <input type="range" id="fuerza" min="10" max="140" value="50"> <span id="fuerzaVal">50</span><br>
+    <div style="position: relative;">
+      Ángulo (°): 
+      <input type="range" id="angulo" min="-90" max="90" value="0">
+      <div class="angle-center"></div>
+      <span id="anguloVal">0</span>
+      <div class="angle-marks">
+        <span>-90</span>
+        <span>-45</span>
+        <span>0</span>
+        <span>45</span>
+        <span>90</span>
+      </div>
+    </div>
+    Gravedad: <input type="range" id="gravedad" min="1" max="20" value="10"> <span id="gravedadVal">10</span>
+  </div>
+  <button id="fullscreenBtn">Pantalla Completa</button>
+  <button id="restartBtn">Jugar de nuevo</button>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const restartBtn = document.getElementById('restartBtn');
+    const playerSelection = document.getElementById('playerSelection');
+    const twoPlayersBtn = document.getElementById('twoPlayers');
+    const threePlayersBtn = document.getElementById('threePlayers');
+
+    const fuerzaInput = document.getElementById('fuerza');
+    const anguloInput = document.getElementById('angulo');
+    const gravedadInput = document.getElementById('gravedad');
+
+    const fuerzaVal = document.getElementById('fuerzaVal');
+    const anguloVal = document.getElementById('anguloVal');
+    const gravedadVal = document.getElementById('gravedadVal');
+
+    // Configuración del juego
+    let currentPlayer = 1;
+    let isShooting = false; // Variable para controlar si hay un disparo en curso
+    const players = [
+      { x: 0, y: 0, color: 'red', originalColor: 'red', alive: true, name: 'Rojo' },
+      { x: 0, y: 0, color: 'blue', originalColor: 'blue', alive: true, name: 'Azul' },
+      { x: 0, y: 0, color: 'green', originalColor: 'green', alive: true, name: 'Verde' }
+    ];
+    let islands = [];
+    let gameActive = true;
+    let blinkInterval;
+    let isBlinkOn = false;
+
+    // Sonidos
+    const shootSound = new Audio('https://actions.google.com/sounds/v1/impacts/metal_hit_impact.ogg');
+    const explosionSound = new Audio('https://actions.google.com/sounds/v1/explosions/explosion.ogg');
+
+    function startBlinking() {
+      // Detener cualquier parpadeo anterior
+      if (blinkInterval) clearInterval(blinkInterval);
+      
+      // Iniciar nuevo parpadeo
+      blinkInterval = setInterval(() => {
+        isBlinkOn = !isBlinkOn;
+        const player = players[currentPlayer - 1];
+        player.color = isBlinkOn ? 'white' : player.originalColor;
+        draw();
+      }, 500); // Cambia cada 500ms (medio segundo)
+    }
+
+    function stopBlinking() {
+      if (blinkInterval) {
+        clearInterval(blinkInterval);
+        blinkInterval = null;
+      }
+      // Asegurarse de que todos los jugadores tengan su color original
+      players.forEach(p => {
+        p.color = p.originalColor;
+      });
+    }
+
+    function resetGame(numPlayers = 3) {
+      stopBlinking();
+      currentPlayer = 1;
+      gameActive = true;
+      isShooting = false; // Reiniciar el estado de disparo
+      
+      // Restablecer el estado de los jugadores
+      players.forEach((p, index) => {
+        p.alive = true;
+        p.color = p.originalColor;
+        // Si estamos en modo 2 jugadores, eliminar al jugador 3 (verde)
+        if (numPlayers === 2 && index === 2) {
+          p.alive = false;
+        }
+      });
+      
+      document.getElementById('info').innerText = `¡Comienza Jugador ${players[currentPlayer - 1].name}!`;
+      resizeCanvas();
+      canvas.addEventListener('click', onCanvasClick);
+      startBlinking();
+    }
+
+    function generateIslandAndPlayers() {
+      const points = [];
+      const segments = 100;
+      const baseHeight = canvas.height * 0.7;
+      const heightVariation = canvas.height * 0.15;
+      
+      for (let i = 0; i <= segments; i++) {
+        const x = (canvas.width / segments) * i;
+        const noise = Math.sin(i * 0.2) * 0.5 + Math.sin(i * 0.5) * 0.3;
+        const y = baseHeight - (noise * heightVariation);
+        points.push({ x, y });
+      }
+      
+      const margin = canvas.width * 0.1;
+      const segmentWidth = canvas.width / 3;
+      
+      const player1X = margin + Math.random() * (segmentWidth - margin * 2);
+      const player2X = segmentWidth * 2 + margin + Math.random() * (segmentWidth - margin * 2);
+      const player3X = segmentWidth + margin + Math.random() * (segmentWidth - margin * 2);
+      
+      const flatWidth = canvas.width * 0.08;
+      
+      points.forEach(point => {
+        if (Math.abs(point.x - player1X) < flatWidth/2) point.y = baseHeight - 20;
+        if (Math.abs(point.x - player2X) < flatWidth/2) point.y = baseHeight - 20;
+        if (Math.abs(point.x - player3X) < flatWidth/2) point.y = baseHeight - 20;
+      });
+      
+      players[0].x = player1X;
+      players[1].x = player2X;
+      players[2].x = player3X;
+      
+      return points;
+    }
+
+    function drawIsland() {
+      ctx.beginPath();
+      ctx.moveTo(islands[0].x, canvas.height);
+      for (const point of islands) ctx.lineTo(point.x, point.y);
+      ctx.lineTo(islands[islands.length - 1].x, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = '#5D4037';
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(islands[0].x, islands[0].y);
+      for (const point of islands) ctx.lineTo(point.x, point.y);
+      ctx.strokeStyle = '#388E3C';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    function getTerrainHeight(x) {
+      x = Math.max(0, Math.min(canvas.width, x));
+      for (let i = 1; i < islands.length; i++) {
+        if (x >= islands[i - 1].x && x <= islands[i].x) {
+          const p1 = islands[i - 1];
+          const p2 = islands[i];
+          const t = (x - p1.x) / (p2.x - p1.x);
+          return p1.y * (1 - t) + p2.y * t;
+        }
+      }
+      return canvas.height;
+    }
+
+    function deformTerrain(xImpact, yImpact, radius = 30) {
+      for (let i = 0; i < islands.length; i++) {
+        const dx = islands[i].x - xImpact;
+        const dy = islands[i].y - yImpact;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < radius) {
+          const factor = (radius - distance) / radius;
+          islands[i].y += factor * radius * 0.7;
+        }
+      }
+    }
+
+    function drawPlayers() {
+      players.forEach((player, index) => {
+        if (!player.alive) return; // No dibujar jugadores eliminados
+        
+        const size = currentPlayer === index + 1 ? 15 : 12;
+        player.y = getTerrainHeight(player.x) - size;
+        
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = player.color;
+        ctx.fill();
+        
+        if (currentPlayer === index + 1) {
+          const angleDeg = parseFloat(anguloInput.value);
+          let angleRad;
+          
+          // Convertimos el ángulo a radianes con el sistema que quieres
+          if (angleDeg === 0) {
+            angleRad = Math.PI/2; // 90° hacia arriba
+          } else if (angleDeg > 0) {
+            angleRad = (90 - angleDeg) * (Math.PI/180); // Derecha
+          } else {
+            angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180); // Izquierda
+          }
+          
+          const length = 30;
+          const endX = player.x + Math.cos(angleRad) * length;
+          const endY = player.y - Math.sin(angleRad) * length;
+          
+          ctx.beginPath();
+          ctx.moveTo(player.x, player.y);
+          ctx.lineTo(endX, endY);
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      });
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      islands = generateIslandAndPlayers();
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Cielo
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#87CEEB');
+      skyGradient.addColorStop(1, '#E0F7FA');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Mar
+      const seaGradient = ctx.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
+      seaGradient.addColorStop(0, '#1E88E5');
+      seaGradient.addColorStop(1, '#0D47A1');
+      ctx.fillStyle = seaGradient;
+      ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+
+      drawIsland();
+      drawPlayers();
+    }
+
+    function fireMissile(fromX, fromY, angleDeg, power, gravity, onHit) {
+      if (!gameActive || isShooting) return; // No disparar si ya hay un disparo en curso
+      
+      isShooting = true; // Marcamos que hay un disparo en curso
+      shootSound.currentTime = 0;
+      shootSound.play();
+      
+      // Convertimos el ángulo al sistema que quieres
+      let angleRad;
+      if (angleDeg === 0) {
+        angleRad = Math.PI/2; // 90° hacia arriba
+      } else if (angleDeg > 0) {
+        angleRad = (90 - angleDeg) * (Math.PI/180); // Derecha
+      } else {
+        angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180); // Izquierda
+      }
+      
+      let vx = Math.cos(angleRad) * power;
+      let vy = -Math.sin(angleRad) * power;
+      let x = fromX;
+      let y = fromY;
+      let t = 0;
+      let trail = [];
+
+      const interval = setInterval(() => {
+        x = fromX + vx * t;
+        y = fromY + vy * t + 0.5 * gravity * t * t;
+        trail.push({x, y});
+        if (trail.length > 20) trail.shift();
+        
+        draw();
+        
+        // Dibujar estela
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Dibujar misil
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'black';
+        ctx.fill();
+
+        // Verificar colisiones
+        const terrainY = getTerrainHeight(x);
+        if (y >= terrainY || x < 0 || x > canvas.width || y > canvas.height) {
+          clearInterval(interval);
+          isShooting = false; // Marcamos que el disparo ha terminado
+          if (y >= terrainY) {
+            explosionSound.currentTime = 0;
+            explosionSound.play();
+            deformTerrain(x, y, 40);
+          }
+          onHit(x, y, false);
+        }
+        
+        // Verificar impacto con jugadores
+        let hitPlayer = false;
+        let hitPlayerNumber = null;
+        for (let i = 0; i < players.length; i++) {
+          if (i !== currentPlayer - 1 && players[i].alive) {
+            const target = players[i];
+            const dx = x - target.x;
+            const dy = y - target.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 20) {
+              clearInterval(interval);
+              isShooting = false; // Marcamos que el disparo ha terminado
+              explosionSound.currentTime = 0;
+              explosionSound.play();
+              hitPlayer = true;
+              hitPlayerNumber = i + 1;
+              players[i].alive = false; // Marcar jugador como eliminado
+              break;
+            }
+          }
+        }
+        
+        t += 0.1;
+        
+        if (hitPlayer) {
+          onHit(x, y, true, hitPlayerNumber);
+        }
+      }, 30);
+    }
+
+    function checkGameEnd() {
+      const alivePlayers = players.filter(p => p.alive);
+      if (alivePlayers.length === 1) {
+        gameActive = false;
+        const winnerNumber = players.findIndex(p => p.alive) + 1;
+        document.getElementById('info').innerText = `¡Jugador ${players[winnerNumber - 1].name} es el ganador!`;
+        canvas.removeEventListener('click', onCanvasClick);
+        restartBtn.style.display = 'block';
+        return true;
+      }
+      return false;
+    }
+
+    function nextTurn(hitPlayer, hitPlayerNumber) {
+      stopBlinking();
+      
+      // Verificar si el juego ha terminado (solo queda un jugador)
+      if (checkGameEnd()) {
+        return;
+      }
+      
+      // Si no ha terminado el juego, pasar al siguiente jugador vivo
+      let nextPlayer = currentPlayer;
+      do {
+        nextPlayer = nextPlayer % 3 + 1;
+      } while (!players[nextPlayer - 1].alive);
+      
+      currentPlayer = nextPlayer;
+      document.getElementById('info').innerText = `Turno de: Jugador ${players[currentPlayer - 1].name}`;
+      startBlinking();
+    }
+
+    function onCanvasClick() {
+      if (!gameActive || isShooting) return; // No hacer nada si hay un disparo en curso
+      
+      const fuerza = parseFloat(fuerzaInput.value);
+      const angulo = parseFloat(anguloInput.value);
+      const gravedad = parseFloat(gravedadInput.value);
+
+      const playerIndex = currentPlayer - 1;
+      const fromX = players[playerIndex].x;
+      const fromY = players[playerIndex].y - 10;
+
+      fireMissile(fromX, fromY, angulo, fuerza / 2, gravedad, (x, y, hitPlayer, hitPlayerNumber) => {
+        draw();
+        if (hitPlayer) {
+          document.getElementById('info').innerText = `¡Jugador ${players[hitPlayerNumber - 1].name} fue eliminado!`;
+        }
+        nextTurn(hitPlayer, hitPlayerNumber);
+      });
+    }
+
+    // Event listeners
+    fuerzaInput.oninput = () => fuerzaVal.textContent = fuerzaInput.value;
+    anguloInput.oninput = () => anguloVal.textContent = anguloInput.value;
+    gravedadInput.oninput = () => gravedadVal.textContent = gravedadInput.value;
+
+    document.getElementById('fullscreenBtn').onclick = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    };
+
+    restartBtn.onclick = () => {
+      playerSelection.style.display = 'block';
+      restartBtn.style.display = 'none';
+    };
+
+    twoPlayersBtn.onclick = () => {
+      playerSelection.style.display = 'none';
+      document.querySelector('.controls').style.display = 'block';
+      resetGame(2);
+    };
+
+    threePlayersBtn.onclick = () => {
+      playerSelection.style.display = 'none';
+      document.querySelector('.controls').style.display = 'block';
+      resetGame(3);
+    };
+
+    // Inicialización
+    window.addEventListener('resize', resizeCanvas);
+    canvas.addEventListener('click', onCanvasClick);
+    
+    // Ocultar elementos del juego al inicio
+    document.getElementById('info').style.display = 'block';
+    document.getElementById('player1-indicator').style.display = 'none';
+    document.getElementById('player2-indicator').style.display = 'none';
+    document.getElementById('player3-indicator').style.display = 'none';
+    document.querySelector('.controls').style.display = 'none';
+    document.getElementById('fullscreenBtn').style.display = 'block';
+    canvas.style.display = 'block';
+  </script>
+</body>
+</html>
