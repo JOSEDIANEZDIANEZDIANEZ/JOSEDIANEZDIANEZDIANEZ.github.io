@@ -25,16 +25,16 @@
       font-weight: bold;
     }
     .controls {
-  position: absolute;
-  top: 30px; /* distancia desde el borde superior */
-  left: 50%; /* centra horizontalmente respecto al viewport */
-  transform: translateX(-50%); /* ajusta el anclaje al centro */
-  background: rgba(255, 255, 255, 0.7);
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 16px;
-  width: 300px;
-}
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 300px;
+    }
     #fullscreenBtn {
       position: absolute;
       top: 10px;
@@ -83,7 +83,6 @@
       display: none;
       z-index: 100;
     }
-    /* Estilo personalizado para el control deslizante de ángulo */
     #angulo {
       width: 100%;
       background: linear-gradient(to right, 
@@ -126,7 +125,6 @@
       margin-top: 5px;
       font-size: 12px;
     }
-    /* Estilos para los botones de selección de jugadores */
     #playerSelection {
       position: absolute;
       top: 50%;
@@ -187,6 +185,11 @@
   <button id="restartBtn">Jugar de nuevo</button>
   <canvas id="gameCanvas"></canvas>
 
+  <!-- Elementos de audio -->
+  <audio id="shootSound" src="disparo.mp3" preload="auto"></audio>
+  <audio id="flightSound" src="caida.mp3" preload="auto"></audio>
+  <audio id="explosionSound" src="explosion.mp3" preload="auto"></audio>
+
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -205,7 +208,7 @@
 
     // Configuración del juego
     let currentPlayer = 1;
-    let isShooting = false; // Variable para controlar si hay un disparo en curso
+    let isShooting = false;
     const players = [
       { x: 0, y: 0, color: 'red', originalColor: 'red', alive: true, name: 'Rojo' },
       { x: 0, y: 0, color: 'blue', originalColor: 'blue', alive: true, name: 'Azul' },
@@ -216,21 +219,15 @@
     let blinkInterval;
     let isBlinkOn = false;
 
-    // Sonidos
-    const shootSound = new Audio('https://actions.google.com/sounds/v1/impacts/metal_hit_impact.ogg');
-    const explosionSound = new Audio('https://actions.google.com/sounds/v1/explosions/explosion.ogg');
-
     function startBlinking() {
-      // Detener cualquier parpadeo anterior
       if (blinkInterval) clearInterval(blinkInterval);
       
-      // Iniciar nuevo parpadeo
       blinkInterval = setInterval(() => {
         isBlinkOn = !isBlinkOn;
         const player = players[currentPlayer - 1];
         player.color = isBlinkOn ? 'white' : player.originalColor;
         draw();
-      }, 500); // Cambia cada 500ms (medio segundo)
+      }, 500);
     }
 
     function stopBlinking() {
@@ -238,7 +235,6 @@
         clearInterval(blinkInterval);
         blinkInterval = null;
       }
-      // Asegurarse de que todos los jugadores tengan su color original
       players.forEach(p => {
         p.color = p.originalColor;
       });
@@ -248,13 +244,11 @@
       stopBlinking();
       currentPlayer = 1;
       gameActive = true;
-      isShooting = false; // Reiniciar el estado de disparo
+      isShooting = false;
       
-      // Restablecer el estado de los jugadores
       players.forEach((p, index) => {
         p.alive = true;
         p.color = p.originalColor;
-        // Si estamos en modo 2 jugadores, eliminar al jugador 3 (verde)
         if (numPlayers === 2 && index === 2) {
           p.alive = false;
         }
@@ -345,7 +339,7 @@
 
     function drawPlayers() {
       players.forEach((player, index) => {
-        if (!player.alive) return; // No dibujar jugadores eliminados
+        if (!player.alive) return;
         
         const size = currentPlayer === index + 1 ? 15 : 12;
         player.y = getTerrainHeight(player.x) - size;
@@ -359,13 +353,12 @@
           const angleDeg = parseFloat(anguloInput.value);
           let angleRad;
           
-          // Convertimos el ángulo a radianes con el sistema que quieres
           if (angleDeg === 0) {
-            angleRad = Math.PI/2; // 90° hacia arriba
+            angleRad = Math.PI/2;
           } else if (angleDeg > 0) {
-            angleRad = (90 - angleDeg) * (Math.PI/180); // Derecha
+            angleRad = (90 - angleDeg) * (Math.PI/180);
           } else {
-            angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180); // Izquierda
+            angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180);
           }
           
           const length = 30;
@@ -392,14 +385,12 @@
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Cielo
       const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
       skyGradient.addColorStop(0, '#87CEEB');
       skyGradient.addColorStop(1, '#E0F7FA');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Mar
       const seaGradient = ctx.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
       seaGradient.addColorStop(0, '#1E88E5');
       seaGradient.addColorStop(1, '#0D47A1');
@@ -411,20 +402,26 @@
     }
 
     function fireMissile(fromX, fromY, angleDeg, power, gravity, onHit) {
-      if (!gameActive || isShooting) return; // No disparar si ya hay un disparo en curso
+      if (!gameActive || isShooting) return;
       
-      isShooting = true; // Marcamos que hay un disparo en curso
+      isShooting = true;
+      const shootSound = document.getElementById('shootSound');
       shootSound.currentTime = 0;
       shootSound.play();
       
-      // Convertimos el ángulo al sistema que quieres
+      const flightSound = document.getElementById('flightSound');
+      setTimeout(() => {
+        flightSound.currentTime = 0;
+        flightSound.play();
+      }, 300);
+      
       let angleRad;
       if (angleDeg === 0) {
-        angleRad = Math.PI/2; // 90° hacia arriba
+        angleRad = Math.PI/2;
       } else if (angleDeg > 0) {
-        angleRad = (90 - angleDeg) * (Math.PI/180); // Derecha
+        angleRad = (90 - angleDeg) * (Math.PI/180);
       } else {
-        angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180); // Izquierda
+        angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180);
       }
       
       let vx = Math.cos(angleRad) * power;
@@ -442,7 +439,6 @@
         
         draw();
         
-        // Dibujar estela
         ctx.beginPath();
         ctx.moveTo(trail[0].x, trail[0].y);
         for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
@@ -450,18 +446,19 @@
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Dibujar misil
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fillStyle = 'black';
         ctx.fill();
 
-        // Verificar colisiones
         const terrainY = getTerrainHeight(x);
         if (y >= terrainY || x < 0 || x > canvas.width || y > canvas.height) {
           clearInterval(interval);
-          isShooting = false; // Marcamos que el disparo ha terminado
+          isShooting = false;
+          flightSound.pause();
+          
           if (y >= terrainY) {
+            const explosionSound = document.getElementById('explosionSound');
             explosionSound.currentTime = 0;
             explosionSound.play();
             deformTerrain(x, y, 40);
@@ -469,7 +466,6 @@
           onHit(x, y, false);
         }
         
-        // Verificar impacto con jugadores
         let hitPlayer = false;
         let hitPlayerNumber = null;
         for (let i = 0; i < players.length; i++) {
@@ -481,12 +477,15 @@
             
             if (distance < 20) {
               clearInterval(interval);
-              isShooting = false; // Marcamos que el disparo ha terminado
+              isShooting = false;
+              flightSound.pause();
+              
+              const explosionSound = document.getElementById('explosionSound');
               explosionSound.currentTime = 0;
               explosionSound.play();
               hitPlayer = true;
               hitPlayerNumber = i + 1;
-              players[i].alive = false; // Marcar jugador como eliminado
+              players[i].alive = false;
               break;
             }
           }
@@ -507,7 +506,7 @@
         const winnerNumber = players.findIndex(p => p.alive) + 1;
         document.getElementById('info').innerText = `¡Jugador ${players[winnerNumber - 1].name} es el ganador!`;
         canvas.removeEventListener('click', onCanvasClick);
-         document.querySelector('.controls').style.display = 'none';
+        document.querySelector('.controls').style.display = 'none';
         restartBtn.style.display = 'block';
         return true;
       }
@@ -517,26 +516,24 @@
     function nextTurn(hitPlayer, hitPlayerNumber) {
       stopBlinking();
       
-      // Verificar si el juego ha terminado (solo queda un jugador)
       if (checkGameEnd()) {
         return;
       }
       
-      // Si no ha terminado el juego, pasar al siguiente jugador vivo
       let nextPlayer = currentPlayer;
       do {
         nextPlayer = nextPlayer % 3 + 1;
       } while (!players[nextPlayer - 1].alive);
       
       currentPlayer = nextPlayer;
-       document.querySelector('.controls').style.display = 'block';
+      document.querySelector('.controls').style.display = 'block';
       document.getElementById('info').innerText = `Turno de: Jugador ${players[currentPlayer - 1].name}`;
       startBlinking();
     }
 
     function onCanvasClick() {
-    document.querySelector('.controls').style.display = 'none';
-      if (!gameActive || isShooting) return; // No hacer nada si hay un disparo en curso
+      document.querySelector('.controls').style.display = 'none';
+      if (!gameActive || isShooting) return;
       
       const fuerza = parseFloat(fuerzaInput.value);
       const angulo = parseFloat(anguloInput.value);
@@ -589,7 +586,6 @@
     window.addEventListener('resize', resizeCanvas);
     canvas.addEventListener('click', onCanvasClick);
     
-    // Ocultar elementos del juego al inicio
     document.getElementById('info').style.display = 'block';
     document.getElementById('player1-indicator').style.display = 'none';
     document.getElementById('player2-indicator').style.display = 'none';
@@ -600,4 +596,3 @@
   </script>
 </body>
 </html>
-   
