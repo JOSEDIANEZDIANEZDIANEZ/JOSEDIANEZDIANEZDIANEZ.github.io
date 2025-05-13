@@ -25,15 +25,16 @@
       font-weight: bold;
     }
     .controls {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.7);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 16px;
-      width: 300px;
-    }
+  position: absolute;
+  top: 30px; /* distancia desde el borde superior */
+  left: 50%; /* centra horizontalmente respecto al viewport */
+  transform: translateX(-50%); /* ajusta el anclaje al centro */
+  background: rgba(255, 255, 255, 0.7);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+  width: 300px;
+}
     #fullscreenBtn {
       position: absolute;
       top: 10px;
@@ -506,6 +507,7 @@
         const winnerNumber = players.findIndex(p => p.alive) + 1;
         document.getElementById('info').innerText = `¡Jugador ${players[winnerNumber - 1].name} es el ganador!`;
         canvas.removeEventListener('click', onCanvasClick);
+         document.querySelector('.controls').style.display = 'none';
         restartBtn.style.display = 'block';
         return true;
       }
@@ -527,11 +529,13 @@
       } while (!players[nextPlayer - 1].alive);
       
       currentPlayer = nextPlayer;
+       document.querySelector('.controls').style.display = 'block';
       document.getElementById('info').innerText = `Turno de: Jugador ${players[currentPlayer - 1].name}`;
       startBlinking();
     }
 
     function onCanvasClick() {
+    document.querySelector('.controls').style.display = 'none';
       if (!gameActive || isShooting) return; // No hacer nada si hay un disparo en curso
       
       const fuerza = parseFloat(fuerzaInput.value);
@@ -596,3 +600,4 @@
   </script>
 </body>
 </html>
+   
