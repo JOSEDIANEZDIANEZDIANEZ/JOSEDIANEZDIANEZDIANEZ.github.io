@@ -1,177 +1,226 @@
 <!DOCTYPE html>
+<!-- Declaración del tipo de documento HTML5 -->
 <html lang="es">
+<!-- Inicio del documento HTML con idioma español -->
 <head>
+  <!-- Sección de metadatos y recursos del documento -->
   <meta charset="UTF-8">
+  <!-- Especifica la codificación de caracteres como UTF-8 -->
   <title>Batalla de Islas - Fuerza 140</title>
+  <!-- Título de la página que aparece en la pestaña del navegador -->
+  
   <style>
+    /* Estilos CSS para la página */
+    
+    /* Estilos generales para html y body */
     html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      height: 100%;
-      font-family: sans-serif;
-      text-align: center;
-      background: #87CEEB;
+      margin: 0;           /* Elimina márgenes por defecto */
+      padding: 0;          /* Elimina padding por defecto */
+      overflow: hidden;    /* Oculta scrollbars */
+      height: 100%;        /* Ocupa toda la altura de la ventana */
+      font-family: sans-serif; /* Fuente sin serifa */
+      text-align: center;  /* Centra el texto */
+      background: #87CEEB; /* Color de fondo azul cielo */
     }
+    
+    /* Estilos para el canvas (lienzo de juego) */
     canvas {
-      display: block;
+      display: block;     /* Muestra como bloque (elimina espacio extra) */
     }
+    
+    /* Estilos para el panel de información */
     #info {
-      position: center;
-      font-size: 20px;
-      background: rgba(255,255,255,0.7);
-      padding: 5px 10px;
-      border-radius: 8px;
-      font-weight: bold;
+      position: center;    /* Posición centrada (no es estándar, mejor usar otros métodos) */
+      font-size: 20px;     /* Tamaño de fuente */
+      background: rgba(255,255,255,0.7); /* Fondo blanco semitransparente */
+      padding: 5px 10px;   /* Espaciado interno */
+      border-radius: 8px;  /* Bordes redondeados */
+      font-weight: bold;   /* Texto en negrita */
     }
-    .controls {
-      position: absolute;
-      top: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.7);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 16px;
-      width: 300px;
+    
+    /* Estilos para el panel de controles */
+    .controles {
+      position: absolute;  /* Posición absoluta para superponer */
+      top: 30px;          /* Distancia desde la parte superior */
+      left: 50%;          /* Centrado horizontal */
+      transform: translateX(-50%); /* Ajuste fino para centrado */
+      background: rgba(255, 255, 255, 0.7); /* Fondo semitransparente */
+      padding: 10px;      /* Espaciado interno */
+      border-radius: 8px; /* Bordes redondeados */
+      font-size: 16px;    /* Tamaño de fuente */
+      width: 300px;       /* Ancho fijo */
     }
-    #fullscreenBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 8px 12px;
-      font-size: 16px;
-      background: #333;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    
+    /* Estilos para el botón de pantalla completa */
+    #botonPantallaCompleta {
+      position: absolute;  /* Posición absoluta */
+      top: 10px;          /* Distancia desde arriba */
+      right: 10px;        /* Distancia desde la derecha */
+      padding: 8px 12px;  /* Espaciado interno */
+      font-size: 16px;    /* Tamaño de fuente */
+      background: #333;   /* Color de fondo oscuro */
+      color: white;      /* Color de texto blanco */
+      border: none;      /* Sin borde */
+      border-radius: 6px; /* Bordes redondeados */
+      cursor: pointer;   /* Cursor tipo puntero */
     }
-    .player-indicator {
-      position: absolute;
-      top: 50px;
-      font-size: 18px;
-      background: rgba(255,255,255,0.7);
-      padding: 5px 10px;
-      border-radius: 8px;
+    
+    /* Estilos para los indicadores de jugador */
+    .indicador-jugador {
+      position: absolute;  /* Posición absoluta */
+      top: 50px;          /* Distancia desde arriba */
+      font-size: 18px;    /* Tamaño de fuente */
+      background: rgba(255,255,255,0.7); /* Fondo semitransparente */
+      padding: 5px 10px;  /* Espaciado interno */
+      border-radius: 8px;  /* Bordes redondeados */
     }
-    #player1-indicator {
-      left: 10px;
-      color: red;
+    
+    /* Posicionamiento específico para cada jugador */
+    #indicador-jugador1 {
+      left: 10px;         /* Distancia desde la izquierda */
+      color: red;         /* Color de texto rojo */
     }
-    #player2-indicator {
-      right: 10px;
-      color: blue;
+    #indicador-jugador2 {
+      right: 10px;        /* Distancia desde la derecha */
+      color: blue;        /* Color de texto azul */
     }
-    #player3-indicator {
-      left: 50%;
-      transform: translateX(-50%);
-      color: green;
+    #indicador-jugador3 {
+      left: 50%;          /* Centrado horizontal */
+      transform: translateX(-50%); /* Ajuste fino para centrado */
+      color: green;      /* Color de texto verde */
     }
-    #restartBtn {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 15px 30px;
-      font-size: 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      display: none;
-      z-index: 100;
+    
+    /* Estilos para el botón de reinicio */
+    #botonReiniciar {
+      position: absolute;  /* Posición absoluta */
+      top: 50%;           /* Centrado vertical */
+      left: 50%;          /* Centrado horizontal */
+      transform: translate(-50%, -50%); /* Ajuste fino para centrado */
+      padding: 15px 30px; /* Espaciado interno */
+      font-size: 20px;    /* Tamaño de fuente */
+      background: #4CAF50; /* Color de fondo verde */
+      color: white;      /* Color de texto blanco */
+      border: none;      /* Sin borde */
+      border-radius: 8px; /* Bordes redondeados */
+      cursor: pointer;   /* Cursor tipo puntero */
+      display: none;     /* Inicialmente oculto */
+      z-index: 100;      /* Capa superior */
     }
+    
+    /* Estilos para el control deslizante de ángulo */
     #angulo {
-      width: 100%;
+      width: 100%;       /* Ancho completo */
       background: linear-gradient(to right, 
-        #0000ff 0%, 
+        #0000ff 0%,     /* Gradiente de colores */
         #00ff00 50%, 
         #ff0000 100%);
-      height: 10px;
-      border-radius: 5px;
-      outline: none;
+      height: 10px;      /* Altura */
+      border-radius: 5px; /* Bordes redondeados */
+      outline: none;     /* Elimina contorno al enfocar */
     }
+    
+    /* Estilos para el "thumb" del control deslizante en WebKit */
     #angulo::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #333;
-      cursor: pointer;
+      -webkit-appearance: none; /* Elimina apariencia por defecto */
+      appearance: none;        /* Elimina apariencia por defecto */
+      width: 20px;            /* Ancho */
+      height: 20px;           /* Alto */
+      border-radius: 50%;     /* Forma circular */
+      background: #333;       /* Color de fondo */
+      cursor: pointer;       /* Cursor tipo puntero */
     }
+    
+    /* Estilos para el "thumb" del control deslizante en Firefox */
     #angulo::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #333;
-      cursor: pointer;
+      width: 20px;           /* Ancho */
+      height: 20px;          /* Alto */
+      border-radius: 50%;    /* Forma circular */
+      background: #333;      /* Color de fondo */
+      cursor: pointer;      /* Cursor tipo puntero */
     }
-    .angle-center {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 2px;
-      height: 15px;
-      background: #000;
-      top: -2px;
+    
+    /* Estilos para la línea central del control de ángulo */
+    .centro-angulo {
+      position: absolute;    /* Posición absoluta */
+      left: 50%;            /* Centrado horizontal */
+      transform: translateX(-50%); /* Ajuste fino para centrado */
+      width: 2px;           /* Ancho de línea */
+      height: 15px;         /* Altura de línea */
+      background: #000;     /* Color negro */
+      top: -2px;            /* Posición vertical */
     }
-    .angle-marks {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 5px;
-      font-size: 12px;
+    
+    /* Estilos para las marcas de ángulo */
+    .marcas-angulo {
+      display: flex;        /* Diseño flexible */
+      justify-content: space-between; /* Espaciado uniforme */
+      width: 100%;         /* Ancho completo */
+      margin-top: 5px;     /* Margen superior */
+      font-size: 12px;     /* Tamaño de fuente pequeño */
     }
-    #playerSelection {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 100;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    
+    /* Estilos para el panel de selección de jugadores */
+    #seleccionJugadores {
+      position: absolute;  /* Posición absoluta */
+      top: 50%;           /* Centrado vertical */
+      left: 50%;          /* Centrado horizontal */
+      transform: translate(-50%, -50%); /* Ajuste fino para centrado */
+      z-index: 100;       /* Capa superior */
+      background: rgba(255, 255, 255, 0.9); /* Fondo semitransparente */
+      padding: 30px;      /* Espaciado interno */
+      border-radius: 15px; /* Bordes redondeados */
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); /* Sombra */
     }
-    .playerOption {
-      padding: 15px 30px;
-      margin: 10px;
-      font-size: 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
+    
+    /* Estilos para los botones de selección de jugadores */
+    .opcionJugador {
+      padding: 15px 30px; /* Espaciado interno */
+      margin: 10px;       /* Margen externo */
+      font-size: 20px;    /* Tamaño de fuente */
+      background: #4CAF50; /* Color de fondo verde */
+      color: white;      /* Color de texto blanco */
+      border: none;      /* Sin borde */
+      border-radius: 8px; /* Bordes redondeados */
+      cursor: pointer;   /* Cursor tipo puntero */
+      transition: background 0.3s; /* Transición suave para hover */
     }
-    .playerOption:hover {
-      background: #45a049;
+    
+    /* Efecto hover para los botones de selección */
+    .opcionJugador:hover {
+      background: #45a049; /* Color de fondo más oscuro al pasar el ratón */
     }
   </style>
 </head>
+<!-- Fin de la sección head -->
+
 <body>
-  <div id="playerSelection">
+  <!-- Inicio del cuerpo del documento -->
+  
+  <!-- Panel de selección de número de jugadores -->
+  <div id="seleccionJugadores">
     <h2>Selecciona número de jugadores</h2>
-    <button class="playerOption" id="twoPlayers">2 Jugadores</button>
-    <button class="playerOption" id="threePlayers">3 Jugadores</button>
+    <!-- Botones para seleccionar 2 o 3 jugadores -->
+    <button class="opcionJugador" id="dosJugadores">2 Jugadores</button>
+    <button class="opcionJugador" id="tresJugadores">3 Jugadores</button>
   </div>
 
+  <!-- Elementos de información y controles del juego -->
   <div id="info">¡Preparados!</div>
-  <div id="player1-indicator" class="player-indicator">Jugador Rojo</div>
-  <div id="player2-indicator" class="player-indicator">Jugador Azul</div>
-  <div id="player3-indicator" class="player-indicator">Jugador Verde</div>
+  <div id="indicador-jugador1" class="indicador-jugador">Jugador Rojo</div>
+  <div id="indicador-jugador2" class="indicador-jugador">Jugador Azul</div>
+  <div id="indicador-jugador3" class="indicador-jugador">Jugador Verde</div>
   
-  <div class="controls">
-    Fuerza: <input type="range" id="fuerza" min="10" max="140" value="50"> <span id="fuerzaVal">50</span><br>
+  <!-- Panel de controles del juego -->
+  <div class="controles">
+    <!-- Control deslizante para la fuerza -->
+    Fuerza: <input type="range" id="fuerza" min="10" max="140" value="50"> <span id="valorFuerza">50</span><br>
     <div style="position: relative;">
+      <!-- Control deslizante para el ángulo con marcas -->
       Ángulo (°): 
       <input type="range" id="angulo" min="-90" max="90" value="0">
-      <div class="angle-center"></div>
-      <span id="anguloVal">0</span>
-      <div class="angle-marks">
+      <div class="centro-angulo"></div>
+      <span id="valorAngulo">0</span>
+      <div class="marcas-angulo">
         <span>-90</span>
         <span>-45</span>
         <span>0</span>
@@ -179,385 +228,466 @@
         <span>90</span>
       </div>
     </div>
-    Gravedad: <input type="range" id="gravedad" min="1" max="20" value="10"> <span id="gravedadVal">10</span>
+    <!-- Control deslizante para la gravedad -->
+    Gravedad: <input type="range" id="gravedad" min="1" max="20" value="10"> <span id="valorGravedad">10</span>
   </div>
-  <button id="fullscreenBtn">Pantalla Completa</button>
-  <button id="restartBtn">Jugar de nuevo</button>
-  <canvas id="gameCanvas"></canvas>
+  
+  <!-- Botón de pantalla completa -->
+  <button id="botonPantallaCompleta">Pantalla Completa</button>
+  <!-- Botón de reinicio (inicialmente oculto) -->
+  <button id="botonReiniciar">Jugar de nuevo</button>
+  <!-- Lienzo donde se dibuja el juego -->
+  <canvas id="lienzoJuego"></canvas>
 
-  <!-- Elementos de audio -->
-  <audio id="shootSound" src="disparo.MP3" preload="auto"></audio>
-  <audio id="flightSound" src="caida.MP3" preload="auto"></audio>
-  <audio id="explosionSound" src="explosion.MP3" preload="auto"></audio>
+  <!-- Elementos de audio para efectos de sonido -->
+  <audio id="sonidoDisparo" src="disparo.mp3" preload="auto"></audio>
+  <audio id="sonidoVuelo" src="caida.mp3" preload="auto"></audio>
+  <audio id="sonidoExplosion" src="explosion.mp3" preload="auto"></audio>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const restartBtn = document.getElementById('restartBtn');
-    const playerSelection = document.getElementById('playerSelection');
-    const twoPlayersBtn = document.getElementById('twoPlayers');
-    const threePlayersBtn = document.getElementById('threePlayers');
+    // Obtener referencias a elementos del DOM
+    const lienzo = document.getElementById('lienzoJuego');
+    const contexto = lienzo.getContext('2d');
+    const botonReiniciar = document.getElementById('botonReiniciar');
+    const seleccionJugadores = document.getElementById('seleccionJugadores');
+    const botonDosJugadores = document.getElementById('dosJugadores');
+    const botonTresJugadores = document.getElementById('tresJugadores');
 
-    const fuerzaInput = document.getElementById('fuerza');
-    const anguloInput = document.getElementById('angulo');
-    const gravedadInput = document.getElementById('gravedad');
+    // Controles de entrada
+    const entradaFuerza = document.getElementById('fuerza');
+    const entradaAngulo = document.getElementById('angulo');
+    const entradaGravedad = document.getElementById('gravedad');
 
-    const fuerzaVal = document.getElementById('fuerzaVal');
-    const anguloVal = document.getElementById('anguloVal');
-    const gravedadVal = document.getElementById('gravedadVal');
+    // Elementos para mostrar valores
+    const valorFuerza = document.getElementById('valorFuerza');
+    const valorAngulo = document.getElementById('valorAngulo');
+    const valorGravedad = document.getElementById('valorGravedad');
 
-    // Configuración del juego
-    let currentPlayer = 1;
-    let isShooting = false;
-    const players = [
-      { x: 0, y: 0, color: 'red', originalColor: 'red', alive: true, name: 'Rojo' },
-      { x: 0, y: 0, color: 'blue', originalColor: 'blue', alive: true, name: 'Azul' },
-      { x: 0, y: 0, color: 'green', originalColor: 'green', alive: true, name: 'Verde' }
+    // Variables de estado del juego
+    let jugadorActual = 1;       // Jugador cuyo turno es actual (1, 2 o 3)
+    let disparando = false;      // Indica si hay un misil en vuelo
+    const jugadores = [          // Array con información de los jugadores
+      { x: 0, y: 0, color: 'red', colorOriginal: 'red', vivo: true, nombre: 'Rojo' },
+      { x: 0, y: 0, color: 'blue', colorOriginal: 'blue', vivo: true, nombre: 'Azul' },
+      { x: 0, y: 0, color: 'green', colorOriginal: 'green', vivo: true, nombre: 'Verde' }
     ];
-    let islands = [];
-    let gameActive = true;
-    let blinkInterval;
-    let isBlinkOn = false;
+    let islas = [];              // Array para almacenar puntos del terreno
+    let juegoActivo = true;      // Indica si el juego está en curso
+    let intervaloParpadeo;       // Referencia al intervalo de parpadeo
+    let parpadeoActivo = false;  // Estado del parpadeo del jugador actual
 
-    function startBlinking() {
-      if (blinkInterval) clearInterval(blinkInterval);
+    // Función para iniciar el efecto de parpadeo del jugador actual
+    function iniciarParpadeo() {
+      // Limpiar intervalo existente si lo hay
+      if (intervaloParpadeo) clearInterval(intervaloParpadeo);
       
-      blinkInterval = setInterval(() => {
-        isBlinkOn = !isBlinkOn;
-        const player = players[currentPlayer - 1];
-        player.color = isBlinkOn ? 'white' : player.originalColor;
-        draw();
-      }, 500);
+      // Configurar nuevo intervalo para alternar el color
+      intervaloParpadeo = setInterval(() => {
+        parpadeoActivo = !parpadeoActivo;  // Alternar estado
+        const jugador = jugadores[jugadorActual - 1];
+        // Alternar entre color blanco y color original
+        jugador.color = parpadeoActivo ? 'white' : jugador.colorOriginal;
+        dibujar();  // Redibujar el lienzo
+      }, 500);  // Intervalo de 500ms (medio segundo)
     }
 
-    function stopBlinking() {
-      if (blinkInterval) {
-        clearInterval(blinkInterval);
-        blinkInterval = null;
+    // Función para detener el efecto de parpadeo
+    function detenerParpadeo() {
+      // Limpiar el intervalo si existe
+      if (intervaloParpadeo) {
+        clearInterval(intervaloParpadeo);
+        intervaloParpadeo = null;
       }
-      players.forEach(p => {
-        p.color = p.originalColor;
+      // Restaurar colores originales a todos los jugadores
+      jugadores.forEach(j => {
+        j.color = j.colorOriginal;
       });
     }
 
-    function resetGame(numPlayers = 3) {
-      stopBlinking();
-      currentPlayer = 1;
-      gameActive = true;
-      isShooting = false;
+    // Función para reiniciar el juego con un número específico de jugadores
+    function reiniciarJuego(numJugadores = 3) {
+      detenerParpadeo();  // Detener cualquier parpadeo en curso
+      jugadorActual = 1;  // Empezar con el jugador 1
+      juegoActivo = true; // Activar el juego
+      disparando = false; // No hay disparos en curso
       
-      players.forEach((p, index) => {
-        p.alive = true;
-        p.color = p.originalColor;
-        if (numPlayers === 2 && index === 2) {
-          p.alive = false;
+      // Reiniciar estado de los jugadores
+      jugadores.forEach((j, indice) => {
+        j.vivo = true;  // Todos vivos inicialmente
+        j.color = j.colorOriginal;  // Colores originales
+        // Si son 2 jugadores, desactivar el tercero
+        if (numJugadores === 2 && indice === 2) {
+          j.vivo = false;
         }
       });
       
-      document.getElementById('info').innerText = `¡Comienza Jugador ${players[currentPlayer - 1].name}!`;
-      resizeCanvas();
-      canvas.addEventListener('click', onCanvasClick);
-      startBlinking();
+      // Actualizar mensaje de información
+      document.getElementById('info').innerText = `¡Comienza Jugador ${jugadores[jugadorActual - 1].nombre}!`;
+      redimensionarLienzo();  // Ajustar tamaño del lienzo
+      // Añadir listener para clicks en el lienzo
+      lienzo.addEventListener('click', alHacerClicEnLienzo);
+      iniciarParpadeo();  // Iniciar parpadeo del jugador actual
     }
 
-    function generateIslandAndPlayers() {
-      const points = [];
-      const segments = 100;
-      const baseHeight = canvas.height * 0.7;
-      const heightVariation = canvas.height * 0.15;
+    // Función para generar el terreno y posicionar a los jugadores
+    function generarIslasYJugadores() {
+      const puntos = [];  // Array para almacenar puntos del terreno
+      const segmentos = 100;  // Número de segmentos del terreno
+      const alturaBase = lienzo.height * 0.7;  // Altura base del terreno
+      const variacionAltura = lienzo.height * 0.15;  // Variación de altura
       
-      for (let i = 0; i <= segments; i++) {
-        const x = (canvas.width / segments) * i;
-        const noise = Math.sin(i * 0.2) * 0.5 + Math.sin(i * 0.5) * 0.3;
-        const y = baseHeight - (noise * heightVariation);
-        points.push({ x, y });
+      // Generar puntos del terreno con variación sinusoidal
+      for (let i = 0; i <= segmentos; i++) {
+        const x = (lienzo.width / segmentos) * i;  // Posición x uniforme
+        // Generar ruido para variar la altura
+        const ruido = Math.sin(i * 0.2) * 0.5 + Math.sin(i * 0.5) * 0.3;
+        const y = alturaBase - (ruido * variacionAltura);  // Calcular altura y
+        puntos.push({ x, y });  // Añadir punto al array
       }
       
-      const margin = canvas.width * 0.1;
-      const segmentWidth = canvas.width / 3;
+      const margen = lienzo.width * 0.1;  // Margen para posicionar jugadores
+      const anchoSegmento = lienzo.width / 3;  // Ancho de cada segmento
       
-      const player1X = margin + Math.random() * (segmentWidth - margin * 2);
-      const player2X = segmentWidth * 2 + margin + Math.random() * (segmentWidth - margin * 2);
-      const player3X = segmentWidth + margin + Math.random() * (segmentWidth - margin * 2);
+      // Calcular posiciones x aleatorias para cada jugador en su segmento
+      const jugador1X = margen + Math.random() * (anchoSegmento - margen * 2);
+      const jugador2X = anchoSegmento * 2 + margen + Math.random() * (anchoSegmento - margen * 2);
+      const jugador3X = anchoSegmento + margen + Math.random() * (anchoSegmento - margen * 2);
       
-      const flatWidth = canvas.width * 0.08;
+      const anchoPlano = lienzo.width * 0.08;  // Ancho de la zona plana para jugadores
       
-      points.forEach(point => {
-        if (Math.abs(point.x - player1X) < flatWidth/2) point.y = baseHeight - 20;
-        if (Math.abs(point.x - player2X) < flatWidth/2) point.y = baseHeight - 20;
-        if (Math.abs(point.x - player3X) < flatWidth/2) point.y = baseHeight - 20;
+      // Aplanar el terreno donde están los jugadores
+      puntos.forEach(punto => {
+        if (Math.abs(punto.x - jugador1X) < anchoPlano/2) punto.y = alturaBase - 20;
+        if (Math.abs(punto.x - jugador2X) < anchoPlano/2) punto.y = alturaBase - 20;
+        if (Math.abs(punto.x - jugador3X) < anchoPlano/2) punto.y = alturaBase - 20;
       });
       
-      players[0].x = player1X;
-      players[1].x = player2X;
-      players[2].x = player3X;
+      // Asignar posiciones a los jugadores
+      jugadores[0].x = jugador1X;
+      jugadores[1].x = jugador2X;
+      jugadores[2].x = jugador3X;
       
-      return points;
+      return puntos;  // Devolver array de puntos del terreno
     }
 
-    function drawIsland() {
-      ctx.beginPath();
-      ctx.moveTo(islands[0].x, canvas.height);
-      for (const point of islands) ctx.lineTo(point.x, point.y);
-      ctx.lineTo(islands[islands.length - 1].x, canvas.height);
-      ctx.closePath();
-      ctx.fillStyle = '#5D4037';
-      ctx.fill();
+    // Función para dibujar las islas (terreno)
+    function dibujarIslas() {
+      contexto.beginPath();  // Iniciar trazado
+      contexto.moveTo(islas[0].x, lienzo.height);  // Mover al punto inicial
+      // Dibujar línea a través de todos los puntos del terreno
+      for (const punto of islas) contexto.lineTo(punto.x, punto.y);
+      contexto.lineTo(islas[islas.length - 1].x, lienzo.height);  // Cerrar el trazado
+      contexto.closePath();  // Cerrar el trazado
+      contexto.fillStyle = '#5D4037';  // Color marrón para el terreno
+      contexto.fill();  // Rellenar el trazado
       
-      ctx.beginPath();
-      ctx.moveTo(islands[0].x, islands[0].y);
-      for (const point of islands) ctx.lineTo(point.x, point.y);
-      ctx.strokeStyle = '#388E3C';
-      ctx.lineWidth = 3;
-      ctx.stroke();
+      // Dibujar borde superior del terreno
+      contexto.beginPath();
+      contexto.moveTo(islas[0].x, islas[0].y);
+      for (const punto of islas) contexto.lineTo(punto.x, punto.y);
+      contexto.strokeStyle = '#388E3C';  // Color verde para el borde
+      contexto.lineWidth = 3;  // Grosor de línea
+      contexto.stroke();  // Dibujar la línea
     }
 
-    function getTerrainHeight(x) {
-      x = Math.max(0, Math.min(canvas.width, x));
-      for (let i = 1; i < islands.length; i++) {
-        if (x >= islands[i - 1].x && x <= islands[i].x) {
-          const p1 = islands[i - 1];
-          const p2 = islands[i];
-          const t = (x - p1.x) / (p2.x - p1.x);
-          return p1.y * (1 - t) + p2.y * t;
+    // Función para obtener la altura del terreno en una posición x dada
+    function obtenerAlturaTerreno(x) {
+      // Asegurar que x esté dentro de los límites del lienzo
+      x = Math.max(0, Math.min(lienzo.width, x));
+      // Buscar el segmento del terreno que contiene la posición x
+      for (let i = 1; i < islas.length; i++) {
+        if (x >= islas[i - 1].x && x <= islas[i].x) {
+          // Interpolación lineal entre los dos puntos del segmento
+          const p1 = islas[i - 1];
+          const p2 = islas[i];
+          const t = (x - p1.x) / (p2.x - p1.x);  // Factor de interpolación
+          return p1.y * (1 - t) + p2.y * t;  // Altura interpolada
         }
       }
-      return canvas.height;
+      return lienzo.height;  // Si no se encuentra, devolver altura del lienzo
     }
 
-    function deformTerrain(xImpact, yImpact, radius = 30) {
-      for (let i = 0; i < islands.length; i++) {
-        const dx = islands[i].x - xImpact;
-        const dy = islands[i].y - yImpact;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < radius) {
-          const factor = (radius - distance) / radius;
-          islands[i].y += factor * radius * 0.7;
+    // Función para deformar el terreno alrededor de un punto de impacto
+    function deformarTerreno(xImpacto, yImpacto, radio = 30) {
+      for (let i = 0; i < islas.length; i++) {
+        // Calcular distancia desde el punto de impacto
+        const dx = islas[i].x - xImpacto;
+        const dy = islas[i].y - yImpacto;
+        const distancia = Math.sqrt(dx * dx + dy * dy);
+        // Si está dentro del radio de impacto
+        if (distancia < radio) {
+          // Calcular factor de deformación (1 en centro, 0 en borde)
+          const factor = (radio - distancia) / radio;
+          // Aplicar deformación al punto del terreno
+          islas[i].y += factor * radio * 0.7;
         }
       }
     }
 
-    function drawPlayers() {
-      players.forEach((player, index) => {
-        if (!player.alive) return;
+    // Función para dibujar los jugadores en el lienzo
+    function dibujarJugadores() {
+      jugadores.forEach((jugador, indice) => {
+        if (!jugador.vivo) return;  // Saltar jugadores eliminados
         
-        const size = currentPlayer === index + 1 ? 15 : 12;
-        player.y = getTerrainHeight(player.x) - size;
+        // Tamaño del jugador (mayor para el jugador actual)
+        const tamaño = jugadorActual === indice + 1 ? 15 : 12;
+        // Posicionar jugador sobre el terreno
+        jugador.y = obtenerAlturaTerreno(jugador.x) - tamaño;
         
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = player.color;
-        ctx.fill();
+        // Dibujar círculo del jugador
+        contexto.beginPath();
+        contexto.arc(jugador.x, jugador.y, tamaño, 0, Math.PI * 2);
+        contexto.fillStyle = jugador.color;
+        contexto.fill();
         
-        if (currentPlayer === index + 1) {
-          const angleDeg = parseFloat(anguloInput.value);
-          let angleRad;
+        // Dibujar línea de dirección para el jugador actual
+        if (jugadorActual === indice + 1) {
+          const anguloGrados = parseFloat(entradaAngulo.value);
+          let anguloRadianes;
           
-          if (angleDeg === 0) {
-            angleRad = Math.PI/2;
-          } else if (angleDeg > 0) {
-            angleRad = (90 - angleDeg) * (Math.PI/180);
+          // Convertir ángulo de grados a radianes
+          if (anguloGrados === 0) {
+            anguloRadianes = Math.PI/2;  // 90 grados hacia arriba
+          } else if (anguloGrados > 0) {
+            anguloRadianes = (90 - anguloGrados) * (Math.PI/180);  // Ángulo positivo
           } else {
-            angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180);
+            anguloRadianes = (90 + Math.abs(anguloGrados)) * (Math.PI/180);  // Ángulo negativo
           }
           
-          const length = 30;
-          const endX = player.x + Math.cos(angleRad) * length;
-          const endY = player.y - Math.sin(angleRad) * length;
+          const longitud = 30;  // Longitud de la línea de dirección
+          // Calcular punto final de la línea
+          const finX = jugador.x + Math.cos(anguloRadianes) * longitud;
+          const finY = jugador.y - Math.sin(anguloRadianes) * longitud;
           
-          ctx.beginPath();
-          ctx.moveTo(player.x, player.y);
-          ctx.lineTo(endX, endY);
-          ctx.strokeStyle = 'black';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+          // Dibujar la línea
+          contexto.beginPath();
+          contexto.moveTo(jugador.x, jugador.y);
+          contexto.lineTo(finX, finY);
+          contexto.strokeStyle = 'black';
+          contexto.lineWidth = 2;
+          contexto.stroke();
         }
       });
     }
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      islands = generateIslandAndPlayers();
-      draw();
+    // Función para redimensionar el lienzo al tamaño de la ventana
+    function redimensionarLienzo() {
+      lienzo.width = window.innerWidth;   // Ancho de la ventana
+      lienzo.height = window.innerHeight; // Alto de la ventana
+      // Regenerar islas y jugadores con el nuevo tamaño
+      islas = generarIslasYJugadores();
+      dibujar();  // Redibujar todo
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Función principal de dibujo del juego
+    function dibujar() {
+      // Limpiar el lienzo
+      contexto.clearRect(0, 0, lienzo.width, lienzo.height);
 
-      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGradient.addColorStop(0, '#87CEEB');
-      skyGradient.addColorStop(1, '#E0F7FA');
-      ctx.fillStyle = skyGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Crear gradiente para el cielo
+      const gradienteCielo = contexto.createLinearGradient(0, 0, 0, lienzo.height);
+      gradienteCielo.addColorStop(0, '#87CEEB');  // Azul claro arriba
+      gradienteCielo.addColorStop(1, '#E0F7FA');  // Azul muy claro abajo
+      contexto.fillStyle = gradienteCielo;
+      contexto.fillRect(0, 0, lienzo.width, lienzo.height);
 
-      const seaGradient = ctx.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
-      seaGradient.addColorStop(0, '#1E88E5');
-      seaGradient.addColorStop(1, '#0D47A1');
-      ctx.fillStyle = seaGradient;
-      ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+      // Crear gradiente para el mar
+      const gradienteMar = contexto.createLinearGradient(0, lienzo.height - 100, 0, lienzo.height);
+      gradienteMar.addColorStop(0, '#1E88E5');  // Azul medio
+      gradienteMar.addColorStop(1, '#0D47A1');  // Azul oscuro
+      contexto.fillStyle = gradienteMar;
+      contexto.fillRect(0, lienzo.height - 100, lienzo.width, 100);
 
-      drawIsland();
-      drawPlayers();
+      // Dibujar elementos del juego
+      dibujarIslas();
+      dibujarJugadores();
     }
 
-    function fireMissile(fromX, fromY, angleDeg, power, gravity, onHit) {
-      if (!gameActive || isShooting) return;
+    // Función para disparar un misil
+    function dispararMisil(desdeX, desdeY, anguloGrados, potencia, gravedad, alImpactar) {
+      if (!juegoActivo || disparando) return;  // No disparar si el juego no está activo o ya hay un misil
       
-      isShooting = true;
-      const shootSound = document.getElementById('shootSound');
-      shootSound.currentTime = 0;
-      shootSound.play();
+      disparando = true;  // Marcar que hay un misil en vuelo
+      // Reproducir sonido de disparo
+      const sonidoDisparo = document.getElementById('sonidoDisparo');
+      sonidoDisparo.currentTime = 0;  // Rebobinar sonido
+      sonidoDisparo.play();
       
-      const flightSound = document.getElementById('flightSound');
+      // Reproducir sonido de vuelo con retardo
+      const sonidoVuelo = document.getElementById('sonidoVuelo');
       setTimeout(() => {
-        flightSound.currentTime = 0;
-        flightSound.play();
+        sonidoVuelo.currentTime = 0;
+        sonidoVuelo.play();
       }, 300);
       
-      let angleRad;
-      if (angleDeg === 0) {
-        angleRad = Math.PI/2;
-      } else if (angleDeg > 0) {
-        angleRad = (90 - angleDeg) * (Math.PI/180);
+      // Convertir ángulo de grados a radianes
+      let anguloRadianes;
+      if (anguloGrados === 0) {
+        anguloRadianes = Math.PI/2;
+      } else if (anguloGrados > 0) {
+        anguloRadianes = (90 - anguloGrados) * (Math.PI/180);
       } else {
-        angleRad = (90 + Math.abs(angleDeg)) * (Math.PI/180);
+        anguloRadianes = (90 + Math.abs(anguloGrados)) * (Math.PI/180);
       }
       
-      let vx = Math.cos(angleRad) * power;
-      let vy = -Math.sin(angleRad) * power;
-      let x = fromX;
-      let y = fromY;
-      let t = 0;
-      let trail = [];
+      // Calcular componentes de velocidad inicial
+      let velocidadX = Math.cos(anguloRadianes) * potencia;
+      let velocidadY = -Math.sin(anguloRadianes) * potencia;
+      let x = desdeX;  // Posición inicial x
+      let y = desdeY;  // Posición inicial y
+      let tiempo = 0;  // Tiempo transcurrido
+      let trayectoria = [];  // Array para almacenar puntos de la trayectoria
 
-      const interval = setInterval(() => {
-        x = fromX + vx * t;
-        y = fromY + vy * t + 0.5 * gravity * t * t;
-        trail.push({x, y});
-        if (trail.length > 20) trail.shift();
+      // Intervalo para animar el misil
+      const intervalo = setInterval(() => {
+        // Calcular nueva posición con movimiento parabólico
+        x = desdeX + velocidadX * tiempo;
+        y = desdeY + velocidadY * tiempo + 0.5 * gravedad * tiempo * tiempo;
+        trayectoria.push({x, y});  // Guardar punto en trayectoria
+        if (trayectoria.length > 20) trayectoria.shift();  // Mantener solo los últimos 20 puntos
         
-        draw();
+        dibujar();  // Redibujar escena
         
-        ctx.beginPath();
-        ctx.moveTo(trail[0].x, trail[0].y);
-        for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
-        ctx.strokeStyle = 'yellow';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Dibujar trayectoria
+        contexto.beginPath();
+        contexto.moveTo(trayectoria[0].x, trayectoria[0].y);
+        for (let i = 1; i < trayectoria.length; i++) contexto.lineTo(trayectoria[i].x, trayectoria[i].y);
+        contexto.strokeStyle = 'yellow';
+        contexto.lineWidth = 2;
+        contexto.stroke();
         
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = 'black';
-        ctx.fill();
+        // Dibujar misil
+        contexto.beginPath();
+        contexto.arc(x, y, 5, 0, Math.PI * 2);
+        contexto.fillStyle = 'black';
+        contexto.fill();
 
-        const terrainY = getTerrainHeight(x);
-        if (y >= terrainY || x < 0 || x > canvas.width || y > canvas.height) {
-          clearInterval(interval);
-          isShooting = false;
-          flightSound.pause();
+        // Verificar colisión con el terreno
+        const alturaTerreno = obtenerAlturaTerreno(x);
+        if (y >= alturaTerreno || x < 0 || x > lienzo.width || y > lienzo.height) {
+          clearInterval(intervalo);  // Detener animación
+          disparando = false;       // Marcar que ya no hay misil
+          sonidoVuelo.pause();      // Detener sonido de vuelo
           
-          if (y >= terrainY) {
-            const explosionSound = document.getElementById('explosionSound');
-            explosionSound.currentTime = 0;
-            explosionSound.play();
-            deformTerrain(x, y, 40);
+          // Si impactó en el terreno
+          if (y >= alturaTerreno) {
+            // Reproducir sonido de explosión
+            const sonidoExplosion = document.getElementById('sonidoExplosion');
+            sonidoExplosion.currentTime = 0;
+            sonidoExplosion.play();
+            deformarTerreno(x, y, 40);  // Deformar terreno
           }
-          onHit(x, y, false);
+          alImpactar(x, y, false);  // Llamar a función de impacto
         }
         
-        let hitPlayer = false;
-        let hitPlayerNumber = null;
-        for (let i = 0; i < players.length; i++) {
-          if (i !== currentPlayer - 1 && players[i].alive) {
-            const target = players[i];
-            const dx = x - target.x;
-            const dy = y - target.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+        // Verificar colisión con otros jugadores
+        let golpeJugador = false;
+        let numeroJugadorGolpeado = null;
+        for (let i = 0; i < jugadores.length; i++) {
+          // Solo verificar con jugadores vivos que no sean el que dispara
+          if (i !== jugadorActual - 1 && jugadores[i].vivo) {
+            const objetivo = jugadores[i];
+            // Calcular distancia al jugador
+            const dx = x - objetivo.x;
+            const dy = y - objetivo.y;
+            const distancia = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < 20) {
-              clearInterval(interval);
-              isShooting = false;
-              flightSound.pause();
+            // Si hay colisión
+            if (distancia < 20) {
+              clearInterval(intervalo);  // Detener animación
+              disparando = false;       // Marcar que ya no hay misil
+              sonidoVuelo.pause();      // Detener sonido de vuelo
               
-              const explosionSound = document.getElementById('explosionSound');
-              explosionSound.currentTime = 0;
-              explosionSound.play();
-              hitPlayer = true;
-              hitPlayerNumber = i + 1;
-              players[i].alive = false;
+              // Reproducir sonido de explosión
+              const sonidoExplosion = document.getElementById('sonidoExplosion');
+              sonidoExplosion.currentTime = 0;
+              sonidoExplosion.play();
+              golpeJugador = true;  // Marcar que golpeó a un jugador
+              numeroJugadorGolpeado = i + 1;  // Guardar número de jugador golpeado
+              jugadores[i].vivo = false;  // Eliminar jugador golpeado
               break;
             }
           }
         }
         
-        t += 0.1;
+        tiempo += 0.1;  // Incrementar tiempo
         
-        if (hitPlayer) {
-          onHit(x, y, true, hitPlayerNumber);
+        // Si golpeó a un jugador, llamar a función de impacto
+        if (golpeJugador) {
+          alImpactar(x, y, true, numeroJugadorGolpeado);
         }
-      }, 30);
+      }, 30);  // Intervalo de 30ms para la animación
     }
 
-    function checkGameEnd() {
-      const alivePlayers = players.filter(p => p.alive);
-      if (alivePlayers.length === 1) {
-        gameActive = false;
-        const winnerNumber = players.findIndex(p => p.alive) + 1;
-        document.getElementById('info').innerText = `¡Jugador ${players[winnerNumber - 1].name} es el ganador!`;
-        canvas.removeEventListener('click', onCanvasClick);
-        document.querySelector('.controls').style.display = 'none';
-        restartBtn.style.display = 'block';
-        return true;
+    // Función para verificar si el juego ha terminado (solo queda un jugador)
+    function verificarFinJuego() {
+      const jugadoresVivos = jugadores.filter(j => j.vivo);  // Filtrar jugadores vivos
+      if (jugadoresVivos.length === 1) {  // Si solo queda uno
+        juegoActivo = false;  // Marcar juego como terminado
+        const numeroGanador = jugadores.findIndex(j => j.vivo) + 1;  // Encontrar ganador
+        // Mostrar mensaje de victoria
+        document.getElementById('info').innerText = `¡Jugador ${jugadores[numeroGanador - 1].nombre} es el ganador!`;
+        lienzo.removeEventListener('click', alHacerClicEnLienzo);  // Quitar listener de click
+        document.querySelector('.controles').style.display = 'none';  // Ocultar controles
+        botonReiniciar.style.display = 'block';  // Mostrar botón de reinicio
+        return true;  // Indicar que el juego terminó
       }
-      return false;
+      return false;  // Indicar que el juego continúa
     }
 
-    function nextTurn(hitPlayer, hitPlayerNumber) {
-      stopBlinking();
+    // Función para pasar al siguiente turno
+    function siguienteTurno(golpeJugador, numeroJugadorGolpeado) {
+      detenerParpadeo();  // Detener parpadeo del jugador actual
       
-      if (checkGameEnd()) {
+      // Verificar si el juego terminó
+      if (verificarFinJuego()) {
         return;
       }
       
-      let nextPlayer = currentPlayer;
+      // Encontrar siguiente jugador vivo
+      let siguienteJugador = jugadorActual;
       do {
-        nextPlayer = nextPlayer % 3 + 1;
-      } while (!players[nextPlayer - 1].alive);
+        siguienteJugador = siguienteJugador % 3 + 1;  // Circular entre 1, 2 y 3
+      } while (!jugadores[siguienteJugador - 1].vivo);
       
-      currentPlayer = nextPlayer;
-      document.querySelector('.controls').style.display = 'block';
-      document.getElementById('info').innerText = `Turno de: Jugador ${players[currentPlayer - 1].name}`;
-      startBlinking();
+      jugadorActual = siguienteJugador;  // Asignar nuevo jugador actual
+      // Mostrar controles y mensaje de turno
+      document.querySelector('.controles').style.display = 'block';
+      document.getElementById('info').innerText = `Turno de: Jugador ${jugadores[jugadorActual - 1].nombre}`;
+      iniciarParpadeo();  // Iniciar parpadeo del nuevo jugador
     }
 
-    function onCanvasClick() {
-      document.querySelector('.controls').style.display = 'none';
-      if (!gameActive || isShooting) return;
+    // Función manejadora del click en el lienzo
+    function alHacerClicEnLienzo() {
+      document.querySelector('.controles').style.display = 'none';  // Ocultar controles
+      if (!juegoActivo || disparando) return;  // No hacer nada si el juego no está activo o ya hay un disparo
       
-      const fuerza = parseFloat(fuerzaInput.value);
-      const angulo = parseFloat(anguloInput.value);
-      const gravedad = parseFloat(gravedadInput.value);
+      // Obtener valores de los controles
+      const fuerza = parseFloat(entradaFuerza.value);
+      const angulo = parseFloat(entradaAngulo.value);
+      const gravedad = parseFloat(entradaGravedad.value);
 
-      const playerIndex = currentPlayer - 1;
-      const fromX = players[playerIndex].x;
-      const fromY = players[playerIndex].y - 10;
+      // Obtener posición del jugador actual
+      
+ const indiceJugador = jugadorActual - 1;
+      const desdeX = jugadores[indiceJugador].x;
+      const desdeY = jugadores[indiceJugador].y - 10;
 
-      fireMissile(fromX, fromY, angulo, fuerza / 2, gravedad, (x, y, hitPlayer, hitPlayerNumber) => {
-        draw();
-        if (hitPlayer) {
-          document.getElementById('info').innerText = `¡Jugador ${players[hitPlayerNumber - 1].name} fue eliminado!`;
+      dispararMisil(desdeX, desdeY, angulo, fuerza / 2, gravedad, (x, y, golpeJugador, numeroJugadorGolpeado) => {
+        dibujar();
+        if (golpeJugador) {
+          document.getElementById('info').innerText = `¡Jugador ${jugadores[numeroJugadorGolpeado - 1].nombre} fue eliminado!`;
         }
-        nextTurn(hitPlayer, hitPlayerNumber);
+        siguienteTurno(golpeJugador, numeroJugadorGolpeado);
       });
     }
 
-    // Event listeners
-    fuerzaInput.oninput = () => fuerzaVal.textContent = fuerzaInput.value;
-    anguloInput.oninput = () => anguloVal.textContent = anguloInput.value;
-    gravedadInput.oninput = () => gravedadVal.textContent = gravedadInput.value;
+    // Eventos
+    entradaFuerza.oninput = () => valorFuerza.textContent = entradaFuerza.value;
+    entradaAngulo.oninput = () => valorAngulo.textContent = entradaAngulo.value;
+    entradaGravedad.oninput = () => valorGravedad.textContent = entradaGravedad.value;
 
-    document.getElementById('fullscreenBtn').onclick = () => {
+    document.getElementById('botonPantallaCompleta').onclick = () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
       } else {
@@ -565,34 +695,34 @@
       }
     };
 
-    restartBtn.onclick = () => {
-      playerSelection.style.display = 'block';
-      restartBtn.style.display = 'none';
+    botonReiniciar.onclick = () => {
+      seleccionJugadores.style.display = 'block';
+      botonReiniciar.style.display = 'none';
     };
 
-    twoPlayersBtn.onclick = () => {
-      playerSelection.style.display = 'none';
-      document.querySelector('.controls').style.display = 'block';
-      resetGame(2);
+    botonDosJugadores.onclick = () => {
+      seleccionJugadores.style.display = 'none';
+      document.querySelector('.controles').style.display = 'block';
+      reiniciarJuego(2);
     };
 
-    threePlayersBtn.onclick = () => {
-      playerSelection.style.display = 'none';
-      document.querySelector('.controls').style.display = 'block';
-      resetGame(3);
+    botonTresJugadores.onclick = () => {
+      seleccionJugadores.style.display = 'none';
+      document.querySelector('.controles').style.display = 'block';
+      reiniciarJuego(3);
     };
 
     // Inicialización
-    window.addEventListener('resize', resizeCanvas);
-    canvas.addEventListener('click', onCanvasClick);
+    window.addEventListener('resize', redimensionarLienzo);
+    lienzo.addEventListener('click', alHacerClicEnLienzo);
     
     document.getElementById('info').style.display = 'block';
-    document.getElementById('player1-indicator').style.display = 'none';
-    document.getElementById('player2-indicator').style.display = 'none';
-    document.getElementById('player3-indicator').style.display = 'none';
-    document.querySelector('.controls').style.display = 'none';
-    document.getElementById('fullscreenBtn').style.display = 'block';
-    canvas.style.display = 'block';
+    document.getElementById('indicador-jugador1').style.display = 'none';
+    document.getElementById('indicador-jugador2').style.display = 'none';
+    document.getElementById('indicador-jugador3').style.display = 'none';
+    document.querySelector('.controles').style.display = 'none';
+    document.getElementById('botonPantallaCompleta').style.display = 'block';
+    lienzo.style.display = 'block';
   </script>
 </body>
 </html>
