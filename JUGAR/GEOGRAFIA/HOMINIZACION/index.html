@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Juego de Cartas</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap">
   <style>
@@ -162,6 +163,44 @@
       max-width: 300px;
       border-radius: 12px;
     }
+
+    @media (max-width: 600px) {
+      #tituloJuego {
+        font-size: 1.5em;
+        margin-top: 10px;
+      }
+
+      .card {
+        width: 90vw;
+        height: 280px;
+      }
+
+      .question, .answer {
+        font-size: 1em;
+      }
+
+      .flip-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.2em;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        font-size: 1em;
+      }
+
+      .bottom-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        bottom: 20px;
+      }
+
+      .celebracion img {
+        max-width: 80vw;
+      }
+    }
   </style>
 </head>
 <body>
@@ -261,3 +300,4 @@
   </script>
 </body>
 </html>
+     
