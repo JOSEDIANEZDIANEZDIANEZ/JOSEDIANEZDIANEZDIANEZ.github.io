@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar - Preguntas y Respuestas</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+h1 { color: #333; }
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 90%;
+  max-width: 600px;
+}
+label { font-weight: bold; }
+textarea {
+  width: 100%;
+  height: 60px;
+  resize: none;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+button {
+  padding: 10px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  margin-top: 10px;
+}
+button:hover { background-color: #0056b3; }
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.switch input {
+  width: 50px;
+  height: 25px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ccc;
+  outline: none;
+  border-radius: 25px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.switch input::before {
+  content: "";
+  position: absolute;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: white;
+  top: 1px;
+  left: 1px;
+  transition: transform 0.3s;
+}
+.switch input:checked {
+  background: #28a745;
+}
+.switch input:checked::before {
+  transform: translateX(25px);
+}
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+.overlay button {
+  font-size: 32px;
+  padding: 20px 40px;
+  background: #28a745;
+}
+.overlay.incorrecto button { background: #dc3545; }
+.overlay.ganaste button {
+  background: #ffc107;
+  color: black;
+}
+
+/* Campos ocultos en modo aprendizaje */
+.modo-aprendizaje .oculto {
+  display: none;
+}
+</style>
+</head>
+<body>
+<h1 id="titulo"></h1>
+
+<!-- SWITCH para seleccionar modo -->
+<div class="switch">
+  <label for="modoToggle">Modo aprendizaje:</label>
+  <input type="checkbox" id="modoToggle">
+</div>
+
+<button id="iniciar">Iniciar</button>
+
+<div class="container" id="contenedorCampos">
+  <label>Pregunta:</label>
+  <textarea id="pregunta" readonly></textarea>
+
+  <div class="oculto">
+    <label>Respuesta:</label>
+    <textarea id="respuesta" readonly></textarea>
+  </div>
+
+  <div class="oculto">
+    <label>Palabras clave:</label>
+    <textarea id="palabrasclave" readonly></textarea>
+  </div>
+
+  <div class="oculto">
+    <label>Lo que he escuchado:</label>
+    <textarea id="loqueheescuchado" readonly></textarea>
+  </div>
+</div>
+
+<div id="overlay" class="overlay" style="display:none;">
+  <button id="overlayBtn"></button>
+</div>
+<script src="preguntas.js"></script>
+<script>
+ /* const titulo_del_juego = "Solar - Preguntas y Respuestas"; // 👉 aquí defines el título
+
+// Asignar el título al <h1>
+
+const preguntas = [
+  { pregunta: "Di verde,azul,amarillo,magenta", respuesta: "Verdee,azul,amarillo y magenta", palabrasclave: "verde,azul,amarillo,magenta" },
+  { pregunta: "¿Qué características tenía el Australopitecus?", respuesta: "No fabricaban herramientas y eran bípedos.", palabrasclave: "No,herramientas,bípedos" },
+  { pregunta: "¿Cuándo apareció el Homo Habilis?", respuesta: "En 1978.", palabrasclave: "1978" },
+  { pregunta: "¿Qué características tenía el Homo Habilis?", respuesta: "Fabricaban herramientas y se comunicaban.", palabrasclave: "herramientas,comunicaban" }
+];*/
+document.getElementById("titulo").textContent = titulo_del_juego;
+let preguntasRestantes = [...preguntas];
+let preguntaActual = null;
+let mirespuesta = "";
+let recognition = null;
+let hablando = false;
+let escuchando = false;
+let modoAprendizaje = false;
+
+const iniciarBtn = document.getElementById('iniciar');
+const preguntaTxt = document.getElementById('pregunta');
+const respuestaTxt = document.getElementById('respuesta');
+const palabrasTxt = document.getElementById('palabrasclave');
+const escuchadoTxt = document.getElementById('loqueheescuchado');
+const overlay = document.getElementById('overlay');
+const overlayBtn = document.getElementById('overlayBtn');
+const modoToggle = document.getElementById('modoToggle');
+const contenedorCampos = document.getElementById('contenedorCampos');
+
+modoToggle.addEventListener("change", () => {
+  modoAprendizaje = modoToggle.checked;
+  if (modoAprendizaje) {
+    contenedorCampos.classList.add("modo-aprendizaje");
+  } else {
+    contenedorCampos.classList.remove("modo-aprendizaje");
+  }
+});
+
+// Normaliza texto: sin tildes, minúsculas
+function normalizarTexto(txt) {
+  if (!txt && txt !== "") return "";
+  return String(txt).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Palabras numéricas básicas
+const NUM_WORDS = {
+  "cero": "0","uno": "1","una":"1","dos":"2","tres":"3","cuatro":"4","cinco":"5",
+  "seis":"6","siete":"7","ocho":"8","nueve":"9","diez":"10","once":"11","doce":"12",
+  "trece":"13","catorce":"14","quince":"15","dieciseis":"16","diecisiete":"17","dieciocho":"18","diecinueve":"19","veinte":"20",
+  "mil":"1000","cien":"100","ciento":"100"
+};
+
+function palabrasANumero(token) {
+  if (NUM_WORDS[token] !== undefined) return NUM_WORDS[token];
+  return null;
+}
+function contieneDigitos(s) {
+  return /\d/.test(s);
+}
+
+// Levenshtein distance
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  const al = a.length, bl = b.length;
+  if (al === 0) return bl;
+  if (bl === 0) return al;
+  const matrix = Array.from({length: al + 1}, (_, i) => new Array(bl + 1));
+  for (let i = 0; i <= al; i++) matrix[i][0] = i;
+  for (let j = 0; j <= bl; j++) matrix[0][j] = j;
+  for (let i = 1; i <= al; i++) {
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i-1][j] + 1,
+        matrix[i][j-1] + 1,
+        matrix[i-1][j-1] + cost
+      );
+    }
+  }
+  return matrix[al][bl];
+}
+
+function similarityRatio(a, b) {
+  if (!a && !b) return 1;
+  if (!a || !b) return 0;
+  const dist = levenshtein(a, b);
+  return 1 - (dist / Math.max(a.length, b.length));
+}
+
+function tokenizarRespuesta(resp) {
+  const cleaned = resp.replace(/[^\p{L}\p{N}\s]+/gu, ' ');
+  return cleaned.split(/\s+/).filter(Boolean);
+}
+
+// ✅ NUEVA FUNCIÓN COMPROBAR
+function comprobar() {
+  const rawClaves = preguntaActual.palabrasclave || "";
+  const clavesArray = rawClaves.split(",").map(k => k.trim()).filter(Boolean);
+  const respNorm = normalizarTexto(mirespuesta || "");
+  const respTokensRaw = tokenizarRespuesta(respNorm);
+  const respTokens = respTokensRaw.map(t => {
+    const num = palabrasANumero(t);
+    return num !== null ? num : t;
+  });
+
+  const UMBRAL_SIMILITUD = 0.5;
+
+  // función auxiliar para detectar raíces comunes de ≥4 letras
+  function compartenRaiz(a, b) {
+    if (a.length < 4 || b.length < 4) return false;
+    for (let i = 0; i < a.length - 3; i++) {
+      const sub = a.slice(i, i + 4);
+      if (b.includes(sub)) return true;
+    }
+    return false;
+  }
+
+  let todoCorrecto = true;
+
+  for (let clave of clavesArray) {
+    const claveNorm = normalizarTexto(clave);
+    const claveNum = palabrasANumero(claveNorm);
+    const claveFinal = claveNum !== null ? claveNum : claveNorm;
+    let encontrada = false;
+
+    if (contieneDigitos(claveFinal)) {
+      encontrada = respTokens.some(t => t === claveFinal);
+    } else {
+      for (let t of respTokens) {
+        if (t === claveFinal) { encontrada = true; break; }
+        if (t.includes(claveFinal) || claveFinal.includes(t)) { encontrada = true; break; }
+        if (compartenRaiz(t, claveFinal)) { encontrada = true; break; }
+        if (similarityRatio(t, claveFinal) >= UMBRAL_SIMILITUD) { encontrada = true; break; }
+      }
+    }
+
+    if (!encontrada) {
+      todoCorrecto = false;
+      break;
+    }
+  }
+
+  mostrarOverlay(todoCorrecto);
+}
+
+function mostrarOverlay(correcto) {
+  window.speechSynthesis.cancel();
+  if (recognition) recognition.stop();
+  overlay.style.display = "flex";
+  overlay.className = "overlay " + (correcto ? "correcto" : "incorrecto");
+  overlayBtn.textContent = correcto ? "CORRECTO" : "INCORRECTO";
+  overlayBtn.style.display = "none";
+
+  const mensaje = correcto ? "Tu respuesta es correcta." : "Tu respuesta es incorrecta.";
+  hablar(mensaje, () => {
+    overlay.style.display = "none";
+    if (correcto) {
+      preguntasRestantes = preguntasRestantes.filter(p => p !== preguntaActual);
+    }
+    if (preguntasRestantes.length === 0) {
+      setTimeout(() => {
+        hablar("Has ganado, felicidades.", mostrarGanaste);
+      }, 700);
+    } else {
+      setTimeout(cargarPregunta, 1000);
+    }
+  });
+}
+
+function mostrarGanaste() {
+  overlay.style.display = "flex";
+  overlay.className = "overlay ganaste";
+  overlayBtn.textContent = "¡GANASTE! Volver a jugar";
+  overlayBtn.style.display = "block";
+  overlayBtn.onclick = () => location.reload();
+}
+
+function hablar(texto, callback) {
+  if (hablando) window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  const utter = new SpeechSynthesisUtterance(texto);
+  utter.lang = "es-ES";
+  hablando = true;
+  utter.onend = () => {
+    hablando = false;
+    if (callback) callback();
+  };
+  synth.speak(utter);
+}
+
+function escuchar() {
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("Tu navegador no soporta reconocimiento de voz");
+    return;
+  }
+
+  if (escuchando) {
+    recognition.stop();
+    escuchando = false;
+  }
+
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "es-ES";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  escuchando = true;
+
+  let resultadoDetectado = false;
+
+  recognition.onresult = (event) => {
+    escuchando = false;
+    resultadoDetectado = true;
+    mirespuesta = event.results[0][0].transcript;
+    escuchadoTxt.value = mirespuesta;
+    setTimeout(comprobar, 2000);
+  };
+  
+  recognition.onerror = () => {
+    escuchando = false;
+    if (!resultadoDetectado) {
+      mirespuesta = "";
+      escuchadoTxt.value = "(sin respuesta)";
+      mostrarOverlay(false);
+    }
+  };
+
+  recognition.onend = () => {
+    escuchando = false;
+    if (!resultadoDetectado) {
+      mirespuesta = "";
+      escuchadoTxt.value = "(sin respuesta)";
+      mostrarOverlay(false);
+    }
+  };
+
+  recognition.start();
+}
+
+function cargarPregunta() {
+  if (hablando || escuchando) {
+    window.speechSynthesis.cancel();
+    if (recognition) recognition.stop();
+  }
+
+  escuchadoTxt.value = "";
+  preguntaActual = preguntasRestantes[Math.floor(Math.random() * preguntasRestantes.length)];
+  preguntaTxt.value = preguntaActual.pregunta;
+  respuestaTxt.value = preguntaActual.respuesta;
+  palabrasTxt.value = preguntaActual.palabrasclave;
+
+  setTimeout(() => {
+    hablar(preguntaActual.pregunta, () => {
+      setTimeout(() => {
+        escuchar();
+      }, 500);
+    });
+  }, 300);
+}
+
+iniciarBtn.onclick = () => {
+  iniciarBtn.disabled = true;
+  cargarPregunta();
+};
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && overlay.style.display === "flex") {
+    overlayBtn.click();
+  }
+});
+</script>
+</body>
+</html>
