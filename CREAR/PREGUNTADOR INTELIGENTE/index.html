@@ -96,6 +96,7 @@
     <hr>
     <button id="descargar">⬇️ Descargar preguntas.js</button>
     <button id="cargar">📂 Cargar archivo preguntas.js existente</button>
+    <button id="descargarPrograma">📦 Descargar programa.zip</button>
     <input type="file" id="archivo" accept=".js" style="display:none">
   </div>
 
@@ -144,14 +145,12 @@ document.getElementById('guardar').addEventListener('click', () => {
     return;
   }
 
-  // Si estamos en una posición existente la sobreescribimos; si estamos en la última posición vacía, la añadimos.
   if (indice >= preguntas.length) {
     preguntas.push(nueva);
   } else {
     preguntas[indice] = nueva;
   }
 
-  // avanzamos al siguiente registro (creamos uno vacío si llegamos al final para poder seguir añadiendo)
   indice++;
   if (indice === preguntas.length) {
     preguntas.push(emptyRecord());
@@ -175,15 +174,12 @@ document.getElementById('siguiente').addEventListener('click', () => {
 
 document.getElementById('descargar').addEventListener('click', () => {
   const titulo = tituloInput.value.trim() || 'Sin título';
-
-  // Filtramos sólo las preguntas con texto en 'pregunta'
   const filtradas = preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '');
 
   let contenido = `const titulo_del_juego = ${JSON.stringify(titulo)};\n\n`;
   contenido += `const preguntas = [\n`;
 
   filtradas.forEach((p, i) => {
-    // escapamos correctamente con JSON.stringify para evitar problemas con comillas y saltos de línea
     const q = JSON.stringify(p.pregunta);
     const r = JSON.stringify(p.respuesta);
     const k = JSON.stringify(p.palabrasclave);
@@ -211,48 +207,47 @@ document.getElementById('archivo').addEventListener('change', function(e) {
   lector.onload = function(evt) {
     try {
       const contenido = evt.target.result;
-
-      // Ejecutamos el contenido dentro de una función y devolvemos variables si existen.
-      // Esto captura definiciones como: const preguntas = [...]; const titulo_del_juego = "..."
       const wrapper = new Function(contenido + '\n return { titulo_del_juego: (typeof titulo_del_juego !== "undefined" ? titulo_del_juego : (typeof titulo !== "undefined" ? titulo : undefined)), preguntas: (typeof preguntas !== "undefined" ? preguntas : undefined) };');
       const resultado = wrapper();
 
       const cargadas = Array.isArray(resultado.preguntas) ? resultado.preguntas : [];
       const tituloCargado = resultado.titulo_del_juego;
 
-      // Conservar las preguntas no vacías que ya existieran en la app (para fusionarlas)
       const existentes = preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '');
 
-      // Fusion: primero las cargadas (si hay), luego las existentes
       if (cargadas.length > 0) {
-        preguntas = cargadas.slice(); // copia de las cargadas
-        // añadimos las existentes que no estuvieran ya en cargadas (evita duplicados exactos)
+        preguntas = cargadas.slice();
         existentes.forEach(e => {
           const dup = preguntas.some(p => p.pregunta === e.pregunta && p.respuesta === e.respuesta);
           if (!dup) preguntas.push(e);
         });
       } else {
-        // si no había preguntas en el archivo, mantenemos las existentes
         preguntas = existentes.slice();
       }
 
-      // añadimos un registro vacío para poder editar/añadir más
       preguntas.push(emptyRecord());
 
       if (tituloCargado) tituloInput.value = tituloCargado;
 
       indice = 0;
       mostrarPregunta();
-      statusText.textContent = `Archivo cargado con éxito. ${ (preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '')).length } preguntas (fusionadas).`;
+      statusText.textContent = `Archivo cargado con éxito. ${(preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '')).length} preguntas (fusionadas).`;
     } catch (err) {
       console.error(err);
       alert("Error al cargar el archivo. Asegúrate de que sea un preguntas.js válido y no contenga código malicioso.");
     } finally {
-      // limpiamos input file para poder seleccionar el mismo archivo más tarde si hace falta
       e.target.value = '';
     }
   };
   lector.readAsText(archivo);
+});
+
+// Botón para descargar programa.zip
+document.getElementById('descargarPrograma').addEventListener('click', () => {
+  const enlace = document.createElement('a');
+  enlace.href = 'programa.zip'; // archivo en el mismo directorio
+  enlace.download = 'programa.zip';
+  enlace.click();
 });
 
 // Inicializar con un registro vacío
