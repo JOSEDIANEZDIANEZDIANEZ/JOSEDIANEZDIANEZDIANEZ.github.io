@@ -27,7 +27,7 @@ pregunta:"¿Cómo se les llama a las enfermedades causadas por los microorganís
 respuesta: "Enfermedades infecciosas y el microorganismo que causa la enfermedad se llama agente patógeno",
 palabrasclave: "infecciosas,agente,patogeno"
 
-}
+},
   {
     pregunta: "¿Son perjudiciales todos los microorganismos?",
     respuesta: "No, la mayoría son beneficiosos para el ser humano y el medioambiente.Como los microorganísmos productores y los descomponedores",
