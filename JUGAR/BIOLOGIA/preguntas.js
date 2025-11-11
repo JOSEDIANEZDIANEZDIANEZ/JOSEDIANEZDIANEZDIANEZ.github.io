@@ -18,6 +18,11 @@ const preguntas = [
     palabrasclave: "levaduras,mohos,protozoo,algas,bacterias"
   },
   {
+  pregunta: "¿Cómo se les llama a los organismos perjudiciales?",
+  respuesta: "Patógenos",
+  palabrasclave: "patogenos"
+},
+  {
     pregunta: "¿Son perjudiciales todos los microorganismos?",
     respuesta: "No, la mayoría son beneficiosos para el ser humano y el medioambiente.Como los microorganísmos productores y los descomponedores",
     palabrasclave: "no,beneficiosos,productores,descomponedores"
