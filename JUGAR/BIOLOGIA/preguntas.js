@@ -18,7 +18,7 @@ const preguntas = [
     palabrasclave: "levaduras,mohos,protozoo,algas,bacterias"
   },
   {
-  pregunta: "¿Cómo se les llama a los organismos perjudiciales?",
+  pregunta: "¿Cómo se les llama a los microorganismos perjudiciales?",
   respuesta: "Patógenos",
   palabrasclave: "patogenos"
 },
