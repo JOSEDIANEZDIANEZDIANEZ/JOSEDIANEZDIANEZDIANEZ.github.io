@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constructor de preguntas.js</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+    background: #f5f6fa;
+    color: #2f3640;
+  }
+  h1 {
+    text-align: center;
+  }
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+  }
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  textarea {
+    resize: vertical;
+    height: 70px;
+  }
+  .buttons {
+    text-align: center;
+    margin-top: 20px;
+  }
+  button {
+    background: #0984e3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover {
+    background: #74b9ff;
+  }
+  .nav-buttons button {
+    background: #636e72;
+  }
+  .nav-buttons button:hover {
+    background: #b2bec3;
+  }
+  #status {
+    text-align: center;
+    margin-top: 15px;
+    font-style: italic;
+    color: #636e72;
+  }
+</style>
+</head>
+<body>
+
+<h1>🧩 Constructor de preguntas.js</h1>
+<div class="container">
+  <label for="titulo">Título del juego:</label>
+  <input type="text" id="titulo" placeholder="Ejemplo: Matemáticas">
+
+  <hr>
+
+  <label for="pregunta">Pregunta:</label>
+  <textarea id="pregunta" placeholder="Escribe aquí la pregunta..."></textarea>
+
+  <label for="respuesta">Respuesta:</label>
+  <textarea id="respuesta" placeholder="Escribe aquí la respuesta..."></textarea>
+
+  <label for="palabrasclave">Palabras clave (separadas por comas):</label>
+  <input type="text" id="palabrasclave" placeholder="Ejemplo: verde,azul,amarillo">
+
+  <div class="buttons">
+    <button id="guardar">💾 Guardar y siguiente</button>
+    <div class="nav-buttons">
+      <button id="anterior">⬅️ Anterior</button>
+      <button id="siguiente">➡️ Siguiente</button>
+    </div>
+    <hr>
+    <button id="descargar">⬇️ Descargar preguntas.js</button>
+    <button id="cargar">📂 Cargar archivo preguntas.js existente</button>
+    <button id="descargarPrograma">📦 Descargar programa.zip</button>
+    <input type="file" id="archivo" accept=".js" style="display:none">
+  </div>
+
+  <p id="status">Listo para comenzar.</p>
+</div>
+
+<script>
+let preguntas = []; // lista principal
+let indice = 0;
+
+const tituloInput = document.getElementById('titulo');
+const preguntaInput = document.getElementById('pregunta');
+const respuestaInput = document.getElementById('respuesta');
+const palabrasInput = document.getElementById('palabrasclave');
+const statusText = document.getElementById('status');
+
+function emptyRecord() {
+  return { pregunta: '', respuesta: '', palabrasclave: '' };
+}
+
+function ensureAtLeastOne() {
+  if (preguntas.length === 0) {
+    preguntas.push(emptyRecord());
+    indice = 0;
+  }
+}
+
+function mostrarPregunta() {
+  ensureAtLeastOne();
+  const rec = preguntas[indice] || emptyRecord();
+  preguntaInput.value = rec.pregunta || '';
+  respuestaInput.value = rec.respuesta || '';
+  palabrasInput.value = rec.palabrasclave || '';
+  statusText.textContent = `Mostrando registro ${indice + 1} de ${preguntas.length}`;
+}
+
+document.getElementById('guardar').addEventListener('click', () => {
+  const nueva = {
+    pregunta: preguntaInput.value.trim(),
+    respuesta: respuestaInput.value.trim(),
+    palabrasclave: palabrasInput.value.trim()
+  };
+
+  if (!nueva.pregunta) {
+    alert('La pregunta no puede estar vacía.');
+    return;
+  }
+
+  if (indice >= preguntas.length) {
+    preguntas.push(nueva);
+  } else {
+    preguntas[indice] = nueva;
+  }
+
+  indice++;
+  if (indice === preguntas.length) {
+    preguntas.push(emptyRecord());
+  }
+  mostrarPregunta();
+});
+
+document.getElementById('anterior').addEventListener('click', () => {
+  if (indice > 0) {
+    indice--;
+    mostrarPregunta();
+  }
+});
+
+document.getElementById('siguiente').addEventListener('click', () => {
+  if (indice < preguntas.length - 1) {
+    indice++;
+    mostrarPregunta();
+  }
+});
+
+document.getElementById('descargar').addEventListener('click', () => {
+  const titulo = tituloInput.value.trim() || 'Sin título';
+  const filtradas = preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '');
+
+  let contenido = `const titulo_del_juego = ${JSON.stringify(titulo)};\n\n`;
+  contenido += `const preguntas = [\n`;
+
+  filtradas.forEach((p, i) => {
+    const q = JSON.stringify(p.pregunta);
+    const r = JSON.stringify(p.respuesta);
+    const k = JSON.stringify(p.palabrasclave);
+    contenido += `  { pregunta: ${q}, respuesta: ${r}, palabrasclave: ${k} }${i < filtradas.length - 1 ? ',' : ''}\n`;
+  });
+
+  contenido += `];\n`;
+
+  const blob = new Blob([contenido], { type: "application/javascript" });
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = "preguntas.js";
+  enlace.click();
+});
+
+document.getElementById('cargar').addEventListener('click', () => {
+  document.getElementById('archivo').click();
+});
+
+document.getElementById('archivo').addEventListener('change', function(e) {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+  lector.onload = function(evt) {
+    try {
+      const contenido = evt.target.result;
+      const wrapper = new Function(contenido + '\n return { titulo_del_juego: (typeof titulo_del_juego !== "undefined" ? titulo_del_juego : (typeof titulo !== "undefined" ? titulo : undefined)), preguntas: (typeof preguntas !== "undefined" ? preguntas : undefined) };');
+      const resultado = wrapper();
+
+      const cargadas = Array.isArray(resultado.preguntas) ? resultado.preguntas : [];
+      const tituloCargado = resultado.titulo_del_juego;
+
+      const existentes = preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '');
+
+      if (cargadas.length > 0) {
+        preguntas = cargadas.slice();
+        existentes.forEach(e => {
+          const dup = preguntas.some(p => p.pregunta === e.pregunta && p.respuesta === e.respuesta);
+          if (!dup) preguntas.push(e);
+        });
+      } else {
+        preguntas = existentes.slice();
+      }
+
+      preguntas.push(emptyRecord());
+
+      if (tituloCargado) tituloInput.value = tituloCargado;
+
+      indice = 0;
+      mostrarPregunta();
+      statusText.textContent = `Archivo cargado con éxito. ${(preguntas.filter(p => p && p.pregunta && p.pregunta.trim() !== '')).length} preguntas (fusionadas).`;
+    } catch (err) {
+      console.error(err);
+      alert("Error al cargar el archivo. Asegúrate de que sea un preguntas.js válido y no contenga código malicioso.");
+    } finally {
+      e.target.value = '';
+    }
+  };
+  lector.readAsText(archivo);
+});
+
+// Botón para descargar programa.zip
+document.getElementById('descargarPrograma').addEventListener('click', () => {
+  const enlace = document.createElement('a');
+  enlace.href = 'programa.zip'; // archivo en el mismo directorio
+  enlace.download = 'programa.zip';
+  enlace.click();
+});
+
+// Inicializar con un registro vacío
+preguntas = [ emptyRecord() ];
+mostrarPregunta();
+</script>
+</body>
+</html>
