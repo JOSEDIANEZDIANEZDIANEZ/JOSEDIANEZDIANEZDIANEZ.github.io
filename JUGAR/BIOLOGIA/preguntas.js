@@ -23,11 +23,17 @@ const preguntas = [
   palabrasclave: "patogenos"
 },
 {
-pregunta:"¿Cómo se les llama a las enfermedades causadas por los microorganísmos?",
-respuesta: "Enfermedades infecciosas y el microorganismo que causa la enfermedad se llama agente patógeno",
-palabrasclave: "infecciosas,agente,patogeno"
+  pregunta: "¿Cómo se les llama a las enfermedades causadas por los microorganísmos?",
+  respuesta: "Enfermedades infecciosas y el microorganismo que causa la enfermedad se llama agente patógeno",
+  palabrasclave: "infecciosas,agente"
+},
+{
+pregunta:"Ejemplos de agentes patógenos",
+respuesta: "algunas bacterias:causan enfermedades como tuberculosis y cólera.Algunos protozoos:causan enfermedades como la malaria y la enfermedad del sueño.Algunos hongos:causan enfermedades como el pie de atleta y la candidiasis",
+palabrasclave: "bacterias,tuberculosis,colera,protozoos,malaria,sueño,atleta,candidiasis"
 
 },
+
   {
     pregunta: "¿Son perjudiciales todos los microorganismos?",
     respuesta: "No, la mayoría son beneficiosos para el ser humano y el medioambiente.Como los microorganísmos productores y los descomponedores",
