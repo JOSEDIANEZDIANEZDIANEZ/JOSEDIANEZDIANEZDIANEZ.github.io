@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preguntas.js a Word</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+#dropzone {
+  width: 400px;
+  padding: 40px;
+  text-align: center;
+  border: 2px dashed #999;
+  border-radius: 10px;
+  background: #fff;
+  color: #333;
+}
+#dropzone.hover {
+  border-color: #0078d7;
+  background: #eef6ff;
+}
+</style>
+</head>
+<body>
+<div id="dropzone">
+  <p><b>Arrastra aquí tu archivo <code>preguntas.js</code></b></p>
+  <p>o haz clic para seleccionarlo</p>
+  <input type="file" id="fileInput" accept=".js" style="display:none;">
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+dropzone.onclick = () => fileInput.click();
+
+dropzone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropzone.classList.add('hover');
+});
+
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('hover'));
+
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('hover');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+});
+
+async function processFile(file) {
+  const text = await file.text();
+
+  // Extraer título si existe
+  let titleMatch = text.match(/titulo_del_juego\s*=\s*["'`](.*?)["'`]/);
+  let title = titleMatch ? titleMatch[1] : "Documento";
+
+  // Extraer el array de preguntas
+  let match = text.match(/preguntas\s*=\s*(\[[\s\S]*?\]);/);
+  if (!match) {
+    alert("No se encontró la variable 'preguntas'.");
+    return;
+  }
+
+  let preguntas;
+  try {
+    preguntas = new Function("return " + match[1])();
+  } catch (e) {
+    alert("Error al leer las preguntas.");
+    return;
+  }
+
+  // Generar HTML compatible con Word
+  let content = `
+  <html><head><meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, sans-serif; padding: 20px; }
+    h1 { font-size: 18pt; }
+    .pregunta { font-weight: bold; text-decoration: underline; background: #fff59d; display: inline-block; margin-top: 12px; }
+    .respuesta { margin: 6px 0 0 8px; }
+  </style></head><body>
+  <h1>${title}</h1>
+  `;
+
+  preguntas.forEach(p => {
+    content += `<div class="pregunta">${p.pregunta}</div><div class="respuesta">${p.respuesta}</div>`;
+  });
+
+  content += "</body></html>";
+
+  // Descargar como Word (.doc)
+  const blob = new Blob([content], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = title.replace(/\s+/g, "_") + ".doc";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
