@@ -1,0 +1,53 @@
+Tengo un archivo preguntas.js con esta estructura
+
+const titulo_del_juego = "LOS MICROORGANISMOS";
+
+const preguntas = [
+  {
+    pregunta: "¿Qué son los microorganismos?",
+    respuesta: "Seres vivos unicelulares o algunos pluricelulares que solo pueden verse con microscopio",
+    palabrasclave: "vivos,unicelulares,pluricelulares,microscopio"
+  },
+  {
+    pregunta: "¿Cómo se les llama también a los microorganismos?",
+    respuesta: "Microbios",
+    palabrasclave: "microbios"
+
+  },
+  {
+    pregunta: "¿Cuántos tipos de microorganismos hay?",
+    respuesta: "Cinco: levaduras, mohos, protozoos, algas unicelulares, bacterias",
+    palabrasclave: "levaduras,mohos,protozoo,algas,bacterias"
+  },
+  {
+  pregunta: "¿Cómo se les llama a los microorganismos perjudiciales?",
+  respuesta: "Patógenos",
+  palabrasclave: "patogenos"
+},
+{
+pregunta:"Ejemplos de agentes patógenos",
+respuesta: "algunas bacterias:causan enfermedades como tuberculosis y cólera.Algunos protozoos:causan enfermedades como la malaria y la enfermedad del sueño.Algunos hongos:causan enfermedades como el pie de atleta y la candidiasis",
+palabrasclave: "bacterias,tuberculosis,colera,protozoos,malaria,sueño,atleta,candidiasis"
+
+},
+
+  {
+    pregunta: "¿Son perjudiciales todos los microorganismos?",
+    respuesta: "No, la mayoría son beneficiosos para el ser humano y el medioambiente.Como los microorganísmos productores y los descomponedores",
+    palabrasclave: "no,beneficiosos,productores,descomponedores"
+  },
+  {
+    pregunta: "¿Qué es un microorganismo productor y qué tipos lo son?",
+    respuesta: "Organismo que produce materia orgánica; los productores son algunas bacterias y las algas",
+    palabrasclave: "materia,organica,bacterias,algas"
+  },
+  {
+    pregunta: "¿Qué es un microorganismo descomponedor y qué tipos lo son?",
+    respuesta: "Organismo que transforma materia orgánica en inorgánica; los descomponedores son algunas bacterias, los mohos y las levaduras",
+    palabrasclave: "transforma,organica,inorganica,bacterias,mohos,levaduras"
+  }
+];
+quiero hacer otro archivo igual pero con las preguntas sobre el temario que te doy a continuación. Quiero que las preguntas sean en el mismo orden 
+del temario y que no se pierda ninguna información.Observa que las palabras clave van en minúsculas, sin acentos y que son las menos posibles para
+darnos pistas sobre la respuesta. Intenta acaparar todo el temario sin que falte informacion. las palabras clave deben estar contenidas en la respuesta, y no debes coger informacion de ningun otro temario
+AQUI TE DEJO EL TEMARIO
