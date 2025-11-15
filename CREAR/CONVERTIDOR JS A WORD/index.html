@@ -68,7 +68,7 @@ async function processFile(file) {
   let titleMatch = text.match(/titulo_del_juego\s*=\s*["'`](.*?)["'`]/);
   let title = titleMatch ? titleMatch[1] : "Documento";
 
-  // Extraer el array de preguntas
+  // Extraer array de preguntas
   let match = text.match(/preguntas\s*=\s*(\[[\s\S]*?\]);/);
   if (!match) {
     alert("No se encontró la variable 'preguntas'.");
@@ -83,8 +83,10 @@ async function processFile(file) {
     return;
   }
 
-  // Generar HTML compatible con Word
-  let content = `
+  /* ------------------------------------------
+     ARCHIVO 1: preguntas + respuestas  (.doc)
+  ------------------------------------------ */
+  let content1 = `
   <html><head><meta charset="UTF-8">
   <style>
     body { font-family: Calibri, sans-serif; padding: 20px; }
@@ -96,17 +98,46 @@ async function processFile(file) {
   `;
 
   preguntas.forEach(p => {
-    content += `<div class="pregunta">${p.pregunta}</div><div class="respuesta">${p.respuesta}</div>`;
+    content1 += `<div class="pregunta">${p.pregunta}</div><div class="respuesta">${p.respuesta}</div>`;
   });
 
-  content += "</body></html>";
+  content1 += "</body></html>";
 
-  // Descargar como Word (.doc)
-  const blob = new Blob([content], { type: "application/msword" });
+  downloadDoc(content1, title.replace(/\s+/g, "_") + ".doc");
+
+
+  /* ------------------------------------------
+     ARCHIVO 2: preguntas + palabras clave  (.doc)
+  ------------------------------------------ */
+  let content2 = `
+  <html><head><meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, sans-serif; padding: 20px; }
+    h1 { font-size: 18pt; }
+    .pregunta { font-weight: bold; text-decoration: underline; background: #bbdefb; display: inline-block; margin-top: 12px; }
+    .pistas { margin: 6px 0 0 15px; font-style: italic; }
+  </style></head><body>
+  <h1>Pistas - ${title}</h1>
+  `;
+
+  preguntas.forEach(p => {
+    content2 += `<div class="pregunta">${p.pregunta}</div><div class="pistas">${p.palabrasclave}</div>`;
+  });
+
+  content2 += "</body></html>";
+
+  downloadDoc(content2, "pistas_" + title.replace(/\s+/g, "_") + ".doc");
+}
+
+/* ------------------------------------------
+   Función para descargar archivo Word
+------------------------------------------- */
+function downloadDoc(html, filename) {
+  const blob = new Blob([html], { type: "application/msword" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = title.replace(/\s+/g, "_") + ".doc";
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 }
