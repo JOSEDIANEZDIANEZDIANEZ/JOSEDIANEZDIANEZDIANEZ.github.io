@@ -17,8 +17,8 @@
     background: var(--bg);
     color: #111;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center;       /* centra verticalmente */
+    justify-content: center;   /* centra horizontalmente */
   }
 
   #main-container {
@@ -26,7 +26,7 @@
     max-width: 900px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-start;   /* alinea el texto a la izquierda */
   }
 
   #startBtn {
@@ -40,7 +40,7 @@
     max-font-size: 22px;
     cursor: pointer;
     margin: 20px 0;
-    align-self: center;
+    align-self: center;        /* el botón centrado horizontalmente */
   }
 
   #titulo {
@@ -66,8 +66,8 @@
     word-wrap: break-word;
     margin-top: 20px;
     text-align: left;          
-    max-height: 60vh;
-    overflow-y: auto;
+    max-height: 60vh;           /* altura máxima para scroll */
+    overflow-y: auto;           /* scroll vertical */
     padding-right: 5px;
   }
 
@@ -104,25 +104,36 @@
 </div>
 
 <script>
-// Carga del archivo preguntas.js
-const script = document.createElement('script');
-script.src = 'preguntas.js';
-document.head.appendChild(script);
+// --------------------------
+// Preguntas y título
+// --------------------------
+const titulo_del_juego = "BACTERIAS";
 
+const preguntas = [
+  { pregunta: "CELULA PROCARIOTA", respuesta: "Son las que no tienen un nucleo diferenciado. Hay dos tipos de microorganismos\nArqueas, viven en sitios extremos\nBacterias,viven en todos sitios incluso en el ser humano, hay mas bacterias que células en el ser humano", palabrasclave: "nucleo,arqueas,bacterias" },
+  { pregunta: "BACTERIAS", respuesta: "Son células procariotas. Pueden ser malas y entonces se llaman patógenos o buenas como las que tenemos en el intestino que nos ayudan a hacer la digestión y entonces se llama microbiota.", palabrasclave: "procariotas,patogenos,microbiota" },
+  { pregunta: "ESTRUCTURA DE LA BACTERIA", respuesta: "Desde fuera hacía dentro, algunas tienen una endospora que es como un escudo, luego nos encontramos con la pared celular y a continuación con la membrana celular, atravesando estas tres capas puede haber unos tubitos llamado pili que sirven para la reproducción sexual, en el interior nos encontramos ribosomas pero lo que nunca tienen es una membrana nuclear.", palabrasclave: "endospora,pared,membrana,pili,ribosomas" },
+  { pregunta: "CLASIFICACIÓN DE BACTERIAS", respuesta: "Se clasifican según su forma en cuatro tipos:\n-Cocos; son esféricas\n-Bacilos: son alargadas\n-Vibrios: son curvadas\t\n-Espirilos: tienen forma espiral", palabrasclave: "cocos,esfericas,bacilos,alargadas,vibrios,curvadas,espirilos" },
+  { pregunta: "FUNCIÓN DE RELACIÓN DE LAS BACTERIAS", respuesta: "Se mueven durante cilios o flagelos y al moverse pueden formar colonias", palabrasclave: "cilios,flagelos,colonias" },
+  { pregunta: "FUNCIÓN DE REPRODUCCIÓN", respuesta: "Asexual por bipartición o sexual por conjugación utilizando el pili.", palabrasclave: "asexual,biparticion,sexual,conjugacion" },
+  { pregunta: "FUNCIÓN DE NUTRICIÓN", respuesta: "Pueden ser de dos tipos:\n-Autótrofas\n-Heterótrofas: Pueden ser de tres tipos: simbióticas, parásitas y saprófitas.", palabrasclave: "autotrofa,heterotrofa,simbiotica,parasita,saprofita" }
+];
+
+// --------------------------
+// Variables globales
+// --------------------------
 let indice = 0;
 let synthesis = window.speechSynthesis;
 let recognition = null;
 let palabrasBorrosas = [];
 let currentIndex = 0;
 
-script.onload = () => {
-    document.getElementById('titulo').textContent = titulo_del_juego || "JUEGO";
-};
+let totalPalabrasClave = preguntas.reduce((sum, p) => sum + p.palabrasclave.split(',').length, 0);
+let palabrasAcertadas = 0;
 
-// ----------------------------------------
-// Funciones JavaScript principales
-// ----------------------------------------
-
+// --------------------------
+// Funciones auxiliares
+// --------------------------
 function normalizar(str){
     if(!str) return '';
     return str.normalize("NFD")
@@ -140,12 +151,15 @@ function prepararTexto(preg){
     palabrasBorrosas = tokens.map(tok => {
         const bare = tok.trim();
         if(bare.length === 0)
-            return { text: tok, blurred:false, isWord:false };
+            return { text: tok, blurred:false, isWord:false, esClave:false };
+
+        const esClave = claves.includes(normalizar(bare));
 
         return {
             text: tok,
-            blurred: claves.includes(normalizar(bare)),
-            isWord: true
+            blurred: esClave,
+            isWord: true,
+            esClave: esClave
         };
     });
 }
@@ -175,10 +189,9 @@ function speakText(text, onend){
     synthesis.speak(u);
 }
 
-// ----------------------------------------
+// --------------------------
 // Reconocimiento de voz
-// ----------------------------------------
-
+// --------------------------
 function startRecognition(onResult, onError){
     if(recognition){ try{ recognition.abort(); }catch(e){} }
 
@@ -236,14 +249,12 @@ function startRecognition(onResult, onError){
     }
 }
 
-// ----------------------------------------
-// Manejo de respuestas y lectura
-// ----------------------------------------
-
+// --------------------------
+// Manejo de respuestas
+// --------------------------
 function manejarRespuestaUsuario(i, dicho){
     const span = document.getElementById("w"+i);
 
-    // Scroll automático a la palabra actual
     if(span) span.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     const correcto = normalizar(palabrasBorrosas[i].text);
@@ -251,12 +262,11 @@ function manejarRespuestaUsuario(i, dicho){
 
     try{ recognition && recognition.stop(); }catch(e){}
 
-    // Regex para aceptar la palabra repetida varias veces
-    const regex = new RegExp(`^(?:${correcto}\\s*)+$`);
-
-    if(regex.test(dichoNorm)){
+    if(dichoNorm === correcto){
         palabrasBorrosas[i].blurred = false;
         span.classList.remove('blur','wrong');
+
+        if(palabrasBorrosas[i].esClave) palabrasAcertadas++;
     } else {
         palabrasBorrosas[i].blurred = false;
         span.classList.remove('blur');
@@ -306,7 +316,15 @@ function leerSiguiente(){
     });
 }
 
+// --------------------------
+// Cargar preguntas
+// --------------------------
 function cargarPregunta(){
+    if(indice >= preguntas.length){
+        mostrarResultadoFinal();
+        return;
+    }
+
     const p = preguntas[indice];
     document.getElementById('pregunta').textContent = p.pregunta;
 
@@ -319,12 +337,39 @@ function cargarPregunta(){
 
 function cargarSiguiente(){
     indice++;
-    if(indice >= preguntas.length) indice = 0;
     cargarPregunta();
 }
 
+// --------------------------
+// Mostrar resultado final
+// --------------------------
+function mostrarResultadoFinal(){
+    const cont = document.getElementById('main-container');
+    cont.innerHTML = "";
+
+    const porcentaje = Math.round((palabrasAcertadas / totalPalabrasClave) * 100);
+
+    const resultado = document.createElement('div');
+    resultado.textContent = `HAS ACERTADO EL ${porcentaje}% DE LAS PREGUNTAS`;
+    resultado.style.fontSize = "8vw";
+    resultado.style.fontWeight = "700";
+    resultado.style.color = "#111";
+    resultado.style.background = "#fff";
+    resultado.style.textAlign = "center";
+    resultado.style.width = "100%";
+    resultado.style.height = "100vh";
+    resultado.style.display = "flex";
+    resultado.style.justifyContent = "center";
+    resultado.style.alignItems = "center";
+    cont.appendChild(resultado);
+}
+
+// --------------------------
+// Botón iniciar
+// --------------------------
 document.getElementById("startBtn").onclick = ()=>{
     document.getElementById("startBtn").style.display = "none";
+    document.getElementById('titulo').textContent = titulo_del_juego;
     cargarPregunta();
 };
 </script>
