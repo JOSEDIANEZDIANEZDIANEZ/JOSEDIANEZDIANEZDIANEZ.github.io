@@ -29,24 +29,33 @@
     align-items: flex-start;
   }
 
+  /* Botón empezar */
   #startBtn {
-    width: 25vw;
-    max-width: 150px;
-    aspect-ratio: 1;
+    width: 120px;
+    height: 120px;
+    min-width: 100px;
+    min-height: 100px;
     border-radius: 50%;
     background: var(--card);
     border: 4px solid #222;
-    font-size: 4vw;
-    max-font-size: 22px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     margin: 20px 0;
     align-self: center;
+    text-align: center;
+    padding: 10px;
+    box-sizing: border-box;
   }
 
   #titulo {
-    font-size: 6vw;
-    max-font-size: 32px;
-    margin-bottom: 10px;
+    display: block; /* se muestra solo al inicio */
+    text-align: center;
+    font-size: 2rem;
+    margin-top: 10px;
+    width: 100%;
   }
 
   #pregunta {
@@ -90,7 +99,11 @@
   @media(max-width: 400px) {
     #titulo { font-size: 8vw; }
     #pregunta, #contenedor { font-size: 5vw; }
-    #startBtn { width: 30vw; font-size: 5vw; }
+    #startBtn {
+      width: 100px;
+      height: 100px;
+      font-size: 1rem;
+    }
   }
 </style>
 </head>
@@ -102,13 +115,9 @@
   <div id="pregunta"></div>
   <div id="contenedor" aria-live="polite"></div>
 </div>
+
 <script src="preguntas.js"></script>
 <script>
-// --------------------------
-// Preguntas y título
-// --------------------------
-
-
 // --------------------------
 // Variables globales
 // --------------------------
@@ -251,9 +260,8 @@ function manejarRespuestaUsuario(i, dicho){
 
     try{ recognition && recognition.stop(); }catch(e){}
 
-    // Comparación flexible y manejo de palabra vacía
     let esCorrecto = false;
-    if(dichoNorm){ // solo verificar si se dijo algo
+    if(dichoNorm){
         esCorrecto = dichoNorm === correcto || correcto.includes(dichoNorm) || dichoNorm.includes(correcto);
     }
 
@@ -289,7 +297,7 @@ function leerSiguiente(){
     if(obj.isWord && obj.blurred){
         startRecognition(
             texto => manejarRespuestaUsuario(currentIndex, texto),
-            ()     => manejarRespuestaUsuario(currentIndex, null) // palabra no detectada → null
+            ()     => manejarRespuestaUsuario(currentIndex, null)
         );
         return;
     }
@@ -361,14 +369,16 @@ function mostrarResultadoFinal(){
 // --------------------------
 // Botón iniciar
 // --------------------------
-document.getElementById("startBtn").onclick = ()=>{
-    palabrasAcertadas = 0; // reinicia el conteo
-    indice = 0;             // reinicia las preguntas
+document.getElementById("startBtn").onclick = ()=> {
+    palabrasAcertadas = 0;
+    indice = 0;
+
+    // Ocultar el botón y el título al empezar
     document.getElementById("startBtn").style.display = "none";
-    document.getElementById('titulo').textContent = titulo_del_juego;
+    document.getElementById('titulo').style.display = "none";
+
     cargarPregunta();
 };
 </script>
 </body>
 </html>
-
