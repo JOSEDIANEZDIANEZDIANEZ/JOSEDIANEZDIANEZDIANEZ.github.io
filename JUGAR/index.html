@@ -1,42 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Juego</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #fff;
+  }
 
-                <!DOCTYPE html>
-                <html lang="es">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Índice de Carpetas</title>
-                    <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            background-color: #f4f4f4;
-                            margin: 0;
-                            padding: 0;
-                            text-align: center;
-                        }
-                        a { 
-                            display: block;
-                            text-decoration: none;
-                            background-color: #4a4a4a;
-                            color: white;
-                            padding: 15px;
-                            margin: 10px auto;
-                            width: 90%;
-                            max-width: 600px;
-                            border-radius: 8px;
-                            font-size: 18px;
-                            transition: background-color 0.3s;
-                        }
-                        a:hover {
-                            background-color: #5c5c5c;
-                        }
-                        ul {
-                            list-style: none;
-                            padding: 0;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <ul><li><a href="BIOLOGIA/index.html">BIOLOGIA</a></li><li><a href="OTROS/index.html">OTROS</a></li><li><a href="MATEMATICAS/index.html">MATEMATICAS</a></li><li><a href="NEMOTECNIA/index.html">NEMOTECNIA</a></li><li><a href="CULTURA/index.html">CULTURA</a></li><li><a href="GEOGRAFIA/index.html">GEOGRAFIA</a></li><li><a href="HISTORIA/index.html">HISTORIA</a></li><li><a href="IDIOMAS/index.html">IDIOMAS</a></li><li><a href="INFORMATICA/index.html">INFORMATICA</a></li><li><a href="LENGUA/index.html">LENGUA</a></li>
-                    </ul>
-                </body>
-                </html>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #main-container {
+    width: 90%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #startBtn {
+    width: 25vw;
+    max-width: 150px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--card);
+    border: 4px solid #222;
+    font-size: 4vw;
+    max-font-size: 22px;
+    cursor: pointer;
+    margin: 20px 0;
+    align-self: center;
+  }
+
+  #titulo {
+    font-size: 6vw;
+    max-font-size: 32px;
+    margin-bottom: 10px;
+  }
+
+  #pregunta {
+    font-weight: 700;
+    font-size: 4vw;
+    max-font-size: 28px;
+    margin-top: 10px;
+    padding-right: 5%;
+    text-align: left;          
+  }
+
+  #contenedor {
+    font-size: 4vw;
+    max-font-size: 28px;
+    line-height: 1.5;
+    width: 100%;
+    word-wrap: break-word;
+    margin-top: 20px;
+    text-align: left;          
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+
+  .blur {
+    filter: blur(6px);
+    color: transparent;
+    text-shadow: 0 0 8px rgba(0,0,0,0.35);
+  }
+
+  .wrong {
+    text-decoration: underline red;
+    color: inherit;
+    filter: none;
+  }
+
+  .word {
+    white-space: pre-wrap;
+  }
+
+  @media(max-width: 400px) {
+    #titulo { font-size: 8vw; }
+    #pregunta, #contenedor { font-size: 5vw; }
+    #startBtn { width: 30vw; font-size: 5vw; }
+  }
+</style>
+</head>
+<body>
+
+<div id="main-container">
+  <button id="startBtn" aria-label="Empezar juego">Empezar</button>
+  <h1 id="titulo"></h1>
+  <div id="pregunta"></div>
+  <div id="contenedor" aria-live="polite"></div>
+</div>
+
+<script>
+// --------------------------
+// Preguntas y título
+// --------------------------
+const titulo_del_juego = "BACTERIAS";
+
+const preguntas = [
+  { pregunta: "CELULA PROCARIOTA", respuesta: "Son las que no tienen un nucleo diferenciado. Hay dos tipos de microorganismos\nArqueas, viven en sitios extremos\nBacterias,viven en todos sitios incluso en el ser humano, hay mas bacterias que células en el ser humano", palabrasclave: "nucleo,arqueas,bacterias" },
+  { pregunta: "BACTERIAS", respuesta: "Son células procariotas. Pueden ser malas y entonces se llaman patógenos o buenas como las que tenemos en el intestino que nos ayudan a hacer la digestión y entonces se llama microbiota.", palabrasclave: "procariotas,patogenos,microbiota" },
+  { pregunta: "ESTRUCTURA DE LA BACTERIA", respuesta: "Desde fuera hacía dentro, algunas tienen una endospora que es como un escudo, luego nos encontramos con la pared celular y a continuación con la membrana celular, atravesando estas tres capas puede haber unos tubitos llamado pili que sirven para la reproducción sexual, en el interior nos encontramos ribosomas pero lo que nunca tienen es una membrana nuclear.", palabrasclave: "endospora,pared,membrana,pili,ribosomas" },
+  { pregunta: "CLASIFICACIÓN DE BACTERIAS", respuesta: "Se clasifican según su forma en cuatro tipos:\n-Cocos; son esféricas\n-Bacilos: son alargadas\n-Vibrios: son curvadas\t\n-Espirilos: tienen forma espiral", palabrasclave: "cocos,esfericas,bacilos,alargadas,vibrios,curvadas,espirilos" },
+  { pregunta: "FUNCIÓN DE RELACIÓN DE LAS BACTERIAS", respuesta: "Se mueven durante cilios o flagelos y al moverse pueden formar colonias", palabrasclave: "cilios,flagelos,colonias" },
+  { pregunta: "FUNCIÓN DE REPRODUCCIÓN", respuesta: "Asexual por bipartición o sexual por conjugación utilizando el pili.", palabrasclave: "asexual,biparticion,sexual,conjugacion" },
+  { pregunta: "FUNCIÓN DE NUTRICIÓN", respuesta: "Pueden ser de dos tipos:\n-Autótrofas\n-Heterótrofas: Pueden ser de tres tipos: simbióticas, parásitas y saprófitas.", palabrasclave: "autotrofa,heterotrofa,simbiotica,parasita,saprofita" }
+];
+
+// --------------------------
+// Variables globales
+// --------------------------
+let indice = 0;
+let synthesis = window.speechSynthesis;
+let recognition = null;
+let palabrasBorrosas = [];
+let currentIndex = 0;
+
+let totalPalabrasClave = preguntas.reduce((sum, p) => sum + p.palabrasclave.split(',').length, 0);
+let palabrasAcertadas = 0;
+
+// --------------------------
+// Funciones auxiliares
+// --------------------------
+function normalizar(str){
+    if(!str) return '';
+    return str.normalize("NFD")
+             .replace(/[\u0300-\u036f]/g,'')
+             .toLowerCase()
+             .replace(/[^a-z0-9ñ]/g,'');
+}
+
+function prepararTexto(preg){
+    const texto = preg.respuesta;
+    const claves = preg.palabrasclave.split(',').map(c => normalizar(c));
+
+    const tokens = texto.match(/\S+|\s+/g) || [];
+
+    palabrasBorrosas = tokens.map(tok => {
+        const bare = tok.trim();
+        if(bare.length === 0)
+            return { text: tok, blurred:false, isWord:false, esClave:false };
+
+        const esClave = claves.includes(normalizar(bare));
+
+        return {
+            text: tok,
+            blurred: esClave,
+            isWord: true,
+            esClave: esClave
+        };
+    });
+}
+
+function mostrarTexto(){
+    const cont = document.getElementById('contenedor');
+    cont.innerHTML = "";
+
+    palabrasBorrosas.forEach((obj,i)=>{
+        const span = document.createElement('span');
+        span.id = "w"+i;
+        span.className = "word";
+        span.textContent = obj.text;
+        if(obj.blurred) span.classList.add('blur');
+        cont.appendChild(span);
+    });
+}
+
+function speakText(text, onend){
+    if(!synthesis){ onend && onend(); return; }
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "es-ES";
+    u.rate = 1.0;
+    u.onend = onend;
+    synthesis.cancel();
+    synthesis.speak(u);
+}
+
+// --------------------------
+// Reconocimiento de voz
+// --------------------------
+function startRecognition(onResult, onError){
+    if(recognition){ try{ recognition.abort(); }catch(e){} }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){
+        onError && onError("no-sr");
+        return;
+    }
+
+    recognition = new SR();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    let responded = false;
+    let silenceTimer = null;
+
+    silenceTimer = setTimeout(()=>{ 
+        if(!responded){
+            responded = true;
+            try{ recognition.stop(); }catch(e){}
+            onError && onError("silencio");
+        }
+    }, 4000);
+
+    recognition.onresult = e => {
+        if(responded) return;
+        responded = true;
+        clearTimeout(silenceTimer);
+
+        const texto = (e.results[0][0].transcript || "").trim();
+        onResult && onResult(texto);
+    };
+
+    recognition.onerror = e => {
+        if(responded) return;
+        responded = true;
+        clearTimeout(silenceTimer);
+        onError && onError(e);
+    };
+
+    recognition.onend = () => {
+        if(!responded){
+            responded = true;
+            clearTimeout(silenceTimer);
+            onError && onError("no-sonido");
+        }
+    };
+
+    try{
+        recognition.start();
+    }catch(e){
+        clearTimeout(silenceTimer);
+        onError && onError(e);
+    }
+}
+
+// --------------------------
+// Manejo de respuestas
+// --------------------------
+function manejarRespuestaUsuario(i, dicho){
+    const span = document.getElementById("w"+i);
+    if(span) span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const correcto = normalizar(palabrasBorrosas[i].text);
+    const dichoNorm = normalizar(dicho);
+
+    try{ recognition && recognition.stop(); }catch(e){}
+
+    // Comparación flexible
+    const esCorrecto = dichoNorm === correcto || correcto.includes(dichoNorm) || dichoNorm.includes(correcto);
+
+    if(esCorrecto){
+        palabrasBorrosas[i].blurred = false;
+        span.classList.remove('blur','wrong');
+        if(palabrasBorrosas[i].esClave) palabrasAcertadas++;
+    } else {
+        palabrasBorrosas[i].blurred = false;
+        span.classList.remove('blur');
+        span.classList.add('wrong');
+    }
+
+    speakText(palabrasBorrosas[i].text, ()=>{
+        currentIndex++;
+        leerSiguiente();
+    });
+}
+
+function leerSiguiente(){
+    if(currentIndex >= palabrasBorrosas.length){
+        cargarSiguiente();
+        return;
+    }
+
+    const obj = palabrasBorrosas[currentIndex];
+
+    if(obj.isWord){
+        const span = document.getElementById("w"+currentIndex);
+        if(span) span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    if(obj.isWord && obj.blurred){
+        startRecognition(
+            texto => manejarRespuestaUsuario(currentIndex, texto),
+            ()     => manejarRespuestaUsuario(currentIndex, "")
+        );
+        return;
+    }
+
+    let textoParaLeer = "";
+
+    while(currentIndex < palabrasBorrosas.length){
+        const t = palabrasBorrosas[currentIndex];
+
+        if(t.isWord && t.blurred) break;
+
+        textoParaLeer += t.text;
+        currentIndex++;
+    }
+
+    speakText(textoParaLeer, ()=>{
+        leerSiguiente();
+    });
+}
+
+// --------------------------
+// Cargar preguntas
+// --------------------------
+function cargarPregunta(){
+    if(indice >= preguntas.length){
+        mostrarResultadoFinal();
+        return;
+    }
+
+    const p = preguntas[indice];
+    document.getElementById('pregunta').textContent = p.pregunta;
+
+    prepararTexto(p);
+    mostrarTexto();
+
+    currentIndex = 0;
+    leerSiguiente();
+}
+
+function cargarSiguiente(){
+    indice++;
+    cargarPregunta();
+}
+
+// --------------------------
+// Mostrar resultado final
+// --------------------------
+function mostrarResultadoFinal(){
+    const cont = document.getElementById('main-container');
+    cont.innerHTML = "";
+
+    const porcentaje = Math.round((palabrasAcertadas / totalPalabrasClave) * 100);
+
+    const resultado = document.createElement('div');
+    resultado.textContent = `HAS ACERTADO EL ${porcentaje}% DE LAS PREGUNTAS`;
+    resultado.style.fontSize = "8vw";
+    resultado.style.fontWeight = "700";
+    resultado.style.color = "#111";
+    resultado.style.background = "#fff";
+    resultado.style.textAlign = "center";
+    resultado.style.width = "100%";
+    resultado.style.height = "100vh";
+    resultado.style.display = "flex";
+    resultado.style.justifyContent = "center";
+    resultado.style.alignItems = "center";
+    cont.appendChild(resultado);
+}
+
+// --------------------------
+// Botón iniciar
+// --------------------------
+document.getElementById("startBtn").onclick = ()=>{
+    palabrasAcertadas = 0; // Reinicia el conteo
+    document.getElementById("startBtn").style.display = "none";
+    document.getElementById('titulo').textContent = titulo_del_juego;
+    cargarPregunta();
+};
+</script>
+</body>
+</html>
