@@ -261,8 +261,11 @@ function manejarRespuestaUsuario(i, dicho){
 
     try{ recognition && recognition.stop(); }catch(e){}
 
-    // Comparación flexible
-    const esCorrecto = dichoNorm === correcto || correcto.includes(dichoNorm) || dichoNorm.includes(correcto);
+    // Comparación flexible y manejo de palabra vacía
+    let esCorrecto = false;
+    if(dichoNorm){ // solo verificar si se dijo algo
+        esCorrecto = dichoNorm === correcto || correcto.includes(dichoNorm) || dichoNorm.includes(correcto);
+    }
 
     if(esCorrecto){
         palabrasBorrosas[i].blurred = false;
@@ -296,7 +299,7 @@ function leerSiguiente(){
     if(obj.isWord && obj.blurred){
         startRecognition(
             texto => manejarRespuestaUsuario(currentIndex, texto),
-            ()     => manejarRespuestaUsuario(currentIndex, "")
+            ()     => manejarRespuestaUsuario(currentIndex, null) // palabra no detectada → null
         );
         return;
     }
@@ -369,7 +372,8 @@ function mostrarResultadoFinal(){
 // Botón iniciar
 // --------------------------
 document.getElementById("startBtn").onclick = ()=>{
-    palabrasAcertadas = 0; // Reinicia el conteo
+    palabrasAcertadas = 0; // reinicia el conteo
+    indice = 0;             // reinicia las preguntas
     document.getElementById("startBtn").style.display = "none";
     document.getElementById('titulo').textContent = titulo_del_juego;
     cargarPregunta();
