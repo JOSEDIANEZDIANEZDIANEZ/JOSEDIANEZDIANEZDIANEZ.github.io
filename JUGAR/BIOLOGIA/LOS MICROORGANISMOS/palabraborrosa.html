@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Juego</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #fff;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #main-container {
+    width: 90%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Botón empezar */
+  #startBtn {
+    width: 420px;
+    height: 420px;
+    min-width: 100px;
+    min-height: 100px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 4px solid #222;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 20px 0;
+    align-self: center;
+    text-align: center;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  #titulo {
+    display: block;
+    text-align: center;
+    font-size: 2rem;
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  #pregunta {
+    font-weight: 700;
+    font-size: 4vw;
+    max-font-size: 28px;
+    margin-top: 10px;
+    padding-right: 5%;
+    text-align: left;          
+  }
+
+  #contenedor {
+    font-size: 4vw;
+    max-font-size: 28px;
+    line-height: 1.5;
+    width: 100%;
+    word-wrap: break-word;
+    margin-top: 20px;
+    text-align: left;          
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+
+  .blur {
+    filter: blur(6px);
+    color: transparent;
+    text-shadow: 0 0 8px rgba(0,0,0,0.35);
+  }
+
+  .wrong {
+    text-decoration: underline red;
+    color: inherit;
+    filter: none;
+  }
+
+  .word {
+    white-space: pre-wrap;
+  }
+
+  @media(max-width: 400px) {
+    #titulo { font-size: 8vw; }
+    #pregunta, #contenedor { font-size: 5vw; }
+    #startBtn {
+      width: 100px;
+      height: 100px;
+      font-size: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="main-container">
+  <button id="startBtn" aria-label="Empezar juego">Empezar</button>
+  <h1 id="titulo"></h1>
+  <div id="pregunta"></div>
+  <div id="contenedor" aria-live="polite"></div>
+</div>
+
+<script src="preguntas.js"></script>
+<script>
+// --------------------------
+// Variables globales
+// --------------------------
+let indice = 0;
+let synthesis = window.speechSynthesis;
+let recognition = null;
+let palabrasBorrosas = [];
+let currentIndex = 0;
+
+let totalPalabrasClave = preguntas.reduce((sum, p) => sum + p.palabrasclave.split(',').length, 0);
+let palabrasAcertadas = 0;
+
+// --------------------------
+// Funciones auxiliares
+// --------------------------
+function normalizar(str){
+    if(!str) return '';
+    return str.normalize("NFD")
+             .replace(/[\u0300-\u036f]/g,'')
+             .toLowerCase()
+             .replace(/[^a-z0-9ñ]/g,'');
+}
+
+function prepararTexto(preg){
+    const texto = preg.respuesta;
+    const claves = preg.palabrasclave.split(',').map(c => normalizar(c));
+
+    const tokens = texto.match(/\S+|\s+/g) || [];
+
+    palabrasBorrosas = tokens.map(tok => {
+        const bare = tok.trim();
+        if(bare.length === 0)
+            return { text: tok, blurred:false, isWord:false, esClave:false };
+
+        const esClave = claves.includes(normalizar(bare));
+
+        return {
+            text: tok,
+            blurred: esClave,
+            isWord: true,
+            esClave: esClave
+        };
+    });
+}
+
+function mostrarTexto(){
+    const cont = document.getElementById('contenedor');
+    cont.innerHTML = "";
+
+    palabrasBorrosas.forEach((obj,i)=>{
+        const span = document.createElement('span');
+        span.id = "w"+i;
+        span.className = "word";
+        span.textContent = obj.text;
+        if(obj.blurred) span.classList.add('blur');
+        cont.appendChild(span);
+    });
+}
+
+function speakText(text, onend){
+    if(!synthesis){ onend && onend(); return; }
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "es-ES";
+    u.rate = 1.0;
+    u.onend = onend;
+    synthesis.cancel();
+    synthesis.speak(u);
+}
+
+// --------------------------
+// Reconocimiento de voz
+// --------------------------
+function startRecognition(onResult, onError){
+    if(recognition){ try{ recognition.abort(); }catch(e){} }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){
+        onError && onError("no-sr");
+        return;
+    }
+
+    recognition = new SR();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    let responded = false;
+    let silenceTimer = null;
+
+    silenceTimer = setTimeout(()=>{ 
+        if(!responded){
+            responded = true;
+            try{ recognition.stop(); }catch(e){}
+            onError && onError("silencio");
+        }
+    }, 4000);
+
+    recognition.onresult = e => {
+        if(responded) return;
+        responded = true;
+        clearTimeout(silenceTimer);
+
+        const texto = (e.results[0][0].transcript || "").trim();
+        onResult && onResult(texto);
+    };
+
+    recognition.onerror = e => {
+        if(responded) return;
+        responded = true;
+        clearTimeout(silenceTimer);
+        onError && onError(e);
+    };
+
+    recognition.onend = () => {
+        if(!responded){
+            responded = true;
+            clearTimeout(silenceTimer);
+            onError && onError("no-sonido");
+        }
+    };
+
+    try{
+        recognition.start();
+    }catch(e){
+        clearTimeout(silenceTimer);
+        onError && onError(e);
+    }
+}
+
+// --------------------------
+// Manejo de respuestas
+// --------------------------
+function manejarRespuestaUsuario(i, dicho){
+    const span = document.getElementById("w"+i);
+    if(span) span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const correcto = normalizar(palabrasBorrosas[i].text);
+    const dichoNorm = normalizar(dicho);
+
+    try{ recognition && recognition.stop(); }catch(e){}
+
+    let esCorrecto = false;
+    if(dichoNorm){
+        esCorrecto = dichoNorm === correcto || correcto.includes(dichoNorm) || dichoNorm.includes(correcto);
+    }
+
+    if(esCorrecto){
+        palabrasBorrosas[i].blurred = false;
+        span.classList.remove('blur','wrong');
+        if(palabrasBorrosas[i].esClave) palabrasAcertadas++;
+    } else {
+        palabrasBorrosas[i].blurred = false;
+        span.classList.remove('blur');
+        span.classList.add('wrong');
+    }
+
+    speakText(palabrasBorrosas[i].text, ()=>{
+        currentIndex++;
+        leerSiguiente();
+    });
+}
+
+function leerSiguiente(){
+    if(currentIndex >= palabrasBorrosas.length){
+        cargarSiguiente();
+        return;
+    }
+
+    const obj = palabrasBorrosas[currentIndex];
+
+    if(obj.isWord){
+        const span = document.getElementById("w"+currentIndex);
+        if(span) span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    if(obj.isWord && obj.blurred){
+        startRecognition(
+            texto => manejarRespuestaUsuario(currentIndex, texto),
+            ()     => manejarRespuestaUsuario(currentIndex, null)
+        );
+        return;
+    }
+
+    let textoParaLeer = "";
+
+    while(currentIndex < palabrasBorrosas.length){
+        const t = palabrasBorrosas[currentIndex];
+
+        if(t.isWord && t.blurred) break;
+
+        textoParaLeer += t.text;
+        currentIndex++;
+    }
+
+    speakText(textoParaLeer, ()=>{
+        leerSiguiente();
+    });
+}
+
+// --------------------------
+// Cargar preguntas
+// --------------------------
+function cargarPregunta(){
+    if(indice >= preguntas.length){
+        mostrarResultadoFinal();
+        return;
+    }
+
+    const p = preguntas[indice];
+    document.getElementById('pregunta').textContent = p.pregunta;
+
+    // Leer la pregunta antes de preparar la respuesta
+    speakText(p.pregunta, () => {
+        prepararTexto(p);
+        mostrarTexto();
+
+        currentIndex = 0;
+        leerSiguiente();
+    });
+}
+
+function cargarSiguiente(){
+    indice++;
+    cargarPregunta();
+}
+
+// --------------------------
+// Mostrar resultado final
+// --------------------------
+function mostrarResultadoFinal(){
+    const cont = document.getElementById('main-container');
+    cont.innerHTML = "";
+
+    const porcentaje = Math.round((palabrasAcertadas / totalPalabrasClave) * 100);
+
+    const resultado = document.createElement('div');
+    resultado.textContent = `HAS ACERTADO EL ${porcentaje}% DE LAS PREGUNTAS`;
+    resultado.style.fontSize = "8vw";
+    resultado.style.fontWeight = "700";
+    resultado.style.color = "#111";
+    resultado.style.background = "#fff";
+    resultado.style.textAlign = "center";
+    resultado.style.width = "100%";
+    resultado.style.height = "100vh";
+    resultado.style.display = "flex";
+    resultado.style.justifyContent = "center";
+    resultado.style.alignItems = "center";
+    cont.appendChild(resultado);
+}
+
+// --------------------------
+// Botón iniciar
+// --------------------------
+document.getElementById("startBtn").onclick = ()=> {
+    palabrasAcertadas = 0;
+    indice = 0;
+
+    // Ocultar el botón y el título al empezar
+    document.getElementById("startBtn").style.display = "none";
+    document.getElementById('titulo').style.display = "none";
+
+    cargarPregunta();
+};
+</script>
+</body>
+</html>
