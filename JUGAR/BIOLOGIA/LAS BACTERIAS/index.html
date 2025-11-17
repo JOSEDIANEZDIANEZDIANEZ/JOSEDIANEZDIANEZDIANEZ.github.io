@@ -19,7 +19,7 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      grid-template-rows: repeat(3, 1fr);
       height: 100vh;
     }
 
@@ -43,11 +43,25 @@
       background-color: #2980b9;
     }
 
+    .btn-temario {
+      background-color: #f5f5dc; /* beige */
+      color: #5d4037; /* marrón */
+      border: 2px solid #5d4037;
+    }
+
+    .btn-temario:hover {
+      background-color: #e0e0c0;
+    }
+
     @media (max-width: 768px) {
       .grid {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, 1fr);
+        grid-template-rows: repeat(6, 1fr);
       }
+    }
+
+    .audio-player {
+      display: none;
     }
   </style>
 </head>
@@ -57,6 +71,10 @@
     <a class="btn" href="cartaaleatira.html">CARTAS ALEATORIAS</a>
     <a class="btn" href="palabraborrosa.html">PALABRAS BORROSAS</a>
     <a class="btn" href="pro.html">MODO PRO</a>
+    <a class="btn btn-temario" href="temario.pdf" download>TEMARIO DESCARGABLE</a>
+    <a class="btn btn-temario" href="#" onclick="document.getElementById('audio').play()">TEMARIO EN AUDIO</a>
   </div>
+
+  <audio id="audio" class="audio-player" src="temario.m4a" preload="auto"></audio>
 </body>
 </html>
