@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Botones Gigantes</title>
+
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
     }
 
     body, html {
@@ -23,6 +24,7 @@
       height: 100vh;
     }
 
+    /* BOTONES GENERALES */
     .btn {
       display: flex;
       justify-content: center;
@@ -37,16 +39,24 @@
       text-align: center;
       padding: 1rem;
       text-decoration: none;
+
+      /* CENTRADO PERFECTO DEL TEXTO */
+      line-height: 1.2;
     }
 
     .btn:hover {
       background-color: #2980b9;
     }
 
+    /* BOTONES BEIGE */
     .btn-temario {
-      background-color: #f5f5dc; /* beige */
-      color: #5d4037; /* marrón */
+      background-color: #f5f5dc;
+      color: #5d4037;
       border: 2px solid #5d4037;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .btn-temario:hover {
@@ -64,17 +74,98 @@
       display: none;
     }
   </style>
+
+  <!-- Cargamos las preguntas directamente -->
+  <script src="preguntas.js"></script>
+
 </head>
+
 <body>
   <div class="grid">
     <a class="btn" href="cartaordenada.html">CARTAS ORDENADAS</a>
     <a class="btn" href="cartaaleatira.html">CARTAS ALEATORIAS</a>
     <a class="btn" href="palabraborrosa.html">PALABRAS BORROSAS</a>
     <a class="btn" href="pro.html">MODO PRO</a>
-    <a class="btn btn-temario" href="temario.pdf" download>TEMARIO DESCARGABLE</a>
+
+    <!-- BOTÓN QUE GENERA LOS .DOC -->
+    <a class="btn btn-temario" href="#" onclick="generarTemario()">TEMARIO DESCARGABLE</a>
+
     <a class="btn btn-temario" href="#" onclick="document.getElementById('audio').play()">TEMARIO EN AUDIO</a>
   </div>
 
   <audio id="audio" class="audio-player" src="temario.m4a" preload="auto"></audio>
+
+<script>
+/* -------------------------------------------------------
+   GENERAR DOCUMENTOS USANDO preguntas.js CARGADO COMO SCRIPT
+-------------------------------------------------------- */
+function generarTemario() {
+
+  if (typeof preguntas === "undefined") {
+    alert("Error: preguntas.js no está cargado.");
+    return;
+  }
+
+  let title = typeof titulo_del_juego !== "undefined" ? titulo_del_juego : "Documento";
+
+  /* ---------------------------
+     ARCHIVO 1: Respuestas
+  ---------------------------- */
+  let content1 = `
+  <html><head><meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, sans-serif; padding: 20px; }
+    h1 { font-size: 18pt; }
+    .pregunta { font-weight: bold; text-decoration: underline; background: #fff59d; display: inline-block; margin-top: 12px; }
+    .respuesta { margin: 6px 0 0 8px; }
+  </style></head><body>
+  <h1>${title}</h1>`;
+
+  preguntas.forEach(p => {
+    content1 += `<div class="pregunta">${p.pregunta}</div>
+                 <div class="respuesta">${p.respuesta}</div>`;
+  });
+
+  content1 += "</body></html>";
+
+  downloadDoc(content1, title.replace(/\s+/g, "_") + ".doc");
+
+  /* ---------------------------
+     ARCHIVO 2: Pistas
+  ---------------------------- */
+  let content2 = `
+  <html><head><meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, sans-serif; padding: 20px; }
+    h1 { font-size: 18pt; }
+    .pregunta { font-weight: bold; text-decoration: underline; background: #bbdefb; display: inline-block; margin-top: 12px; }
+    .pistas { margin: 6px 0 0 15px; font-style: italic; }
+  </style></head><body>
+  <h1>Pistas - ${title}</h1>`;
+
+  preguntas.forEach(p => {
+    content2 += `<div class="pregunta">${p.pregunta}</div>
+                 <div class="pistas">${p.palabrasclave}</div>`;
+  });
+
+  content2 += "</body></html>";
+
+  downloadDoc(content2, "pistas_" + title.replace(/\s+/g, "_") + ".doc");
+}
+
+/* ------------------------------
+   DESCARGAR ARCHIVO WORD
+------------------------------ */
+function downloadDoc(html, filename) {
+  const blob = new Blob([html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+
 </body>
 </html>
