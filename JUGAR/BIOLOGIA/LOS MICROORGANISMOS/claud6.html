@@ -297,54 +297,12 @@
     
     <div class="container" id="app">
         <div class="centered">
-            <button id="btnInicio" class="fade-in">Fase 1: Lectura comprensiva</button>
+            <button id="btnInicio" class="fade-in">¡Comencémos!</button>
         </div>
     </div>
-
+<script src="preguntas.js"></script>
     <script>
-        const titulo_del_juego = "BACTERIAS";
-        const preguntas = [
-            {
-                pregunta: "¿Qué son los organismos procariotas?",
-                respuesta: "Son seres vivos unicelulares que pertenecen a los reinos de las Arqueas y las Bacterias. Viven en ambientes muy diversos. Las Arqueas en condiciones extremas (mucha sal, mucho calor). Las Bacterias en cualquier lugar, incluso dentro del cuerpo humano.",
-                palabrasclave: "unicelulares,arqueas,bacterias,extremas,humano"
-            },
-            {
-                pregunta: "¿Qué son las bacterias?",
-                respuesta: "Son células procariotas. En el cuerpo humano hay más bacterias que células propias, sobre todo en el intestino donde ayudan a la digestión, son lo que llamamos microbiota beneficiosa",
-                palabrasclave: "procariotas,intestino,digestion,microbiota"
-            },
-            {
-                pregunta: "Estructura de las bacterias",
-                respuesta: "Como células procariotas que son, comparten estructura y funciones. No tienen un núcleo definido y tienen una membrana plasmática (regula el paso de sustancias), pared celular (protege y da forma), ribosomas (fabrican proteínas) y algunas pueden producir lo que se llama una endospora, que es como un escudo de protección. También pueden tener pili que son unos tubitos que pueden tener en la membrana.",
-                palabrasclave: "definido,membrana,pared,ribosomas,endospora,pili"
-            },
-            {
-                pregunta: "Forma de las bacterias (células procariotas)",
-                respuesta: "Cocos: esféricos, Bacilos: alargados, Vibrios: curvados, Espirilos: en espiral",
-                palabrasclave: "cocos,esferico,bacilos,alargados,vibrios,curvados,espirilos,espiral"
-            },
-            {
-                pregunta: "Funciones vitales de las bacterias (funciones de las células procariotas)",
-                respuesta: "Son la función de relación, de reproducción y de nutrición",
-                palabrasclave: "relacion,reproduccion,nutricion"
-            },
-            {
-                pregunta: "Función de relación de las bacterias",
-                respuesta: "Las bacterias se relacionan con el entorno, respondiendo a estímulos sencillos como la luz o sustancias químicas. Al reaccionar pueden desplazarse, mediante dos estructuras, que son los Flagelos: largos y pocos o los Cilios: cortos y numerosos. Al desplazarse pueden formar colonias",
-                palabrasclave: "sencillos,flagelos,cilios,colonias"
-            },
-            {
-                pregunta: "Función de reproducción",
-                respuesta: "Las bacterias se pueden reproducir de dos formas. Por Bipartición (asexual): la célula se divide en dos tras duplicar su material genético o por Conjugación (sexual): intercambio de material genético mediante los pili",
-                palabrasclave: "biparticion,asexual,conjugacion,sexual,pili"
-            },
-            {
-                pregunta: "Función de nutrición",
-                respuesta: "Pueden ser autótrofos (fabrican y se alimentan de su propia materia orgánica) o heterótrofos (se alimentan de materia orgánica proveniente del exterior). Los heterótrofos pueden ser a su vez de tres tipos. Parásitos (usan materia orgánica de otro ser vivo, al que producen una enfermedad), Simbióticos (viven junto a otro ser vivo y ambos se benefician), Saprófitos (se alimentan de materia orgánica en descomposición, es decir de seres muertos)",
-                palabrasclave: "autotrofo,heterotrofo,parasitos,simbioticos,saprofitos"
-            }
-        ];
+        
 
         let indicePreguntaActual = 0;
         let faseActual = 1;

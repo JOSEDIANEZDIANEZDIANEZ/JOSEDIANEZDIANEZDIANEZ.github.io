@@ -1,52 +1,21 @@
-const titulo_del_juego = "LOS MICROORGANISMOS";
+const titulo_del_juego = "MICROORGANISMOS";
 
 const preguntas = [
-  {
-    pregunta: "¿Qué son los microorganismos?",
-    respuesta: "Seres vivos unicelulares o algunos pluricelulares que solo pueden verse con microscopio",
-    palabrasclave: "vivos,unicelulares,pluricelulares,microscopio"
-  },
-  {
-    pregunta: "¿Cómo se les llama también a los microorganismos?",
-    respuesta: "Microbios",
-    palabrasclave: "microbios"
+  { pregunta: "MICROORGANISMOS", respuesta: "Seres vivos. La mayoría unicelulares y algunos pluricelulares, que sólo son visibles al microscopio. También se les llama microbios.", palabrasclave: "vivos,unicelulares,pluricelulares,microscopio,microbios" },
+    { pregunta: "¿CUANDO SE DESCUBRIERON LOS MICROORGANISMOS?", respuesta: "Se descubrieron cuando empezaron a poder verse con la invención del microscopio, en el siglo XVII", palabrasclave: "microscopio,siglo" },
 
-  },
-  {
-    pregunta: "¿Cuántos tipos de microorganismos hay?",
-    respuesta: "Cinco: levaduras, mohos, protozoos, algas unicelulares, bacterias",
-    palabrasclave: "levaduras,mohos,protozoo,algas,bacterias"
-  },
-  {
-  pregunta: "¿Cómo se les llama a los microorganismos perjudiciales?",
-  respuesta: "Patógenos",
-  palabrasclave: "patogenos"
-},
-{
-  pregunta: "¿Cómo se les llama a las enfermedades causadas por los microorganísmos?",
-  respuesta: "Enfermedades infecciosas y el microorganismo que causa la enfermedad se llama agente patógeno",
-  palabrasclave: "infecciosas,agente"
-},
-{
-pregunta:"Ejemplos de agentes patógenos",
-respuesta: "algunas bacterias:causan enfermedades como tuberculosis y cólera.Algunos protozoos:causan enfermedades como la malaria y la enfermedad del sueño.Algunos hongos:causan enfermedades como el pie de atleta y la candidiasis",
-palabrasclave: "bacterias,tuberculosis,colera,protozoos,malaria,sueño,atleta,candidiasis"
+  { pregunta: "TIPOS DE MICROORGANISMOS", respuesta: "Son cinco. En orden alfabético: Algas unicelulares,bacterias,levaduras,mohos y protozoos", palabrasclave: "algas,bacterias,levaduras,mohos,protozoos" },
+  
+  { pregunta: "MICROORGANISMOS PATOGENOS", respuesta: "Son aquellos que producen enfermedades. Las enfermedades que producen se llaman enfermedades infecciosas y al microorganismo que causa la enfermedad se le llama agente patógeno.", palabrasclave: "infecciosas,patogeno" },
+  
+  { pregunta: "EJEMPLOS DE ENFERMEDADES CAUSADAS POR MICROORGANISMOS PATOGENOS", respuesta: "Tuberculosis y cólera, causados por bacterias\nMalaria y enfermedad del sueño, causados por protozoos\nPie de atleta y candidiasis, causado por hongos", palabrasclave: "tuberculosis,colera,malaria,sueño,atleta,candidiasis" },
+  
+  { pregunta: "MICROORGANISMOS BENEFICIOSOS", respuesta: "La mayoría de los microorganismos son beneficiosos, tanto para el ser humano, como para el medio ambiente.", palabrasclave: "humano,ambiente" },
+  
+  { pregunta: "TIPOS DE MICROORGANISMOS BENEFICIOSOS", respuesta: "Hay dos tipos:\n-Productores, producen materia orgánica(algunas bacterias y algas)\n-Descomponedores, descomponen materia orgánica en inorgánica(algunas bacterias, mohos y levaduras)", palabrasclave: "productores,bacterias,algas,descomponedores,mohos,levaduras" },
+    { pregunta: "MICROORGANISMOS Y MEDIO AMBIENTE", respuesta: "Son imprescindibles para la vida en la tierra, participan en el ciclo de la materia, es decir la transformación de materia orgánica en inorgánica y vuelta a transformarla en orgánica ejemplo descomponen cadáveres. Algunos producen oxígeno, como las cianobacterias que son bacterias fotosintéticas y las algas", palabrasclave: "ciclo,oxigeno,cianobacterias" },
 
-},
-
-  {
-    pregunta: "¿Son perjudiciales todos los microorganismos?",
-    respuesta: "No, la mayoría son beneficiosos para el ser humano y el medioambiente.Como los microorganísmos productores y los descomponedores",
-    palabrasclave: "no,beneficiosos,productores,descomponedores"
-  },
-  {
-    pregunta: "¿Qué es un microorganismo productor y qué tipos lo son?",
-    respuesta: "Organismo que produce materia orgánica; los productores son algunas bacterias y las algas",
-    palabrasclave: "materia,organica,bacterias,algas"
-  },
-  {
-    pregunta: "¿Qué es un microorganismo descomponedor y qué tipos lo son?",
-    respuesta: "Organismo que transforma materia orgánica en inorgánica; los descomponedores son algunas bacterias, los mohos y las levaduras",
-    palabrasclave: "transforma,organica,inorganica,bacterias,mohos,levaduras"
-  }
+  
+  { pregunta: "UTILIZACION BENEFICIOSA DE LOS MICROORGANISMOS PARA EL SER HUMANO", respuesta: "Vamos a dar tres ejemplos:\n-Elaboración de alimentos(algunas bacterias o levaduras)\n-Producción de fármacos(la penicilina del hongo penicillium)\n-Investigación(Escherichia coli)", palabrasclave: "alimentos,farmacos,investigacion" }
+ 
 ];
