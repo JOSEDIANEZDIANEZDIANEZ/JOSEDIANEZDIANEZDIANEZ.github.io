@@ -25,7 +25,7 @@
     margin-bottom: 20px;
     font-size: 18px;
   }
-  input[type="number"] {
+  input[type="text"] {
     width: 100px;
     padding: 5px;
     font-size: 16px;
@@ -110,7 +110,7 @@
       questions.push(q);
       const div = document.createElement('div');
       div.className = 'question';
-      div.innerHTML = `${q.text} <input type="number" id="q${i}">`;
+      div.innerHTML = `${q.text} <input type="text" id="q${i}" inputmode="decimal" pattern="[-+]?\d+">`;
       questionsDiv.appendChild(div);
     }
   }
@@ -118,8 +118,9 @@
   function checkAnswers() {
     let correct = 0;
     for (let i = 0; i < questionCount; i++) {
-      const userAnswer = parseInt(document.getElementById(`q${i}`).value);
-      if (userAnswer === questions[i].answer) correct++;
+      const val = document.getElementById(`q${i}`).value.trim();
+      const userAnswer = parseInt(val, 10);
+      if (!isNaN(userAnswer) && userAnswer === questions[i].answer) correct++;
     }
 
     if (correct === questionCount) {
