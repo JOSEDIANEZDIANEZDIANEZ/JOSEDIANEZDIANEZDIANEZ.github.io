@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Quiz de Sumas y Restas</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  #container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  .question {
+    margin-bottom: 20px;
+    font-size: 18px;
+  }
+  input[type="number"] {
+    width: 100px;
+    padding: 5px;
+    font-size: 16px;
+  }
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background: #4CAF50;
+    color: #fff;
+  }
+  #result {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .formula {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 25px;
+    }
+</style>
+</head>
+<body>
+<h1>SUMAS Y RESTAS DE NÚMEROS ENTEROS</h1>
+<div id="container">
+  <div id="questions"></div>
+  <button onclick="checkAnswers()">Comprobar</button>
+  <div id="result"></div>
+</div>
+<div>
+- Si tienen el mismo signo se suman los números y se pone ese signo</br>
+- Si tienen distinto signo se pone el signo del de la cifra mayor y se restan</br>
+- Si nos encontramos con paréntesis hacemos primero las operaciones de dentro</br>
+- Si hay un signo antes de un paréntesis utilizaremos las propiedades de multiplicación  
+<div class="formula">
+\[ +\cdot-=- \]
+</div>
+
+<div class="formula">
+\[ +\cdot+=+ \]
+</div>
+
+<div class="formula">
+\[ -\cdot-=+ \]
+</div>
+
+<div class="formula">
+\[ -3-(-5) = -3 - 1\cdot(-5) = -3 + 6 = +3 \]
+</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+  const questionCount = 10;
+  const questionsDiv = document.getElementById('questions');
+  const resultDiv = document.getElementById('result');
+
+  function getRandomInt() {
+    return Math.floor(Math.random() * 50) + 1;
+  }
+
+  function generateQuestion(i) {
+    let a = getRandomInt() * (Math.random() < 0.5 ? 1 : -1);
+    let b = getRandomInt() * (Math.random() < 0.5 ? 1 : -1);
+    const operators = ['+', '-'];
+    let operator = operators[Math.floor(Math.random() * operators.length)];
+    let text = `${a} ${operator} (${b > 0 ? '+' + b : b}) = `;
+    let answer = operator === '+' ? a + b : a - b;
+    return { text, answer };
+  }
+
+  let questions = [];
+
+  function loadQuestions() {
+    for (let i = 0; i < questionCount; i++) {
+      const q = generateQuestion(i);
+      questions.push(q);
+      const div = document.createElement('div');
+      div.className = 'question';
+      div.innerHTML = `${q.text} <input type="number" id="q${i}">`;
+      questionsDiv.appendChild(div);
+    }
+  }
+
+  function checkAnswers() {
+    let correct = 0;
+    for (let i = 0; i < questionCount; i++) {
+      const userAnswer = parseInt(document.getElementById(`q${i}`).value);
+      if (userAnswer === questions[i].answer) correct++;
+    }
+
+    if (correct === questionCount) {
+      resultDiv.textContent = "¡Enhorabuena! ¡Has ganado! 🎉";
+
+      // Crear el contenido del archivo
+      const now = new Date();
+      const fechaHora = now.toLocaleString(); 
+      const contenido = `El alumno ha terminado el juego suma de numeros enteros correctamente con el día de hoy y la hora: ${fechaHora}`;
+
+      // Crear archivo descargable
+      const blob = new Blob([contenido], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "pruebadevidasumanumerosenteros.txt";
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      resultDiv.textContent = `Has acertado ${correct} de ${questionCount}. ¡Sigue practicando!`;
+    }
+  }
+
+  loadQuestions();
+</script>
+</body>
+</html>
