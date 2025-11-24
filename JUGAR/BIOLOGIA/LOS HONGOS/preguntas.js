@@ -1,13 +1,10 @@
-const titulo_del_juego = "MICROORGANISMOS";
+const titulo_del_juego = "HONGOS";
 
 const preguntas = [
-  { pregunta: "MICROORGANISMOS", respuesta: "Seres vivos. La mayoría unicelulares y algunos pluricelulares, que sólo son visibles al microscopio. También se les llama microbios.", palabrasclave: "vivos,unicelulares,pluricelulares,microscopio,microbios" },
-  { pregunta: "¿CUANDO SE DESCUBRIERON LOS MICROORGANISMOS?", respuesta: "Se descubrieron cuando empezaron a poder verse con la invención del microscopio, en el siglo XVII", palabrasclave: "microscopio,siglo" },
-  { pregunta: "TIPOS DE MICROORGANISMOS", respuesta: "Son cinco: \nAlgas unicelulares\nbacterias\nlevaduras,mohos(ambos son hongos) y\nprotozoos", palabrasclave: "algas,bacterias,levaduras,mohos,protozoos" },
-  { pregunta: "MICROORGANISMOS PATOGENOS", respuesta: "Son aquellos que producen enfermedades. Las enfermedades que producen se llaman enfermedades infecciosas y al microorganismo que causa la enfermedad se le llama agente patógeno.", palabrasclave: "infecciosas,patogeno" },
-  { pregunta: "EJEMPLOS DE ENFERMEDADES CAUSADAS POR MICROORGANISMOS PATOGENOS", respuesta: "Tuberculosis y cólera, causados por bacterias\nMalaria y enfermedad del sueño, causados por protozoos\nPie de atleta y candidiasis, causado por hongos", palabrasclave: "tuberculosis,colera,malaria,sueño,atleta,candidiasis" },
-  { pregunta: "MICROORGANISMOS BENEFICIOSOS", respuesta: "La mayoría de los microorganismos son beneficiosos, tanto para el ser humano, como para el medio ambiente.", palabrasclave: "humano,ambiente" },
-  { pregunta: "TIPOS DE MICROORGANISMOS BENEFICIOSOS", respuesta: "Hay dos tipos:\n-Productores, producen materia orgánica(algunas bacterias y algas)\n-Descomponedores, descomponen materia orgánica en inorgánica(algunas bacterias, mohos y levaduras)", palabrasclave: "productores,bacterias,algas,descomponedores,mohos,levaduras" },
-  { pregunta: "MICROORGANISMOS Y MEDIO AMBIENTE", respuesta: "Son imprescindibles para la vida en la tierra, participan en el ciclo de la materia, es decir la transformación de materia orgánica en inorgánica y vuelta a transformarla en orgánica ejemplo descomponen cadáveres. Algunos producen oxígeno, como las cianobacterias que son bacterias fotosintéticas y las algas", palabrasclave: "ciclo,oxigeno,cianobacterias" },
-  { pregunta: "UTILIZACION BENEFICIOSA DE LOS MICROORGANISMOS PARA EL SER HUMANO", respuesta: "Vamos a dar tres ejemplos:\n-Elaboración de alimentos(algunas bacterias o levaduras)\n-Producción de fármacos(la penicilina del hongo penicillium)\n-Investigación(Escherichia coli)", palabrasclave: "alimentos,farmacos,investigacion" }
+  { pregunta: "HONGOS,DEFINICIÓN", respuesta: "Unicelulares o pluricelulares, células eucariotas, viven en sitios húmedos o en el agua. Pared celular con quitina. Los pluricelulares forman unas fibras llamadas hifas, que se trenzan para formar una estructura llamada micelio", palabrasclave: "unicelulares,pluricelulares,eucariotas,humedos,agua,quitina,hifas,micelio" },
+  { pregunta: "HONGOS,NUTRICIÓN", respuesta: "Heterótrofos", palabrasclave: "heterotrofos" },
+  { pregunta: "HONGOS, REPRODUCCIÓN", respuesta: "Los unicelulares(levaduras) por gemación.Los pluricelulares por esporulación mediante los esporangios", palabrasclave: "levaduras,gemacion,esporulacion,esporangios" },
+  { pregunta: "HONGOS, RELACION O MOVIMIENTO", respuesta: "Los unicelulares no tienen capacidad de movimiento propio. Pueden formar colonias.", palabrasclave: "no,colonias" },
+  { pregunta: "HONGOS, CLASIFICACIÓN", respuesta: "Levaduras: unicelulares, obtienen la energía por fermentación\nMohos: pluricelulares, tienen micelio y crecen sobre alimentos.\nSetas: pluricelulares, el micelio está enterrado, pero tienen una estructura externa(llamada también seta) para la reproducción", palabrasclave: "levaduras, moho,setas" },
+  { pregunta: "HONGOS, EJEMPLOS", respuesta: "Micorrizas: asociación simbionte entre hongo y plantas\nLíquenes: asociación simbionte entre hongo y alga", palabrasclave: "microrrizas,liquenes" }
 ];
