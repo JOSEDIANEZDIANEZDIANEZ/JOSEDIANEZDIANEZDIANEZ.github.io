@@ -7,5 +7,7 @@ const preguntas = [
   { pregunta: "¿QUÉ MICROORGANISMOS ESTÁN INCLUIDOS EN EL REINO MONERA?", respuesta: "Las bacterias y las arqueas", palabrasclave: "bacterias,arqueas" },
   { pregunta: "¿QUÉ MICROORGANISMOS PERTENECEN AL REINO PROTISTA?", respuesta: "Los protozoos y las algas", palabrasclave: "protozoos,algas" },
   { pregunta: "¿QUÉ MICROORGANISMOS PERTENECEN AL REINO FUNGI?", respuesta: "Los hongos", palabrasclave: "hongos" },
-  { pregunta: "LAS SETAS PERTENECEN A LOS HONGOS¿PERO SON MICROORGANISMOS?", respuesta: "No, porque son observables a simple vista", palabrasclave: "No" }
+  { pregunta: "LAS SETAS PERTENECEN A LOS HONGOS¿PERO SON MICROORGANISMOS?", respuesta: "No, porque son observables a simple vista", palabrasclave: "No" },
+  { pregunta: "¿QUE TRES TIPOS DE MICROORGANISMOS HETEROTROFOS EXISTEN?", respuesta: "1-Parásitos, enferman al organismo vivo, con el que conviven\n2-Simbióticos, tanto el organismo vivo con el que conviven como ellos se benefician, entré si\n3-Saprofitos, viven sobre organismos muertos en descomposición", palabrasclave: "parasitos,simbioticos,saprofitos" },
+  { pregunta: "¿CUAL ES LA PRINCIPAL DIFERENCIA ENTRE LA CÉLULA EUCORIOTA Y PROCARIOTA?", respuesta: "Qué la célula eucariota tiene una membrana nuclear dentro de la otra", palabrasclave: "membrana,nuclear" }
 ];
