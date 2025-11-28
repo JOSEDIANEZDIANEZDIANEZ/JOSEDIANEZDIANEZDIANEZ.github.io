@@ -18,5 +18,10 @@ const videos = [
     "title": "NUREMBER",
     "url": "https://www.youtube.com/watch?v=WvAy9C-bipY",
     "thumbnail": "https://img.youtube.com/vi/WvAy9C-bipY/0.jpg"
+  },
+  {
+    "title": "anuncios out",
+    "url": "https://www.youtube.com/watch?v=malUpUeZJBs",
+    "thumbnail": "https://img.youtube.com/vi/malUpUeZJBs/0.jpg"
   }
 ];
