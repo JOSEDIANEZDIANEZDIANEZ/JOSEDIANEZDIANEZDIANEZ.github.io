@@ -58,5 +58,11 @@ const videos = [
     "url": "https://youtu.be/wpyleP9OnAo?si=M99J81TuHidIeXkm",
     "thumbnail": "https://img.youtube.com/vi/wpyleP9OnAo/mqdefault.jpg",
     "tema": "DOCUMENTALES"
+  },
+  {
+    "title": "erase una vez los inventores capítulo unoérase una vez los inventores capítulo uno",
+    "url": "https://youtu.be/jdCmEthl0cY?si=5B0fKWzQOmPQUIhS",
+    "thumbnail": "https://img.youtube.com/vi/jdCmEthl0cY/mqdefault.jpg",
+    "tema": "PELICULAS COMPLETAS"
   }
 ];
