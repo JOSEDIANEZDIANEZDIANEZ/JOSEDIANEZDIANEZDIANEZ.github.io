@@ -64,5 +64,11 @@ const videos = [
     "url": "https://youtu.be/jdCmEthl0cY?si=5B0fKWzQOmPQUIhS",
     "thumbnail": "https://img.youtube.com/vi/jdCmEthl0cY/mqdefault.jpg",
     "tema": "PELICULAS COMPLETAS"
+  },
+  {
+    "title": "depredador",
+    "url": "https://youtu.be/xvykzwOZhY0?si=Ynxsk1IbIm61oVtC",
+    "thumbnail": "https://img.youtube.com/vi/xvykzwOZhY0/mqdefault.jpg",
+    "tema": "PELICULAS COMPLETAS"
   }
 ];
