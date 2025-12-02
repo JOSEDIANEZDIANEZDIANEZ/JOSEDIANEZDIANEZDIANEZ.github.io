@@ -70,5 +70,11 @@ const videos = [
     "url": "https://youtu.be/xvykzwOZhY0?si=Ynxsk1IbIm61oVtC",
     "thumbnail": "https://img.youtube.com/vi/xvykzwOZhY0/mqdefault.jpg",
     "tema": "PELICULAS COMPLETAS"
+  },
+  {
+    "title": "Sintetizador",
+    "url": "https://youtu.be/N71yoajGmX8?si=q8Tsocs85iPKZo9r",
+    "thumbnail": "https://img.youtube.com/vi/N71yoajGmX8/mqdefault.jpg",
+    "tema": "TECNICAS DE ESTUDIO"
   }
 ];
