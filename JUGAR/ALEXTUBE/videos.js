@@ -52,5 +52,11 @@ const videos = [
     "url": "https://youtu.be/dayfz0ff1Mc?si=HSlkIO20kzAFPY-U",
     "thumbnail": "https://img.youtube.com/vi/dayfz0ff1Mc/mqdefault.jpg",
     "tema": "TECNICAS DE ESTUDIO"
+  },
+  {
+    "title": "torres",
+    "url": "https://youtu.be/wpyleP9OnAo?si=M99J81TuHidIeXkm",
+    "thumbnail": "https://img.youtube.com/vi/wpyleP9OnAo/mqdefault.jpg",
+    "tema": "DOCUMENTALES"
   }
 ];
