@@ -536,16 +536,11 @@
       const urlBlob = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = urlBlob;
-      a.download = 'videos.js';
+      a.download = 'videos.txt';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(urlBlob);
-      
-      // Redirigir a GitHub después de un breve delay para asegurar la descarga
-      setTimeout(() => {
-        window.open('https://github.com/JOSEDIANEZDIANEZDIANEZ/JOSEDIANEZDIANEZDIANEZ.github.io', '_blank');
-      }, 500);
     }
   </script>
 </body>
