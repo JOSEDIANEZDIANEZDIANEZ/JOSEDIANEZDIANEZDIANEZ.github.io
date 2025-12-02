@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototipo de Página de Videos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Estilos para la pantalla de selección de tema */
+    .theme-selector-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .theme-selector-container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .theme-selector-container h1 {
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .theme-selector-container select {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      border: 2px solid #007bff;
+      border-radius: 8px;
+      background-color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    .theme-selector-container select:hover {
+      border-color: #0056b3;
+    }
+
+    .theme-selector-container button {
+      width: 100%;
+      padding: 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .theme-selector-container button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Estilos para la aplicación principal */
+    .main-app {
+      display: none;
+    }
+
+    .app-header {
+      background-color: #007bff;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-header h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .change-theme-btn {
+      padding: 8px 16px;
+      background-color: white;
+      color: #007bff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .change-theme-btn:hover {
+      background-color: #f0f0f0;
+    }
+
+    .search-container {
+      margin: 20px auto;
+      max-width: 600px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .search-box input {
+      padding: 10px 15px;
+      width: 400px;
+      font-size: 16px;
+      border: 2px solid #007bff;
+      border-radius: 4px;
+    }
+
+    .search-box button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .search-box button:hover {
+      background-color: #0056b3;
+    }
+
+    .miniaturas-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+      padding-bottom: 80px;
+    }
+
+    .miniatura {
+      margin: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s;
+    }
+
+    .miniatura:hover {
+      transform: scale(1.05);
+    }
+
+    .miniatura.highlight {
+      animation: highlight 1s ease-in-out;
+    }
+
+    @keyframes highlight {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px #007bff;
+      }
+    }
+
+    .miniatura img {
+      width: 200px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid transparent;
+    }
+
+    .miniatura.highlight img {
+      border-color: #007bff;
+    }
+
+    .miniatura-title {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+      max-width: 200px;
+    }
+
+    .developer-mode {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .developer-mode2 {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .new-video-url {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .new-video-url input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    .new-video-url select {
+      padding: 10px;
+      width: 324px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    .context-menu {
+      display: none;
+      position: absolute;
+      z-index: 1000;
+      background-color: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    .context-menu__item {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    .context-menu__item:hover {
+      background-color: #f0f0f0;
+    }
+
+    .search-results {
+      margin: 10px auto;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Pantalla de selección de tema -->
+  <div class="theme-selector-screen" id="themeSelectorScreen">
+    <div class="theme-selector-container">
+      <h1>Selecciona un Tema</h1>
+      <select id="themeSelect">
+        <option value="">-- Elige un tema --</option>
+        <option value="PELICULAS COMPLETAS">PELÍCULAS COMPLETAS</option>
+        <option value="DOCUMENTALES">DOCUMENTALES</option>
+        <option value="PROGRAMACION">PROGRAMACIÓN</option>
+        <option value="SALUD">SALUD</option>
+        <option value="CINE">SOBRE CINE</option>
+        <option value="TECNICAS DE ESTUDIO">TÉCNICAS DE ESTUDIO</option>
+        <option value="TRUCOS DEL HOGAR">TRUCOS DEL HOGAR</option>
+        <option value="COLEGIO">COLEGIO</option>
+        <option value="MOTIVACION">MOTIVACIÓN</option>
+        <option value="OTROS">OTROS</option>
+      </select>
+      <button onclick="seleccionarTema()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- Aplicación principal -->
+  <div class="main-app" id="mainApp">
+    <div class="app-header">
+      <h2 id="temaActual">Tema: </h2>
+      <button class="change-theme-btn" onclick="cambiarTema()">Cambiar Tema</button>
+    </div>
+
+    <div class="search-container">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar videos por título...">
+        <button onclick="buscarVideos()">🔍 Buscar</button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="new-video-url" id="newVideoUrl">
+      <input type="text" id="videoUrlInput" placeholder="Ingresa la URL del nuevo video">
+      <input type="text" id="videoTitleInput" placeholder="Ingresa el título del nuevo video">
+      <select id="videoThemeInput">
+        <option value="">-- Selecciona tema --</option>
+        <option value="PELICULAS COMPLETAS">PELÍCULAS COMPLETAS</option>
+        <option value="DOCUMENTALES">DOCUMENTALES</option>
+        <option value="PROGRAMACION">PROGRAMACIÓN</option>
+        <option value="SALUD">SALUD</option>
+        <option value="CINE">SOBRE CINE</option>
+        <option value="TECNICAS DE ESTUDIO">TÉCNICAS DE ESTUDIO</option>
+        <option value="TRUCOS DEL HOGAR">TRUCOS DEL HOGAR</option>
+        <option value="COLEGIO">COLEGIO</option>
+        <option value="MOTIVACION">MOTIVACIÓN</option>
+        <option value="OTROS">OTROS</option>
+      </select>
+      <button onclick="agregarVideoBtn()" style="margin-top: 10px; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Añadir Video</button>
+    </div>
+
+    <div class="miniaturas-container" id="miniaturasContainer"></div>
+
+    <div id="contextMenu" class="context-menu">
+      <div class="context-menu__item" onclick="eliminarMiniatura()">Eliminar</div>
+    </div>
+
+    <button class="developer-mode2" onclick="generarNuevaPagina()">Listado nuevo</button>
+    <button class="developer-mode" onclick="toggleDeveloperMode()">Añadir nuevo video</button>
+  </div>
+
+  <script src="videos.js"></script>
+   <script>
+
+    let temaSeleccionado = '';
+    let miniaturaSeleccionada = null;
+
+    function seleccionarTema() {
+      const select = document.getElementById('themeSelect');
+      if (select.value === '') {
+        alert('Por favor, selecciona un tema');
+        return;
+      }
+      temaSeleccionado = select.value;
+      document.getElementById('themeSelectorScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('temaActual').textContent = 'Tema: ' + temaSeleccionado;
+      cargarVideos();
+    }
+
+    function cambiarTema() {
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('themeSelectorScreen').style.display = 'flex';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchResults').textContent = '';
+    }
+
+    function abrirVideo(url) {
+      const width = 600;
+      const height = 400;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+      window.open(url, 'Video de YouTube', `width=${width}, height=${height}, left=${left}, top=${top}`);
+    }
+
+    function toggleDeveloperMode() {
+      const newVideoUrl = document.getElementById('newVideoUrl');
+      if (newVideoUrl.style.display === 'none' || newVideoUrl.style.display === '') {
+        newVideoUrl.style.display = 'block';
+      } else {
+        newVideoUrl.style.display = 'none';
+      }
+    }
+
+    function obtenerMiniatura(url) {
+      let videoId = '';
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+      } else if (url.includes('youtube.com/watch')) {
+        videoId = url.split('v=')[1].split('&')[0];
+      } else if (url.includes('youtube.com/shorts/') || url.includes('youtube.com/shorts/')) {
+        videoId = url.split('/shorts/')[1].split('?')[0];
+      }
+      return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+
+    function agregarVideoBtn() {
+      const url = document.getElementById('videoUrlInput').value;
+      const title = document.getElementById('videoTitleInput').value;
+      const theme = document.getElementById('videoThemeInput').value;
+      
+      if (url.trim() === '' || title.trim() === '' || theme.trim() === '') {
+        alert('Por favor, completa todos los campos');
+        return;
+      }
+
+      const thumbnailUrl = obtenerMiniatura(url);
+      videos.push({ title, url, thumbnail: thumbnailUrl, tema: theme });
+
+      if (theme === temaSeleccionado) {
+        const newMiniatura = crearMiniatura({ title, url, thumbnail: thumbnailUrl, tema: theme });
+        const miniaturasContainer = document.getElementById('miniaturasContainer');
+        miniaturasContainer.appendChild(newMiniatura);
+      }
+
+      document.getElementById('videoUrlInput').value = '';
+      document.getElementById('videoTitleInput').value = '';
+      document.getElementById('videoThemeInput').value = '';
+      toggleDeveloperMode();
+    }
+
+    function crearMiniatura(video) {
+      const newMiniatura = document.createElement('div');
+      newMiniatura.className = 'miniatura';
+      newMiniatura.setAttribute('data-title', video.title);
+      newMiniatura.setAttribute('data-url', video.url);
+      newMiniatura.setAttribute('data-tema', video.tema);
+      newMiniatura.onclick = () => abrirVideo(video.url);
+      newMiniatura.oncontextmenu = (event) => mostrarMenuContextual(event, newMiniatura);
+
+      const newImage = document.createElement('img');
+      newImage.src = video.thumbnail || obtenerMiniatura(video.url);
+      newImage.alt = 'Miniatura del video';
+
+      const newTitle = document.createElement('div');
+      newTitle.className = 'miniatura-title';
+      newTitle.textContent = video.title;
+
+      newMiniatura.appendChild(newImage);
+      newMiniatura.appendChild(newTitle);
+
+      return newMiniatura;
+    }
+
+    function buscarVideos() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const miniaturas = document.querySelectorAll('.miniatura');
+      const searchResults = document.getElementById('searchResults');
+      let foundCount = 0;
+      let firstMatch = null;
+
+      miniaturas.forEach(miniatura => {
+        miniatura.classList.remove('highlight');
+      });
+
+      if (searchTerm.trim() === '') {
+        miniaturas.forEach(miniatura => {
+          miniatura.style.display = 'block';
+        });
+        searchResults.textContent = '';
+        return;
+      }
+
+      miniaturas.forEach(miniatura => {
+        const title = miniatura.getAttribute('data-title').toLowerCase();
+        if (title.includes(searchTerm)) {
+          miniatura.style.display = 'block';
+          miniatura.classList.add('highlight');
+          foundCount++;
+          if (!firstMatch) {
+            firstMatch = miniatura;
+          }
+        } else {
+          miniatura.style.display = 'none';
+        }
+      });
+
+      if (foundCount > 0) {
+        searchResults.textContent = `Se encontraron ${foundCount} resultado(s)`;
+        if (firstMatch) {
+          firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        searchResults.textContent = 'No se encontraron resultados';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('searchInput').addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+          buscarVideos();
+        }
+      });
+    });
+
+    function mostrarMenuContextual(event, miniatura) {
+      event.preventDefault();
+      miniaturaSeleccionada = miniatura;
+      const contextMenu = document.getElementById('contextMenu');
+      contextMenu.style.top = `${event.clientY}px`;
+      contextMenu.style.left = `${event.clientX}px`;
+      contextMenu.style.display = 'block';
+      document.addEventListener('click', ocultarMenuContextual);
+    }
+
+    function ocultarMenuContextual() {
+      const contextMenu = document.getElementById('contextMenu');
+      contextMenu.style.display = 'none';
+      document.removeEventListener('click', ocultarMenuContextual);
+    }
+
+    function eliminarMiniatura() {
+      if (miniaturaSeleccionada) {
+        const url = miniaturaSeleccionada.getAttribute('data-url');
+        const index = videos.findIndex(v => v.url === url);
+        if (index > -1) {
+          videos.splice(index, 1);
+        }
+        miniaturaSeleccionada.remove();
+        miniaturaSeleccionada = null;
+        ocultarMenuContextual();
+      }
+    }
+
+    function cargarVideos() {
+      const miniaturasContainer = document.getElementById('miniaturasContainer');
+      miniaturasContainer.innerHTML = '';
+
+      const videosFiltrados = videos.filter(video => video.tema === temaSeleccionado);
+
+      videosFiltrados.forEach(video => {
+        const newMiniatura = crearMiniatura(video);
+        miniaturasContainer.appendChild(newMiniatura);
+      });
+
+      if (videosFiltrados.length === 0) {
+        miniaturasContainer.innerHTML = '<p style="color: #666; margin-top: 50px;">No hay videos disponibles para este tema</p>';
+      }
+    }
+
+    function generarNuevaPagina() {
+      const contenido = `const videos = ${JSON.stringify(videos, null, 2)};`;
+      const blob = new Blob([contenido], { type: 'application/javascript' });
+      const urlBlob = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = 'videos.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(urlBlob);
+    }
+  </script>
+</body>
+
+</html>
