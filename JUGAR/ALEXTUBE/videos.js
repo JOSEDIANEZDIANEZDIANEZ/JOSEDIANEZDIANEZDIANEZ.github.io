@@ -46,5 +46,11 @@ const videos = [
     "url": "https://www.youtube.com/watch?v=6JBiFcMDefc",
     "thumbnail": "https://img.youtube.com/vi/6JBiFcMDefc/mqdefault.jpg",
     "tema": "PELICULAS COMPLETAS"
+  },
+  {
+    "title": "Restar",
+    "url": "https://youtu.be/dayfz0ff1Mc?si=HSlkIO20kzAFPY-U",
+    "thumbnail": "https://img.youtube.com/vi/dayfz0ff1Mc/mqdefault.jpg",
+    "tema": "TECNICAS DE ESTUDIO"
   }
 ];
