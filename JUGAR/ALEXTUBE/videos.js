@@ -46,5 +46,11 @@ const videos = [
     "url": "https://www.youtube.com/watch?v=6JBiFcMDefc",
     "thumbnail": "https://img.youtube.com/vi/6JBiFcMDefc/mqdefault.jpg",
     "tema": "PELICULAS COMPLETAS"
+  },
+  {
+    "title": "SUMAR NUMEROS ENTEROS",
+    "url": "https://www.youtube.com/watch?v=Rs6Qyei7XY0&t=274s",
+    "thumbnail": "https://img.youtube.com/vi/Rs6Qyei7XY0/mqdefault.jpg",
+    "tema": "TECNICAS DE ESTUDIO"
   }
 ];
