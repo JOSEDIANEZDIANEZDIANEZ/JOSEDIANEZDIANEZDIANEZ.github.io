@@ -76,5 +76,11 @@ const videos = [
     "url": "https://youtu.be/N71yoajGmX8?si=q8Tsocs85iPKZo9r",
     "thumbnail": "https://img.youtube.com/vi/N71yoajGmX8/mqdefault.jpg",
     "tema": "TECNICAS DE ESTUDIO"
+  },
+  {
+    "title": "metas pequeñas",
+    "url": "https://youtu.be/a0zu3eFHqFI?si=dIk7pVqE8sQf8gud",
+    "thumbnail": "https://img.youtube.com/vi/a0zu3eFHqFI/mqdefault.jpg",
+    "tema": "MOTIVACION"
   }
 ];
