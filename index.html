@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprender Jugando</title>
+    
+    <!-- Icono para navegadores (favicon) -->
+    <link rel="icon" type="image/png" href="rubik-icon.png">
+    
+    <!-- Iconos para Android/Chrome -->
+    <link rel="icon" sizes="192x192" href="rubik-icon-192.png">
+    <link rel="icon" sizes="512x512" href="rubik-icon-512.png">
+    
+    <!-- Apple Touch Icon (iOS) -->
+    <link rel="apple-touch-icon" href="rubik-icon-180.png">
+    
+    <!-- Para Windows/Microsoft -->
+    <meta name="msapplication-TileImage" content="rubik-icon-144.png">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    
+    <!-- Web App Manifest (Android) -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Theme color para Android -->
+    <meta name="theme-color" content="#ffffff">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+        .boton {
+            width: 300px;
+            height: 300px;
+            margin: 10px;
+            font-size: 35px;
+            border: 2px solid lightgray;
+            background-color: white;
+            color: darkgray;
+            border-radius: 50%;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        @media screen and (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="boton" href="JUGAR/">JUGAR</a>
+        <a class="boton" href="CREAR/">CREAR</a>
+    </div>
+</body>
+</html>
