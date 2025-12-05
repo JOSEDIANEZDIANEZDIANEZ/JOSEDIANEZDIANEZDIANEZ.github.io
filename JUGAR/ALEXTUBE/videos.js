@@ -82,5 +82,11 @@ const videos = [
     "url": "https://youtu.be/a0zu3eFHqFI?si=dIk7pVqE8sQf8gud",
     "thumbnail": "https://img.youtube.com/vi/a0zu3eFHqFI/mqdefault.jpg",
     "tema": "MOTIVACION"
+  },
+  {
+    "title": "Ejercicios para la miopía",
+    "url": "https://youtu.be/1EatskI5Ds4?si=wZ43Zwfae9rWjGSU",
+    "thumbnail": "https://img.youtube.com/vi/1EatskI5Ds4/mqdefault.jpg",
+    "tema": "SALUD"
   }
 ];
