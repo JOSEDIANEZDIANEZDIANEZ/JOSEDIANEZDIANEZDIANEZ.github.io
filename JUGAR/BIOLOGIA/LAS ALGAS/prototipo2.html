@@ -523,12 +523,14 @@
                     </div>
                 `;
                 
-                document.getElementById('btnTerminado').addEventListener('click', verificarRespuesta);
-                iniciarReconocimientoVoz();
+                const btnTerminado = document.getElementById('btnTerminado');
+                btnTerminado.addEventListener('click', verificarRespuesta);
+                
+                iniciarReconocimientoVoz(btnTerminado);
             });
         }
 
-        function iniciarReconocimientoVoz() {
+        function iniciarReconocimientoVoz(btnTerminado) {
             const voiceButton = document.getElementById('voiceButton');
             const textarea = document.getElementById('respuestaUsuario');
             const voiceStatus = document.getElementById('voiceStatus');
@@ -547,12 +549,13 @@
             recognition.interimResults = true;
 
             let isRecording = false;
-            let shouldRestart = false;
+            let shouldKeepRecording = false;
+            let finalTranscript = '';
 
             voiceButton.addEventListener('click', () => {
                 if (!isRecording) {
                     finalTranscript = textarea.value ? textarea.value + ' ' : '';
-                    shouldRestart = true;
+                    shouldKeepRecording = true;
                     try {
                         recognition.start();
                         isRecording = true;
@@ -562,15 +565,17 @@
                         console.error('Error al iniciar:', e);
                     }
                 } else {
-                    shouldRestart = false;
-                    recognition.stop();
+                    shouldKeepRecording = false;
+                    try {
+                        recognition.stop();
+                    } catch (e) {
+                        console.error('Error al detener:', e);
+                    }
                     isRecording = false;
                     voiceButton.classList.remove('recording');
                     voiceStatus.textContent = '';
                 }
             });
-
-            let finalTranscript = '';
 
             recognition.onresult = (event) => {
                 let interimTranscript = '';
@@ -589,25 +594,29 @@
 
             recognition.onerror = (event) => {
                 console.error('Error de reconocimiento:', event.error);
-                if (event.error === 'no-speech' || event.error === 'aborted') {
-                    // Ignorar estos errores y reintentar
+                if (event.error === 'no-speech' && shouldKeepRecording) {
+                    // Ignorar error de no-speech y continuar
+                    return;
+                }
+                if (event.error === 'aborted') {
+                    // Ignorar error aborted
                     return;
                 }
                 isRecording = false;
                 voiceButton.classList.remove('recording');
                 voiceStatus.textContent = 'Error: ' + event.error;
-                shouldRestart = false;
+                shouldKeepRecording = false;
             };
 
             recognition.onend = () => {
-                // Reiniciar automáticamente en Android si el usuario no lo detuvo manualmente
-                if (shouldRestart && isRecording) {
+                // Reiniciar automáticamente si shouldKeepRecording sigue activo
+                if (shouldKeepRecording) {
                     try {
                         setTimeout(() => {
-                            if (shouldRestart) {
+                            if (shouldKeepRecording) {
                                 recognition.start();
                             }
-                        }, 100);
+                        }, 300);
                     } catch (e) {
                         console.error('Error al reiniciar:', e);
                         isRecording = false;
@@ -622,6 +631,22 @@
                     }
                 }
             };
+
+            // Detener el reconocimiento cuando se presiona "YA HE TERMINADO"
+            const originalClick = btnTerminado.onclick;
+            btnTerminado.addEventListener('click', () => {
+                shouldKeepRecording = false;
+                if (isRecording) {
+                    try {
+                        recognition.stop();
+                    } catch (e) {
+                        console.error('Error al detener:', e);
+                    }
+                    isRecording = false;
+                    voiceButton.classList.remove('recording');
+                    voiceStatus.textContent = '';
+                }
+            }, { once: false });
         }
 
         function verificarRespuesta() {
