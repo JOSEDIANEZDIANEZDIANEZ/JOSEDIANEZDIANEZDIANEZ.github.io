@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalla Constitucional - Título Preliminar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 95%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* Pantalla de bienvenida */
+        .welcome-screen {
+            text-align: center;
+        }
+
+        .welcome-screen h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .welcome-screen p {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Pantalla de artículo */
+        .article-screen {
+            display: none;
+        }
+
+        .article-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+
+        .article-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .article-box p {
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 1.5em;
+            color: #f5576c;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        /* Pantalla de preguntas */
+        .quiz-screen {
+            display: none;
+        }
+
+        .player-info {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .player-info h3 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .fuel-bar {
+            background: white;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .fuel-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .question-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .question-box h4 {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.05em;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .option.correct {
+            background: #84fab0;
+            border-color: #84fab0;
+            animation: pulse 0.5s;
+        }
+
+        .option.incorrect {
+            background: #f5576c;
+            color: white;
+            border-color: #f5576c;
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Pantalla de carrera */
+        .battle-screen {
+            display: none;
+        }
+
+        .race-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-radius: 10px;
+        }
+
+        .race-info h3 {
+            color: #2d3436;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .racetrack {
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 30%, #90EE90 30%, #7CB342 100%);
+            min-height: 400px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            padding: 40px 20px;
+        }
+
+        .finish-line {
+            position: absolute;
+            right: 30px;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                #fff 10px,
+                #fff 20px
+            );
+            border: 3px solid #333;
+        }
+
+        .race-lane {
+            position: relative;
+            height: 120px;
+            margin-bottom: 40px;
+            border-bottom: 3px dashed #999;
+        }
+
+        .lane-label {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .horse.blue {
+            color: #4A90E2;
+        }
+
+        .horse.red {
+            color: #E74C3C;
+        }
+
+        .runner {
+            display: inline-block;
+            transform: scaleX(-1);
+            animation: running 0.5s ease-in-out infinite;
+        }
+
+        @keyframes running {
+            0% { 
+                transform: scaleX(-1) translateY(0px) rotate(0deg); 
+            }
+            25% { 
+                transform: scaleX(-1) translateY(-5px) rotate(-3deg); 
+            }
+            50% { 
+                transform: scaleX(-1) translateY(0px) rotate(0deg); 
+            }
+            75% { 
+                transform: scaleX(-1) translateY(-5px) rotate(3deg); 
+            }
+            100% { 
+                transform: scaleX(-1) translateY(0px) rotate(0deg); 
+            }
+        }
+
+        .horse.blue .runner {
+            animation-delay: 0s;
+        }
+
+        .horse.red .runner {
+            animation-delay: 0.25s;
+        }
+
+        /* Animación adicional cuando están en movimiento */
+        .horse {
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3em;
+            transition: left 1.5s ease-out;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .horse.moving .runner {
+            animation: running-fast 0.3s ease-in-out infinite;
+        }
+
+        @keyframes running-fast {
+            0% { 
+                transform: scaleX(-1) translateY(0px) rotate(0deg) scale(1); 
+            }
+            25% { 
+                transform: scaleX(-1) translateY(-8px) rotate(-5deg) scale(1.05); 
+            }
+            50% { 
+                transform: scaleX(-1) translateY(0px) rotate(0deg) scale(1); 
+            }
+            75% { 
+                transform: scaleX(-1) translateY(-8px) rotate(5deg) scale(1.05); 
+            }
+            100% { 
+                transform: scaleX(-1) translateY(0px) rotate(0deg) scale(1); 
+            }
+        }
+
+        .distance-marker {
+            position: absolute;
+            left: 60px;
+            bottom: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #333;
+            background: white;
+            padding: 2px 8px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .progress-bars {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .progress-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .progress-label.blue {
+            color: #4A90E2;
+        }
+
+        .progress-label.red {
+            color: #E74C3C;
+        }
+
+        .progress-bar {
+            background: #ddd;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 1.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .progress-fill.blue {
+            background: linear-gradient(90deg, #4A90E2 0%, #5DADE2 100%);
+        }
+
+        .progress-fill.red {
+            background: linear-gradient(90deg, #E74C3C 0%, #EC7063 100%);
+        }
+
+        .race-button {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .celebration {
+            position: absolute;
+            font-size: 2em;
+            animation: celebrate 2s infinite;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(10deg); }
+            75% { transform: translateY(-20px) rotate(-10deg); }
+        }
+
+        .winner-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .winner-screen h2 {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .trophy {
+            font-size: 5em;
+            margin: 20px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ Batalla Constitucional ⚔️</h1>
+            <p>Título Preliminar de la Constitución Española</p>
+        </div>
+
+        <div class="content">
+            <!-- Pantalla de bienvenida -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <h2>🎮 ¡Bienvenidos a la Gran Carrera Constitucional!</h2>
+                <p>
+                    Prepárense para una emocionante carrera en 9 etapas:<br><br>
+                    <strong>📚 Cada Etapa:</strong> Estudiarás uno de los 9 artículos del Título Preliminar.<br>
+                    Ambos jugadores responderán 5 preguntas sobre ese artículo.<br><br>
+                    <strong>🏃 La Carrera:</strong> Después de cada etapa, verás cómo avanzan los corredores:<br>
+                    • <span style="color: #4A90E2;">Corredor Azul 🏃</span> (Jugador 1)<br>
+                    • <span style="color: #E74C3C;">Corredora Roja 🏃‍♀️</span> (Jugador 2)<br><br>
+                    <strong>🏆 Reglas:</strong><br>
+                    • Cada respuesta correcta = tu corredor avanza 20 metros<br>
+                    • Máximo por etapa = 100 metros (5 aciertos)<br>
+                    • <strong>¡El primero en completar las 9 etapas GANA!</strong><br><br>
+                    ¡Que gane el mejor atleta constitucionalista! 🏃‍♀️💨
+                </p>
+                <button class="btn" onclick="startGame()">¡Comenzar Batalla!</button>
+            </div>
+
+            <!-- Pantalla de artículo -->
+            <div class="article-screen" id="articleScreen">
+                <div class="article-box" id="articleBox"></div>
+                <div class="timer" id="articleTimer">Tiempo para leer: <span id="timeLeft">20</span>s</div>
+                <div style="text-align: center;">
+                    <button class="btn" id="readyBtn" style="display: none;" onclick="startQuiz()">¡Estoy Listo!</button>
+                </div>
+            </div>
+
+            <!-- Pantalla de preguntas -->
+            <div class="quiz-screen" id="quizScreen">
+                <div class="player-info">
+                    <h3 id="currentPlayer">Jugador 1</h3>
+                    <div class="fuel-bar">
+                        <div class="fuel-fill" id="fuelFill" style="width: 0%">
+                            <span id="fuelText">0 L</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-box">
+                    <h4 id="questionText">Pregunta...</h4>
+                    <div class="options" id="optionsContainer"></div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="btn" id="nextBtn" style="display: none;" onclick="nextQuestion()">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- Pantalla de carrera -->
+            <div class="battle-screen" id="battleScreen">
+                <div class="race-info">
+                    <h3 id="raceTitle">Etapa 1 de 9</h3>
+                    <p style="margin: 5px 0; color: #2d3436;">¡Los atletas avanzan según tus aciertos!</p>
+                </div>
+
+                <div class="progress-bars">
+                    <div class="progress-container">
+                        <div class="progress-label blue">🏃 Jugador 1 </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill blue" id="progress1" style="width: 0%">
+                                <span id="progressText1">0m / 900m</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-label red">🏃‍♀️ Jugador </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill red" id="progress2" style="width: 0%">
+                                <span id="progressText2">0m / 900m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="racetrack" id="racetrack">
+                    <div class="finish-line"></div>
+                    
+                    <div class="race-lane">
+                        <div class="lane-label" style="background: #4A90E2; color: white;">Jugador 1</div>
+                        <div class="horse blue" id="horse1"><span class="runner">🏃</span></div>
+                        <div class="distance-marker" id="distance1">0m</div>
+                    </div>
+
+                    <div class="race-lane">
+                        <div class="lane-label" style="background: #E74C3C; color: white;">Jugador 2</div>
+                        <div class="horse red" id="horse2"><span class="runner">🏃‍♀️</span></div>
+                        <div class="distance-marker" id="distance2">0m</div>
+                    </div>
+                </div>
+
+                <div class="race-button">
+                    <button class="btn" id="continueBtn" onclick="continueRace()">Continuar a Siguiente Etapa</button>
+                </div>
+            </div>
+
+            <!-- Pantalla de ganador -->
+            <div class="winner-screen" id="winnerScreen">
+                <div class="trophy">🏆</div>
+                <h2 id="winnerText">¡Jugador 1 Gana!</h2>
+                <p style="font-size: 1.2em; color: #666; margin: 20px 0;">
+                    ¡Domina la Constitución y el campo de batalla!
+                </p>
+                <button class="btn" onclick="location.reload()">Jugar de Nuevo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base de datos de artículos y preguntas
+        const articles = [
+            {
+                number: 1,
+                title: "Artículo 1",
+                text: "1. España se constituye en un Estado social y democrático de Derecho, que propugna como valores superiores de su ordenamiento jurídico la libertad, la justicia, la igualdad y el pluralismo político.\n\n2. La soberanía nacional reside en el pueblo español, del que emanan los poderes del Estado.\n\n3. La forma política del Estado español es la Monarquía parlamentaria.",
+                questions: [
+                    {
+                        q: "¿Cuál NO es un valor superior del ordenamiento jurídico español?",
+                        options: ["La libertad", "La fraternidad", "La igualdad", "El pluralismo político"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿En quién reside la soberanía nacional?",
+                        options: ["En el Rey", "En el pueblo español", "En las Cortes Generales", "En el Gobierno"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cuál es la forma política del Estado español?",
+                        options: ["República parlamentaria", "Monarquía absoluta", "Monarquía parlamentaria", "República presidencialista"],
+                        correct: 2
+                    },
+                    {
+                        q: "España se constituye en un Estado:",
+                        options: ["Liberal y de Derecho", "Social y democrático de Derecho", "Federal y democrático", "Confesional de Derecho"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿De dónde emanan los poderes del Estado?",
+                        options: ["De la Constitución", "Del pueblo español", "Del Rey", "Del Parlamento"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                number: 2,
+                title: "Artículo 2",
+                text: "La Constitución se fundamenta en la indisoluble unidad de la Nación española, patria común e indivisible de todos los españoles, y reconoce y garantiza el derecho a la autonomía de las nacionalidades y regiones que la integran y la solidaridad entre todas ellas.",
+                questions: [
+                    {
+                        q: "¿En qué se fundamenta la Constitución española?",
+                        options: ["En la diversidad regional", "En la unidad de la Nación española", "En el derecho foral", "En la monarquía"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Qué reconoce la Constitución respecto a las nacionalidades y regiones?",
+                        options: ["Su independencia", "Su derecho a la autonomía", "Su soberanía", "Su separación"],
+                        correct: 1
+                    },
+                    {
+                        q: "La Nación española es descrita como:",
+                        options: ["Divisible y plural", "Común e indivisible", "Federal y autónoma", "Regional y diversa"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Qué principio se garantiza entre las nacionalidades y regiones?",
+                        options: ["La competitividad", "La solidaridad", "La independencia", "La jerarquía"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cómo califica la Constitución a la unidad de la Nación española?",
+                        options: ["Reversible", "Indisoluble", "Temporal", "Condicional"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                number: 3,
+                title: "Artículo 3",
+                text: "1. El castellano es la lengua española oficial del Estado. Todos los españoles tienen el deber de conocerla y el derecho a usarla.\n\n2. Las demás lenguas españolas serán también oficiales en las respectivas Comunidades Autónomas de acuerdo con sus Estatutos.\n\n3. La riqueza de las distintas modalidades lingüísticas de España es un patrimonio cultural que será objeto de especial respeto y protección.",
+                questions: [
+                    {
+                        q: "¿Cuál es la lengua oficial del Estado español?",
+                        options: ["El español", "El castellano", "El ibérico", "Todas las lenguas españolas"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Qué tienen todos los españoles respecto al castellano?",
+                        options: ["Solo el derecho a usarlo", "El deber de conocerlo y el derecho a usarlo", "Solo el deber de conocerlo", "La opción de aprenderlo"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Dónde pueden ser oficiales las demás lenguas españolas?",
+                        options: ["En todo el territorio nacional", "En sus respectivas Comunidades Autónomas", "Solo en documentos locales", "No pueden ser oficiales"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cómo considera la Constitución las modalidades lingüísticas de España?",
+                        options: ["Un problema a resolver", "Un patrimonio cultural", "Una cuestión administrativa", "Un derecho individual"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Qué protección reciben las lenguas españolas según el artículo 3?",
+                        options: ["Protección básica", "Especial respeto y protección", "Protección opcional", "No se menciona"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                number: 4,
+                title: "Artículo 4",
+                text: "1. La bandera de España está formada por tres franjas horizontales, roja, amarilla y roja, siendo la amarilla de doble anchura que cada una de las rojas.\n\n2. Los Estatutos podrán reconocer banderas y enseñas propias de las Comunidades Autónomas. Estas se utilizarán junto a la bandera de España en sus edificios públicos y en sus actos oficiales.",
+                questions: [
+                    {
+                        q: "¿Cuántas franjas tiene la bandera de España?",
+                        options: ["Dos", "Tres", "Cuatro", "Cinco"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Qué franja de la bandera es de doble anchura?",
+                        options: ["La roja superior", "La amarilla", "La roja inferior", "Todas son iguales"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Pueden las Comunidades Autónomas tener banderas propias?",
+                        options: ["No, está prohibido", "Sí, si lo reconocen sus Estatutos", "Solo en días festivos", "Solo en el interior de edificios"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cómo deben usarse las banderas autonómicas en actos oficiales?",
+                        options: ["Solas", "Junto a la bandera de España", "Solo en edificios privados", "No pueden usarse"],
+                        correct: 1
+                    },
+                    {
+                        q: "Los colores de la bandera española son:",
+                        options: ["Rojo y amarillo", "Rojo, amarillo y azul", "Rojo, amarillo y rojo", "Amarillo, verde y rojo"],
+                        correct: 2
+                    }
+                ]
+            },
+            {
+                number: 5,
+                title: "Artículo 5",
+                text: "La capital del Estado es la villa de Madrid.",
+                questions: [
+                    {
+                        q: "¿Cuál es la capital del Estado español?",
+                        options: ["Barcelona", "Madrid", "Sevilla", "Valencia"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cómo se refiere el artículo a Madrid?",
+                        options: ["La ciudad de Madrid", "La villa de Madrid", "El municipio de Madrid", "La provincia de Madrid"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Puede cambiar la capital según la Constitución?",
+                        options: ["Sí, mediante ley ordinaria", "Solo mediante reforma constitucional", "Sí, por decreto", "No lo especifica"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Desde cuándo Madrid es capital de España constitucionalmente?",
+                        options: ["Desde 1492", "Desde 1978", "Desde 1931", "Desde 1812"],
+                        correct: 1
+                    },
+                    {
+                        q: "El artículo 5 es:",
+                        options: ["El más largo del Título Preliminar", "El más corto del Título Preliminar", "De longitud media", "No existe"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                number: 6,
+                title: "Artículo 6",
+                text: "Los partidos políticos expresan el pluralismo político, concurren a la formación y manifestación de la voluntad popular y son instrumento fundamental para la participación política. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.",
+                questions: [
+                    {
+                        q: "¿Qué expresan los partidos políticos?",
+                        options: ["El pluralismo social", "El pluralismo político", "La unidad nacional", "La diversidad regional"],
+                        correct: 1
+                    },
+                    {
+                        q: "Los partidos políticos son instrumento fundamental para:",
+                        options: ["El gobierno", "La participación política", "La administración", "El poder judicial"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Es libre la creación de partidos políticos?",
+                        options: ["Sí, sin restricciones", "Sí, dentro del respeto a la Constitución y la ley", "No, requiere autorización", "Solo en determinadas circunstancias"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cómo debe ser el funcionamiento interno de los partidos?",
+                        options: ["Jerárquico", "Democrático", "Autocrático", "No se especifica"],
+                        correct: 1
+                    },
+                    {
+                        q: "Los partidos concurren a:",
+                        options: ["La formación del gobierno", "La manifestación de la voluntad popular", "Las elecciones municipales", "El control judicial"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                number: 7,
+                title: "Artículo 7",
+                text: "Los sindicatos de trabajadores y las asociaciones empresariales contribuyen a la defensa y promoción de los intereses económicos y sociales que les son propios. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.",
+                questions: [
+                    {
+                        q: "¿Qué defienden los sindicatos de trabajadores?",
+                        options: ["Intereses políticos", "Intereses económicos y sociales", "Intereses culturales", "Intereses religiosos"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Es libre la creación de sindicatos?",
+                        options: ["No", "Sí, dentro del respeto a la Constitución y la ley", "Solo con autorización", "Solo en el sector público"],
+                        correct: 1
+                    },
+                    {
+                        q: "Las asociaciones empresariales contribuyen a:",
+                        options: ["La defensa de intereses políticos", "La promoción de intereses económicos y sociales propios", "El control del gobierno", "La administración pública"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cómo debe ser la estructura interna de sindicatos y asociaciones empresariales?",
+                        options: ["Autocrática", "Democrática", "Jerárquica", "No se especifica"],
+                        correct: 1
+                    },
+                    {
+                        q: "Este artículo trata sobre:",
+                        options: ["Solo sindicatos", "Solo empresarios", "Sindicatos y asociaciones empresariales", "Partidos políticos"],
+                        correct: 2
+                    }
+                ]
+            },
+            {
+                number: 8,
+                title: "Artículo 8",
+                text: "1. Las Fuerzas Armadas, constituidas por el Ejército de Tierra, la Armada y el Ejército del Aire, tienen como misión garantizar la soberanía e independencia de España, defender su integridad territorial y el ordenamiento constitucional.\n\n2. Una ley orgánica regulará las bases de la organización militar conforme a los principios de la presente Constitución.",
+                questions: [
+                    {
+                        q: "¿Cuántos ejércitos componen las Fuerzas Armadas según el artículo?",
+                        options: ["Dos", "Tres", "Cuatro", "Cinco"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Cuál NO es una rama de las Fuerzas Armadas mencionada?",
+                        options: ["Ejército de Tierra", "La Guardia Civil", "La Armada", "Ejército del Aire"],
+                        correct: 1
+                    },
+                    {
+                        q: "La misión de las Fuerzas Armadas incluye:",
+                        options: ["Garantizar la soberanía", "Controlar el gobierno", "Legislar", "Impartir justicia"],
+                        correct: 0
+                    },
+                    {
+                        q: "¿Qué tipo de ley regula las bases de la organización militar?",
+                        options: ["Ley ordinaria", "Ley orgánica", "Decreto-ley", "Real Decreto"],
+                        correct: 1
+                    },
+                    {
+                        q: "Las Fuerzas Armadas deben defender:",
+                        options: ["Solo el territorio", "El ordenamiento constitucional", "Solo al gobierno", "Solo a la monarquía"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                number: 9,
+                title: "Artículo 9",
+                text: "1. Los ciudadanos y los poderes públicos están sujetos a la Constitución y al resto del ordenamiento jurídico.\n\n2. Corresponde a los poderes públicos promover las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas; remover los obstáculos que impidan o dificulten su plenitud y facilitar la participación de todos los ciudadanos en la vida política, económica, cultural y social.\n\n3. La Constitución garantiza el principio de legalidad, la jerarquía normativa, la publicidad de las normas, la irretroactividad de las disposiciones sancionadoras no favorables o restrictivas de derechos individuales, la seguridad jurídica, la responsabilidad y la interdicción de la arbitrariedad de los poderes públicos.",
+                questions: [
+                    {
+                        q: "¿Quiénes están sujetos a la Constitución?",
+                        options: ["Solo los ciudadanos", "Solo los poderes públicos", "Ciudadanos y poderes públicos", "Solo el gobierno"],
+                        correct: 2
+                    },
+                    {
+                        q: "¿Qué deben promover los poderes públicos?",
+                        options: ["La desigualdad", "Condiciones para libertad e igualdad reales", "Solo el crecimiento económico", "La jerarquía social"],
+                        correct: 1
+                    },
+                    {
+                        q: "La Constitución garantiza el principio de:",
+                        options: ["Oportunidad", "Legalidad", "Conveniencia", "Discrecionalidad"],
+                        correct: 1
+                    },
+                    {
+                        q: "¿Pueden las normas sancionadoras ser retroactivas si son favorables?",
+                        options: ["No, nunca", "Sí, si son favorables", "Solo con autorización judicial", "No lo especifica"],
+                        correct: 1
+                    },
+                    {
+                        q: "La Constitución prohíbe:",
+                        options: ["La participación ciudadana", "La arbitrariedad de los poderes públicos", "La seguridad jurídica", "La jerarquía normativa"],
+                        correct: 1
+                    }
+                ]
+            }
+        ];
+
+        // Variables del juego
+        let currentArticle = null;
+        let currentPlayer = 1;
+        let currentQuestion = 0;
+        let player1Fuel = 0;
+        let player2Fuel = 0;
+        let player1Position = 0; // Posición del caballo azul
+        let player2Position = 0; // Posición del caballo rojo
+        let currentArticleIndex = 0;
+        let usedArticles = [];
+
+        function startGame() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            selectNextArticle();
+            showArticle();
+        }
+
+        function selectNextArticle() {
+            // Seleccionar un artículo que no se haya usado
+            let availableArticles = articles.filter((_, index) => !usedArticles.includes(index));
+            
+            if (availableArticles.length === 0) {
+                // Si ya se usaron todos, reiniciar
+                usedArticles = [];
+                availableArticles = articles;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * availableArticles.length);
+            currentArticle = availableArticles[randomIndex];
+            
+            // Marcar como usado
+            const originalIndex = articles.indexOf(currentArticle);
+            usedArticles.push(originalIndex);
+            currentArticleIndex++;
+        }
+
+        function showArticle() {
+            const articleScreen = document.getElementById('articleScreen');
+            const articleBox = document.getElementById('articleBox');
+            
+            articleBox.innerHTML = `
+                <h3>${currentArticle.title}</h3>
+                <p style="white-space: pre-line;">${currentArticle.text}</p>
+            `;
+            
+            articleScreen.style.display = 'block';
+            
+            let timeLeft = 20;
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timeLeft').textContent = timeLeft;
+                
+                if (timeLeft === 0) {
+                    clearInterval(timer);
+                    document.getElementById('readyBtn').style.display = 'inline-block';
+                }
+            }, 1000);
+        }
+
+        function startQuiz() {
+            document.getElementById('articleScreen').style.display = 'none';
+            document.getElementById('quizScreen').style.display = 'block';
+            currentQuestion = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = currentArticle.questions[currentQuestion];
+            document.getElementById('questionText').textContent = `Pregunta ${currentQuestion + 1}/5: ${question.q}`;
+            document.getElementById('currentPlayer').textContent = `Jugador ${currentPlayer}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.textContent = option;
+                div.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(div);
+            });
+            
+            document.getElementById('nextBtn').style.display = 'none';
+            updateFuelDisplay();
+        }
+
+        function selectAnswer(selected) {
+            const question = currentArticle.questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            
+            if (selected === question.correct) {
+                options[selected].classList.add('correct');
+                if (currentPlayer === 1) {
+                    player1Fuel += 20;
+                } else {
+                    player2Fuel += 20;
+                }
+            } else {
+                options[selected].classList.add('incorrect');
+                options[question.correct].classList.add('correct');
+            }
+            
+            updateFuelDisplay();
+            document.getElementById('nextBtn').style.display = 'inline-block';
+        }
+
+        function updateFuelDisplay() {
+            const fuel = currentPlayer === 1 ? player1Fuel : player2Fuel;
+            const percentage = Math.min(fuel, 100);
+            document.getElementById('fuelFill').style.width = percentage + '%';
+            document.getElementById('fuelText').textContent = fuel + ' L';
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            
+            if (currentQuestion < 5) {
+                showQuestion();
+            } else if (currentPlayer === 1) {
+                currentPlayer = 2;
+                currentQuestion = 0;
+                showQuestion();
+            } else {
+                startBattle();
+            }
+        }
+
+        function startBattle() {
+            document.getElementById('quizScreen').style.display = 'none';
+            document.getElementById('battleScreen').style.display = 'block';
+            
+            // Reproducir música tipo Tetris
+            playRaceMusic();
+            
+            // Actualizar información de la etapa
+            document.getElementById('raceTitle').textContent = `Etapa ${currentArticleIndex} de 9`;
+            
+            // Mostrar progreso inicial
+            updateRaceDisplay();
+            
+            // Animar el avance de los caballos
+            setTimeout(() => {
+                animateHorses();
+            }, 500);
+        }
+
+        // Función para reproducir sonidos de pasos de corredores
+        let runningSound = null;
+        let runningInterval = null;
+        
+        function playRaceMusic() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Función para crear un sonido de paso individual
+            function createFootstep() {
+                // Ruido blanco para simular el contacto con el suelo
+                const bufferSize = audioContext.sampleRate * 0.1; // 100ms de sonido
+                const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                // Generar ruido blanco con envelope
+                for (let i = 0; i < bufferSize; i++) {
+                    const envelope = Math.exp(-i / (bufferSize * 0.3)); // Decay rápido
+                    data[i] = (Math.random() * 2 - 1) * envelope * 0.3;
+                }
+                
+                const source = audioContext.createBufferSource();
+                source.buffer = buffer;
+                
+                // Filtro para dar carácter al sonido
+                const filter = audioContext.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 800; // Frecuencia de corte
+                filter.Q.value = 1;
+                
+                // Añadir un tono bajo para el impacto
+                const bassOsc = audioContext.createOscillator();
+                const bassGain = audioContext.createGain();
+                bassOsc.frequency.value = 60; // Frecuencia muy baja
+                bassOsc.type = 'sine';
+                
+                bassGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                bassGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                source.connect(filter);
+                bassOsc.connect(bassGain);
+                filter.connect(audioContext.destination);
+                bassGain.connect(audioContext.destination);
+                
+                const now = audioContext.currentTime;
+                source.start(now);
+                source.stop(now + 0.1);
+                bassOsc.start(now);
+                bassOsc.stop(now + 0.1);
+            }
+            
+            // Crear pasos alternados (simulando dos pies)
+            let stepCount = 0;
+            runningInterval = setInterval(() => {
+                createFootstep();
+                stepCount++;
+                
+                // Añadir variación en el ritmo
+                if (stepCount > 20) {
+                    stopRunningSound();
+                }
+            }, 250); // Paso cada 250ms (4 pasos por segundo)
+            
+            runningSound = audioContext;
+        }
+        
+        function stopRunningSound() {
+            if (runningInterval) {
+                clearInterval(runningInterval);
+                runningInterval = null;
+            }
+        }
+
+        function animateHorses() {
+            const trackWidth = document.getElementById('racetrack').offsetWidth - 150; // Espacio disponible
+            const totalDistance = 900; // 9 etapas × 100 metros máximo
+            
+            // Añadir clase 'moving' para animación rápida
+            document.getElementById('horse1').classList.add('moving');
+            document.getElementById('horse2').classList.add('moving');
+            
+            // Calcular posición proporcional
+            const position1Percent = (player1Position / totalDistance) * trackWidth;
+            const position2Percent = (player2Position / totalDistance) * trackWidth;
+            
+            document.getElementById('horse1').style.left = (60 + position1Percent) + 'px';
+            document.getElementById('horse2').style.left = (60 + position2Percent) + 'px';
+            
+            // Actualizar marcadores de distancia
+            document.getElementById('distance1').textContent = player1Position + 'm';
+            document.getElementById('distance2').textContent = player2Position + 'm';
+            
+            // Actualizar barras de progreso
+            const progress1Percent = (player1Position / totalDistance) * 100;
+            const progress2Percent = (player2Position / totalDistance) * 100;
+            
+            document.getElementById('progress1').style.width = progress1Percent + '%';
+            document.getElementById('progressText1').textContent = player1Position + 'm / 900m';
+            
+            document.getElementById('progress2').style.width = progress2Percent + '%';
+            document.getElementById('progressText2').textContent = player2Position + 'm / 900m';
+            
+            // Quitar clase 'moving' y detener sonido después de la animación
+            setTimeout(() => {
+                document.getElementById('horse1').classList.remove('moving');
+                document.getElementById('horse2').classList.remove('moving');
+                stopRunningSound(); // Detener el sonido de pasos
+            }, 1500);
+            
+            // Verificar si alguien ganó
+            if (player1Position >= totalDistance || player2Position >= totalDistance) {
+                setTimeout(() => {
+                    showWinner();
+                }, 2000);
+                document.getElementById('continueBtn').style.display = 'none';
+            }
+        }
+
+        function updateRaceDisplay() {
+            // Esta función se llama antes de la animación para actualizar las posiciones
+            const advancePlayer1 = player1Fuel;
+            const advancePlayer2 = player2Fuel;
+            
+            player1Position += advancePlayer1;
+            player2Position += advancePlayer2;
+            
+            // Resetear fuel para la siguiente etapa
+            player1Fuel = 0;
+            player2Fuel = 0;
+        }
+
+        function continueRace() {
+            if (currentArticleIndex >= 9) {
+                // Si ya terminaron las 9 etapas, mostrar ganador
+                showWinner();
+                return;
+            }
+            
+            // Resetear para siguiente etapa
+            currentPlayer = 1;
+            currentQuestion = 0;
+            
+            document.getElementById('battleScreen').style.display = 'none';
+            
+            // Seleccionar siguiente artículo
+            selectNextArticle();
+            showArticle();
+        }
+
+        function showWinner() {
+            document.getElementById('battleScreen').style.display = 'none';
+            const winnerScreen = document.getElementById('winnerScreen');
+            
+            let winner;
+            if (player1Position > player2Position) {
+                winner = 1;
+                document.getElementById('winnerText').textContent = '🏃 ¡El Corredor Azul Gana! 🏆';
+            } else if (player2Position > player1Position) {
+                winner = 2;
+                document.getElementById('winnerText').textContent = '🏃‍♀️ ¡La Corredora Roja Gana! 🏆';
+            } else {
+                document.getElementById('winnerText').textContent = '🏃‍♀️🏃 ¡Empate Histórico! 🏆';
+            }
+            
+            winnerScreen.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
