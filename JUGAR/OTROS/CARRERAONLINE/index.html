@@ -896,6 +896,9 @@ const articles = [
             const track = document.getElementById('racetrack').offsetWidth - 150;
             document.getElementById('raceTitle').textContent = `Resultados Etapa`;
             
+            // Reproducir sonido de correr
+            playRunningSound();
+            
             // Animación
             document.getElementById('horse1').classList.add('moving');
             document.getElementById('horse2').classList.add('moving');
@@ -916,6 +919,8 @@ const articles = [
                 document.getElementById('horse2').classList.remove('moving');
 
                 if (player1Position >= 900 || player2Position >= 900) {
+                    // Reproducir sonido de victoria
+                    playVictorySound();
                     hideAll(); document.getElementById('winnerScreen').style.display = 'block';
                     document.getElementById('winnerText').textContent = player1Position > player2Position ? "¡Gana Jugador 1!" : "¡Gana Jugador 2!";
                 }
@@ -932,6 +937,75 @@ const articles = [
             const indicator = document.getElementById('playerIndicator');
             indicator.textContent = `Yo soy el Jugador ${playerNumber}`;
             indicator.style.display = 'block';
+        }
+
+        function playRunningSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const duration = 1.5; // Duración del sonido de correr
+            
+            // Crear varios pasos rápidos
+            for (let i = 0; i < 8; i++) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 100 + Math.random() * 50; // Frecuencia baja para simular pasos
+                oscillator.type = 'sine';
+                
+                const startTime = audioContext.currentTime + (i * 0.15);
+                gainNode.gain.setValueAtTime(0.3, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.1);
+            }
+        }
+
+        function playVictorySound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Melodía de victoria ascendente
+            const notes = [262, 330, 392, 523]; // Do, Mi, Sol, Do (octava alta)
+            
+            notes.forEach((freq, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = 'triangle';
+                
+                const startTime = audioContext.currentTime + (index * 0.2);
+                gainNode.gain.setValueAtTime(0.3, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.4);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.4);
+            });
+            
+            // Agregar un acorde final triunfal
+            setTimeout(() => {
+                [523, 659, 784].forEach(freq => { // Do, Mi, Sol (octava alta)
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'triangle';
+                    
+                    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 1);
+                });
+            }, 800);
         }
 
         function hideAll() {
