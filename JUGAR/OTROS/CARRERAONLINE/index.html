@@ -392,6 +392,19 @@
             margin-bottom: 40px;
             border-bottom: 3px dashed #999;
         }
+        
+        .player-name-label {
+            position: absolute;
+            left: 60px;
+            bottom: -25px;
+            font-size: 0.9em;
+            color: #333;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3px 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
 
         .lane-label {
             position: absolute;
@@ -473,14 +486,6 @@
             background: #f8f9fa;
             padding: 15px;
             border-radius: 10px;
-        }
-        
-        .player-name-label {
-            text-align: center;
-            font-size: 0.95em;
-            color: #667eea;
-            font-weight: bold;
-            margin-top: 8px;
         }
 
         .progress-label {
@@ -609,18 +614,24 @@
                     <div class="progress-container">
                         <div class="progress-label blue">🏃 J1</div>
                         <div class="progress-bar"><div class="progress-fill blue" id="progress1" style="width: 0%"><span id="progressText1">0m</span></div></div>
-                        <div class="player-name-label">Jugador 1</div>
                     </div>
                     <div class="progress-container">
                         <div class="progress-label red">🏃‍♀️ J2</div>
                         <div class="progress-bar"><div class="progress-fill red" id="progress2" style="width: 0%"><span id="progressText2">0m</span></div></div>
-                        <div class="player-name-label">Jugador 2</div>
                     </div>
                 </div>
                 <div class="racetrack" id="racetrack">
                     <div class="finish-line"></div>
-                    <div class="race-lane"><div class="horse blue" id="horse1"><span class="runner">🏃</span></div><div class="distance-marker" id="distance1">0m</div></div>
-                    <div class="race-lane"><div class="horse red" id="horse2"><span class="runner">🏃‍♀️</span></div><div class="distance-marker" id="distance2">0m</div></div>
+                    <div class="race-lane">
+                        <div class="horse blue" id="horse1"><span class="runner">🏃</span></div>
+                        <div class="distance-marker" id="distance1">0m</div>
+                        <div class="player-name-label">Jugador 1</div>
+                    </div>
+                    <div class="race-lane">
+                        <div class="horse red" id="horse2"><span class="runner">🏃‍♀️</span></div>
+                        <div class="distance-marker" id="distance2">0m</div>
+                        <div class="player-name-label">Jugador 2</div>
+                    </div>
                 </div>
                 <div style="text-align:center"><button class="btn" id="continueBtn" onclick="continueRace()">Siguiente Etapa</button></div>
             </div>
