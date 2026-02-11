@@ -886,13 +886,35 @@ const articles = [
             document.getElementById('currentPlayerName').textContent = `Tú (J${playerNumber})`;
             document.getElementById('questionText').textContent = q.q;
             const cont = document.getElementById('optionsContainer'); cont.innerHTML = '';
-            q.options.forEach((o, i) => {
-                const d = document.createElement('div'); d.className = 'option'; d.textContent = o;
+            
+            // Crear array con opciones y sus índices originales
+            const shuffledOptions = q.options.map((o, i) => ({text: o, originalIndex: i}));
+            
+            // Mezclar aleatoriamente (algoritmo Fisher-Yates)
+            for (let i = shuffledOptions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+            }
+            
+            // Mostrar opciones mezcladas
+            shuffledOptions.forEach((option) => {
+                const d = document.createElement('div'); d.className = 'option'; d.textContent = option.text;
                 d.onclick = () => {
                     const opts = document.querySelectorAll('.option');
                     opts.forEach(p => p.style.pointerEvents = 'none');
-                    if (i === q.correct) { d.classList.add('correct'); if(playerNumber===1) player1Fuel+=20; else player2Fuel+=20; }
-                    else { d.classList.add('incorrect'); opts[q.correct].classList.add('correct'); }
+                    if (option.originalIndex === q.correct) { 
+                        d.classList.add('correct'); 
+                        if(playerNumber===1) player1Fuel+=20; else player2Fuel+=20; 
+                    }
+                    else { 
+                        d.classList.add('incorrect'); 
+                        // Marcar la opción correcta
+                        opts.forEach(opt => {
+                            if (opt.textContent === q.options[q.correct]) {
+                                opt.classList.add('correct');
+                            }
+                        });
+                    }
                     document.getElementById('fuelText').textContent = (playerNumber===1?player1Fuel:player2Fuel) + "m";
                     document.getElementById('fuelFill').style.width = ((playerNumber===1?player1Fuel:player2Fuel)) + "%";
                     document.getElementById('nextBtn').style.display = 'block';
