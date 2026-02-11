@@ -86,11 +86,16 @@
             justify-content: center;
             transition: all 0.3s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            -webkit-tap-highlight-color: transparent;
         }
 
         .voice-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        }
+
+        .voice-btn:active {
+            transform: scale(0.95);
         }
 
         .voice-btn.active {
@@ -113,6 +118,26 @@
             font-size: 0.85em;
             color: #666;
             font-weight: bold;
+        }
+
+        /* Mejorar visibilidad en móviles */
+        @media (max-width: 768px) {
+            .voice-controls {
+                bottom: 15px;
+                right: 15px;
+                padding: 12px;
+            }
+            
+            .voice-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 2em;
+            }
+            
+            .voice-status {
+                font-size: 0.75em;
+                max-width: 120px;
+            }
         }
 
         .content {
@@ -681,7 +706,7 @@
     <!-- Controles de voz -->
     <div class="voice-controls" id="voiceControls">
         <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
-        <div class="voice-status" id="voiceStatus">Micrófono apagado</div>
+        <div class="voice-status" id="voiceStatus">Toca para activar voz</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -873,15 +898,9 @@ const articles = [
                     document.getElementById('player2Status').classList.add('ready');
                     document.getElementById('player2Status').innerHTML = '<span>✅</span><span>Jugador 2 Listo</span>';
                     
-                    // Inicializar chat de voz cuando ambos jugadores están conectados
-                    if (!localStream) {
-                        initVoiceChat().then(() => {
-                            // El jugador 1 inicia la llamada
-                            if (playerNumber === 1) {
-                                setTimeout(() => startCall(), 1000);
-                            }
-                        });
-                    }
+                    // Mostrar controles de voz cuando ambos jugadores están conectados
+                    // En móviles, el usuario debe hacer click para activar el micrófono
+                    document.getElementById('voiceControls').style.display = 'block';
                     
                     if (game.gameState === 'lobby') showWelcome();
                 }
@@ -1114,7 +1133,7 @@ const articles = [
             // Escuchar ofertas WebRTC
             database.ref('games/' + gameId + '/webrtc/offer').on('value', async (snapshot) => {
                 const offer = snapshot.val();
-                if (offer && playerNumber === 2 && !peerConnection) {
+                if (offer && playerNumber === 2 && !peerConnection && localStream) {
                     await handleOffer(offer);
                 }
             });
@@ -1134,6 +1153,16 @@ const articles = [
                     await peerConnection.addIceCandidate(new RTCIceCandidate(candidate.candidate));
                 }
             });
+
+            // Si soy jugador 2 y ya existe una oferta, la proceso cuando tenga stream
+            if (playerNumber === 2) {
+                database.ref('games/' + gameId + '/webrtc/offer').once('value', async (snapshot) => {
+                    const offer = snapshot.val();
+                    if (offer && localStream && !peerConnection) {
+                        await handleOffer(offer);
+                    }
+                });
+            }
         }
 
         async function createPeerConnection() {
@@ -1210,11 +1239,37 @@ const articles = [
             const voiceBtn = document.getElementById('voiceBtn');
             const voiceStatus = document.getElementById('voiceStatus');
 
+            // Si no hay stream local, inicializar
             if (!localStream) {
-                initVoiceChat();
+                voiceBtn.textContent = '⏳';
+                voiceStatus.textContent = 'Conectando...';
+                
+                initVoiceChat().then(() => {
+                    // Iniciar la llamada WebRTC
+                    if (playerNumber === 1) {
+                        startCall();
+                    }
+                    
+                    // Activar micrófono automáticamente después de inicializar
+                    isMuted = false;
+                    localStream.getAudioTracks().forEach(track => {
+                        track.enabled = true;
+                    });
+                    
+                    voiceBtn.classList.add('active');
+                    voiceBtn.classList.remove('muted');
+                    voiceBtn.textContent = '🎤';
+                    voiceStatus.textContent = 'Hablando...';
+                }).catch(error => {
+                    console.error('Error al activar voz:', error);
+                    voiceBtn.textContent = '❌';
+                    voiceStatus.textContent = 'Error de micrófono';
+                    alert('No se pudo acceder al micrófono. Verifica los permisos.');
+                });
                 return;
             }
 
+            // Alternar entre muted y activo
             isMuted = !isMuted;
             
             // Silenciar/activar micrófono
