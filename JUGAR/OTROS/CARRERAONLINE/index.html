@@ -60,6 +60,61 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
+        /* Controles de voz */
+        .voice-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .voice-btn {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        }
+
+        .voice-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: pulse-voice 1.5s infinite;
+        }
+
+        .voice-btn.muted {
+            background: linear-gradient(135deg, #999 0%, #666 100%);
+        }
+
+        @keyframes pulse-voice {
+            0%, 100% { box-shadow: 0 4px 10px rgba(245, 87, 108, 0.4); }
+            50% { box-shadow: 0 4px 20px rgba(245, 87, 108, 0.8); }
+        }
+
+        .voice-status {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #666;
+            font-weight: bold;
+        }
+
         .content {
             padding: 40px;
         }
@@ -623,6 +678,12 @@
         </div>
     </div>
 
+    <!-- Controles de voz -->
+    <div class="voice-controls" id="voiceControls">
+        <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+        <div class="voice-status" id="voiceStatus">Micrófono apagado</div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
@@ -644,6 +705,16 @@
         let player1Fuel = 0, player2Fuel = 0, player1Position = 0, player2Position = 0;
         let currentQuestion = 0, usedArticles = [], articleInterval = null;
 
+        // Variables para WebRTC y chat de voz
+        let localStream = null;
+        let peerConnection = null;
+        let isMuted = true;
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
 
 
 
@@ -801,6 +872,17 @@ const articles = [
                 if (game.player2) {
                     document.getElementById('player2Status').classList.add('ready');
                     document.getElementById('player2Status').innerHTML = '<span>✅</span><span>Jugador 2 Listo</span>';
+                    
+                    // Inicializar chat de voz cuando ambos jugadores están conectados
+                    if (!localStream) {
+                        initVoiceChat().then(() => {
+                            // El jugador 1 inicia la llamada
+                            if (playerNumber === 1) {
+                                setTimeout(() => startCall(), 1000);
+                            }
+                        });
+                    }
+                    
                     if (game.gameState === 'lobby') showWelcome();
                 }
 
@@ -1007,6 +1089,154 @@ const articles = [
                 });
             }, 800);
         }
+
+        // ===== FUNCIONES DE CHAT DE VOZ =====
+        
+        async function initVoiceChat() {
+            try {
+                // Solicitar permiso de micrófono
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                
+                // Mostrar controles de voz
+                document.getElementById('voiceControls').style.display = 'block';
+                
+                // Configurar listeners de Firebase para WebRTC signaling
+                setupWebRTCSignaling();
+                
+                console.log('Chat de voz inicializado');
+            } catch (error) {
+                console.error('Error al inicializar chat de voz:', error);
+                alert('No se pudo acceder al micrófono. Por favor, permite el acceso para usar el chat de voz.');
+            }
+        }
+
+        function setupWebRTCSignaling() {
+            // Escuchar ofertas WebRTC
+            database.ref('games/' + gameId + '/webrtc/offer').on('value', async (snapshot) => {
+                const offer = snapshot.val();
+                if (offer && playerNumber === 2 && !peerConnection) {
+                    await handleOffer(offer);
+                }
+            });
+
+            // Escuchar respuestas WebRTC
+            database.ref('games/' + gameId + '/webrtc/answer').on('value', async (snapshot) => {
+                const answer = snapshot.val();
+                if (answer && playerNumber === 1 && peerConnection) {
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                }
+            });
+
+            // Escuchar candidatos ICE
+            database.ref('games/' + gameId + '/webrtc/candidates').on('child_added', async (snapshot) => {
+                const candidate = snapshot.val();
+                if (peerConnection && candidate.from !== playerNumber) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate.candidate));
+                }
+            });
+        }
+
+        async function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(configuration);
+
+            // Agregar tracks de audio locales
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+            }
+
+            // Manejar audio remoto
+            peerConnection.ontrack = (event) => {
+                const remoteAudio = new Audio();
+                remoteAudio.srcObject = event.streams[0];
+                remoteAudio.play();
+                console.log('Audio remoto conectado');
+            };
+
+            // Enviar candidatos ICE a Firebase
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    database.ref('games/' + gameId + '/webrtc/candidates').push({
+                        candidate: event.candidate,
+                        from: playerNumber
+                    });
+                }
+            };
+
+            return peerConnection;
+        }
+
+        async function startCall() {
+            if (!localStream) {
+                await initVoiceChat();
+            }
+
+            await createPeerConnection();
+
+            // Crear oferta
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            // Enviar oferta a Firebase
+            await database.ref('games/' + gameId + '/webrtc/offer').set({
+                type: offer.type,
+                sdp: offer.sdp
+            });
+
+            console.log('Llamada iniciada');
+        }
+
+        async function handleOffer(offer) {
+            await createPeerConnection();
+
+            // Establecer descripción remota
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+            // Crear respuesta
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            // Enviar respuesta a Firebase
+            await database.ref('games/' + gameId + '/webrtc/answer').set({
+                type: answer.type,
+                sdp: answer.sdp
+            });
+
+            console.log('Oferta manejada y respuesta enviada');
+        }
+
+        function toggleVoice() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            const voiceStatus = document.getElementById('voiceStatus');
+
+            if (!localStream) {
+                initVoiceChat();
+                return;
+            }
+
+            isMuted = !isMuted;
+            
+            // Silenciar/activar micrófono
+            localStream.getAudioTracks().forEach(track => {
+                track.enabled = !isMuted;
+            });
+
+            // Actualizar UI
+            if (isMuted) {
+                voiceBtn.classList.remove('active');
+                voiceBtn.classList.add('muted');
+                voiceBtn.textContent = '🔇';
+                voiceStatus.textContent = 'Micrófono apagado';
+            } else {
+                voiceBtn.classList.add('active');
+                voiceBtn.classList.remove('muted');
+                voiceBtn.textContent = '🎤';
+                voiceStatus.textContent = 'Hablando...';
+            }
+        }
+
+        // ===== FIN FUNCIONES DE CHAT DE VOZ =====
 
         function hideAll() {
             ['lobbyScreen','welcomeScreen','articleScreen','quizScreen','waitingScreen','battleScreen','winnerScreen'].forEach(id => {
