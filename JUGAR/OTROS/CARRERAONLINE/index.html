@@ -781,8 +781,7 @@
             database.ref('games/' + gameId).set({
                 player1: true,
                 player2: false,
-                gameState: 'lobby',
-                usedArticles: []  // Array para trackear artículos usados
+                gameState: 'lobby'
             });
 
             document.getElementById('gameCode').textContent = gameId;
@@ -859,8 +858,9 @@
             if (playerNumber !== 1) return;
             
             // Obtener artículos usados de la base de datos
-            database.ref('games/' + gameId + '/usedArticles').once('value').then(snapshot => {
-                const usedArticles = snapshot.val() || [];
+            database.ref('games/' + gameId).once('value').then(snapshot => {
+                const gameData = snapshot.val();
+                const usedArticles = gameData.usedArticles || [];
                 
                 // Crear array de índices disponibles (artículos no usados)
                 const availableIndices = [];
