@@ -125,7 +125,6 @@
             border-radius: 10px;
             width: 300px;
             text-align: center;
-            text-transform: uppercase;
         }
 
         .input-group input:focus {
@@ -569,7 +568,7 @@
 
                 <div id="joinGameSection" class="hidden">
                     <div class="input-group">
-                        <input type="text" id="gameCodeInput" placeholder="Ingresa el código" maxlength="6">
+                        <input type="text" id="gameCodeInput" placeholder="Ingresa el código" maxlength="4">
                     </div>
                     <button class="btn" onclick="joinGame()">Unirse</button>
                 </div>
@@ -816,7 +815,7 @@
         let articleInterval = null;
 
         function createGame() {
-            gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            gameId = Math.floor(1000 + Math.random() * 9000).toString();
             playerNumber = 1;
             
             database.ref('games/' + gameId).set({
@@ -848,7 +847,7 @@
         }
 
         function joinGame() {
-            const code = document.getElementById('gameCodeInput').value.toUpperCase();
+            const code = document.getElementById('gameCodeInput').value;
             if (!code) return alert('Ingresa un código');
 
             database.ref('games/' + code).once('value').then((snapshot) => {
