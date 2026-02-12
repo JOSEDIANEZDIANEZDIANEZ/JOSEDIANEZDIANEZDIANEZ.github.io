@@ -216,102 +216,121 @@
             padding: 25px;
             margin-bottom: 30px;
             border-radius: 10px;
+            line-height: 1.8;
         }
 
         .article-box h3 {
             color: #667eea;
-            font-size: 1.8em;
             margin-bottom: 15px;
+            font-size: 1.5em;
         }
 
         .article-box p {
-            color: #444;
-            font-size: 1.1em;
-            line-height: 1.8;
+            color: #333;
+            font-size: 1.05em;
         }
 
         .timer {
             text-align: center;
-            margin: 30px 0;
-        }
-
-        .timer h3 {
+            font-size: 1.5em;
             color: #f5576c;
-            font-size: 3em;
-            margin-bottom: 10px;
+            font-weight: bold;
+            margin: 20px 0;
         }
 
-        .timer p {
-            color: #666;
-            font-size: 1.2em;
-        }
-
-        /* Pantalla de quiz */
+        /* Pantalla de preguntas */
         .quiz-screen {
             display: none;
         }
 
-        .current-player {
+        .player-info {
             background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
+            margin-bottom: 25px;
             text-align: center;
-            margin-bottom: 20px;
         }
 
-        .current-player h3 {
+        .player-info h3 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .fuel-bar {
+            background: white;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .fuel-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            font-size: 1.5em;
+            font-weight: bold;
         }
 
         .question-box {
             background: #f8f9fa;
-            padding: 30px;
+            padding: 25px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
-        .question-box h3 {
+        .question-box h4 {
             color: #667eea;
-            font-size: 1.5em;
+            font-size: 1.3em;
             margin-bottom: 20px;
-            text-align: center;
         }
 
-        .options-container {
-            display: grid;
+        .options {
+            display: flex;
+            flex-direction: column;
             gap: 15px;
         }
 
         .option {
             background: white;
-            border: 3px solid #ddd;
-            padding: 20px;
+            border: 2px solid #ddd;
+            padding: 15px 20px;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 1.1em;
+            font-size: 1.05em;
         }
 
         .option:hover {
             border-color: #667eea;
             transform: translateX(5px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
 
         .option.correct {
             background: #84fab0;
-            border-color: #5cb85c;
-            animation: correctAnswer 0.5s;
+            border-color: #84fab0;
+            animation: pulse-once 0.5s;
         }
 
         .option.incorrect {
-            background: #ffb3b3;
-            border-color: #d9534f;
+            background: #f5576c;
+            color: white;
+            border-color: #f5576c;
             animation: shake 0.5s;
         }
 
-        @keyframes correctAnswer {
+        @keyframes pulse-once {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
@@ -322,89 +341,81 @@
             75% { transform: translateX(10px); }
         }
 
-        .fuel-indicator {
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        .fuel-bar {
-            background: #ddd;
-            height: 40px;
-            border-radius: 20px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-
-        .fuel-fill {
-            background: linear-gradient(90deg, #84fab0 0%, #8fd3f4 100%);
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .next-btn {
-            display: none;
-            margin-top: 20px;
-        }
-
-        /* Pantalla de espera */
-        .waiting-screen {
-            display: none;
-            text-align: center;
-        }
-
-        .waiting-screen h2 {
-            color: #667eea;
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-
-        .score-display {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-
-        .score-display h3 {
-            color: #667eea;
-            font-size: 2.5em;
-        }
-
-        /* Pantalla de batalla */
+        /* Pantalla de carrera */
         .battle-screen {
             display: none;
         }
 
-        .race-title {
+        .race-info {
             text-align: center;
-            color: #667eea;
-            font-size: 2em;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-radius: 10px;
+        }
+
+        .race-info h3 {
+            color: #2d3436;
+            font-size: 1.5em;
+            margin-bottom: 5px;
         }
 
         .racetrack {
-            background: #e8f5e9;
-            border: 3px solid #4caf50;
-            border-radius: 15px;
-            padding: 40px 20px;
-            position: relative;
-            margin-bottom: 30px;
-            min-height: 200px;
-        }
-
-        .lane {
-            background: linear-gradient(to right, #fff3e0 0%, #fff3e0 100%);
-            border: 2px dashed #ff9800;
-            height: 60px;
-            margin: 20px 0;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 30%, #90EE90 30%, #7CB342 100%);
+            min-height: 400px;
             border-radius: 10px;
             position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            padding: 40px 20px;
+        }
+
+        .finish-line {
+            position: absolute;
+            right: 30px;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                #fff 10px,
+                #fff 20px
+            );
+            border: 3px solid #333;
+        }
+
+        .race-lane {
+            position: relative;
+            height: 120px;
+            margin-bottom: 40px;
+            border-bottom: 3px dashed #999;
+        }
+        
+        .player-name-label {
+            position: absolute;
+            left: 60px;
+            bottom: -25px;
+            font-size: 0.9em;
+            color: #333;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3px 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .lane-label {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .horse {
@@ -413,66 +424,78 @@
             top: 50%;
             transform: translateY(-50%);
             font-size: 3em;
-            transition: left 2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: left 1.5s ease-out;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
         }
 
-        .horse.moving {
-            animation: gallop 0.3s steps(2) infinite;
+        .horse.blue {
+            color: #4A90E2;
         }
 
-        @keyframes gallop {
-            0%, 100% { transform: translateY(-50%) rotate(-5deg); }
-            50% { transform: translateY(-50%) rotate(5deg); }
+        .horse.red {
+            color: #E74C3C;
         }
 
-        .player-label {
+        .runner {
+            display: inline-block;
+            transform: scaleX(-1);
+            animation: running 0.5s ease-in-out infinite;
+        }
+
+        @keyframes running {
+            0% { transform: scaleX(-1) translateY(0px) rotate(0deg); }
+            25% { transform: scaleX(-1) translateY(-5px) rotate(-3deg); }
+            50% { transform: scaleX(-1) translateY(0px) rotate(0deg); }
+            75% { transform: scaleX(-1) translateY(-5px) rotate(3deg); }
+            100% { transform: scaleX(-1) translateY(0px) rotate(0deg); }
+        }
+
+        .horse.moving .runner {
+            animation: running-fast 0.3s ease-in-out infinite;
+        }
+
+        @keyframes running-fast {
+            0% { transform: scaleX(-1) translateY(0px) rotate(0deg) scale(1); }
+            25% { transform: scaleX(-1) translateY(-8px) rotate(-5deg) scale(1.05); }
+            50% { transform: scaleX(-1) translateY(0px) rotate(0deg) scale(1); }
+            75% { transform: scaleX(-1) translateY(-8px) rotate(5deg) scale(1.05); }
+            100% { transform: scaleX(-1) translateY(0px) rotate(0deg) scale(1); }
+        }
+
+        .distance-marker {
             position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
+            left: 60px;
+            bottom: 5px;
+            font-size: 0.9em;
             font-weight: bold;
-            color: #667eea;
-        }
-
-        .distance {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
+            color: #333;
             background: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            color: #f5576c;
-        }
-
-        .finish-line {
-            position: absolute;
-            right: 20px;
-            top: 0;
-            bottom: 0;
-            width: 5px;
-            background: repeating-linear-gradient(
-                45deg,
-                #000,
-                #000 10px,
-                #fff 10px,
-                #fff 20px
-            );
+            padding: 2px 8px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .progress-bars {
-            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
-        .progress-item {
-            margin: 20px 0;
+        .progress-container {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
         }
 
-        .progress-item h4 {
-            color: #667eea;
-            margin-bottom: 10px;
+        .progress-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
         }
+
+        .progress-label.blue { color: #4A90E2; }
+        .progress-label.red { color: #E74C3C; }
 
         .progress-bar {
             background: #ddd;
@@ -482,32 +505,28 @@
             position: relative;
         }
 
-        .progress {
-            background: linear-gradient(90deg, #84fab0 0%, #8fd3f4 100%);
+        .progress-fill {
             height: 100%;
-            width: 0%;
-            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 1.5s ease-out;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            padding-right: 10px;
+            justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 0.9em;
         }
 
-        .continue-btn {
-            margin-top: 30px;
-        }
+        .progress-fill.blue { background: linear-gradient(90deg, #4A90E2 0%, #5DADE2 100%); }
+        .progress-fill.red { background: linear-gradient(90deg, #E74C3C 0%, #EC7063 100%); }
 
-        /* Pantalla de ganador */
         .winner-screen {
             display: none;
             text-align: center;
         }
 
         .winner-screen h2 {
-            color: #f5576c;
             font-size: 3em;
+            color: #667eea;
             margin-bottom: 20px;
             animation: bounce 1s infinite;
         }
@@ -517,328 +536,308 @@
             50% { transform: translateY(-20px); }
         }
 
-        .trophy {
-            font-size: 10em;
-            margin: 30px 0;
-        }
-
-        .hidden {
-            display: none;
-        }
+        .trophy { font-size: 5em; margin: 20px 0; }
+        .hidden { display: none; }
+        .error-message { background: #f5576c; color: white; padding: 15px; border-radius: 10px; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>⚔️ Batalla Constitucional Online ⚔️</h1>
-            <p>Título Preliminar - De los españoles y los extranjeros</p>
-            <div id="playerIndicator" class="player-indicator"></div>
+            <p>Título Preliminar de la Constitución Española</p>
+            <div class="player-indicator" id="playerIndicator"></div>
         </div>
 
         <div class="content">
-            <!-- Pantalla de Lobby -->
-            <div id="lobbyScreen" class="lobby-screen">
-                <h2>🎮 Bienvenido al Lobby</h2>
-                <p>Selecciona una opción para comenzar:</p>
-                
+            <div class="lobby-screen" id="lobbyScreen">
+                <h2>🌐 Modo Multijugador Online</h2>
+                <p>Juega con un amigo desde cualquier lugar.<br>Uno crea la sala y el otro se une con el código.</p>
                 <div class="lobby-options">
-                    <button class="btn" onclick="createGame()">Crear Partida</button>
-                    <button class="btn btn-secondary" onclick="showJoinGame()">Unirse a Partida</button>
+                    <button class="btn" onclick="createGame()">Crear Sala</button>
+                    <button class="btn btn-secondary" onclick="showJoinGame()">Unirse a Sala</button>
                 </div>
-
-                <div id="createGameSection" class="hidden">
+                <div id="joinGameDiv" class="hidden">
+                    <div class="input-group"><input type="text" id="gameCodeInput" placeholder="Código" maxlength="4"></div>
+                    <button class="btn" onclick="joinGame()">Entrar</button>
+                </div>
+                <div id="gameCreatedDiv" class="hidden">
                     <div class="game-code">
-                        <h3>Código de Partida</h3>
-                        <div class="code" id="gameCode">----</div>
+                        <h3>Código de tu sala:</h3>
+                        <div class="code" id="gameCodeDisplay"></div>
                     </div>
+                    <div class="waiting-message">⏳ Esperando al Jugador 2...</div>
                     <div class="players-status">
-                        <div class="player-slot ready">
-                            <span>👤</span>
-                            <span>Jugador 1: Listo</span>
-                        </div>
-                        <div class="player-slot" id="player2Slot">
-                            <span>⏳</span>
-                            <span>Esperando Jugador 2...</span>
-                        </div>
+                        <div class="player-slot ready"><span>✅</span><span>Tú (Jugador 1)</span></div>
+                        <div class="player-slot" id="player2Status"><span>⏳</span><span>Jugador 2</span></div>
                     </div>
                 </div>
-
-                <div id="joinGameSection" class="hidden">
-                    <div class="input-group">
-                        <input type="text" id="joinCodeInput" placeholder="CÓDIGO" maxlength="4">
-                    </div>
-                    <button class="btn" onclick="joinGame()">Unirse</button>
-                </div>
+                <div id="errorDiv" class="hidden"><div class="error-message" id="errorMessage"></div></div>
             </div>
 
-            <!-- Pantalla de Bienvenida -->
-            <div id="welcomeScreen" class="welcome-screen">
-                <h2>🎯 Preparados para la Batalla</h2>
-                <p>Van a aparecer artículos de la Constitución.<br>
-                   Tienes 30 segundos para leerlo.<br>
-                   Luego responderás 5 preguntas.<br>
-                   Cada respuesta correcta te da 20 metros.<br>
-                   ¡El primero en llegar a 900m gana!</p>
-                
-                <button class="btn" id="startBtn" onclick="startGame()">¡Comenzar!</button>
-                <p class="waiting-message hidden" id="waitingForStart">Esperando que el Jugador 1 inicie...</p>
+            <div class="welcome-screen" id="welcomeScreen">
+                <h2>🎮 ¡Bienvenidos a la Carrera!</h2>
+                <p>9 etapas, 9 artículos. Cada acierto te da 20 metros.<br>¡El primero en llegar a los 900m gana!</p>
+                <button class="btn" id="startBtn" onclick="startGame()">¡Comenzar Batalla!</button>
+                <p id="waitingForStart" class="hidden" style="color:#f5576c">Esperando a que el Creador inicie...</p>
             </div>
 
-            <!-- Pantalla de Artículo -->
-            <div id="articleScreen" class="article-screen">
-                <div id="articleBox" class="article-box"></div>
-                <div class="timer">
-                    <h3 id="timeLeft">30</h3>
-                    <p>segundos para leer</p>
-                </div>
+            <div class="article-screen" id="articleScreen">
+                <div class="article-box" id="articleBox"></div>
+                <div class="timer" id="articleTimer">Tiempo para leer: <span id="timeLeft">30</span>s</div>
             </div>
 
-            <!-- Pantalla de Quiz -->
-            <div id="quizScreen" class="quiz-screen">
-                <div class="current-player">
-                    <h3>Turno de: <span id="currentPlayerName"></span></h3>
+            <div class="quiz-screen" id="quizScreen">
+                <div class="player-info">
+                    <h3 id="currentPlayerName">Jugador</h3>
+                    <div class="fuel-bar"><div class="fuel-fill" id="fuelFill" style="width: 0%"><span id="fuelText">0 L</span></div></div>
                 </div>
-                
                 <div class="question-box">
-                    <h3 id="questionText"></h3>
-                    <div id="optionsContainer" class="options-container"></div>
+                    <h4 id="questionText">Cargando pregunta...</h4>
+                    <div class="options" id="optionsContainer"></div>
                 </div>
-
-                <div class="fuel-indicator">
-                    <p>Combustible acumulado:</p>
-                    <div class="fuel-bar">
-                        <div id="fuelFill" class="fuel-fill">
-                            <span id="fuelText">0m</span>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="btn next-btn" id="nextBtn" onclick="nextQuestion()">Siguiente Pregunta →</button>
+                <div style="text-align: center;"><button class="btn" id="nextBtn" style="display: none;" onclick="nextQuestion()">Siguiente</button></div>
             </div>
 
-            <!-- Pantalla de Espera -->
-            <div id="waitingScreen" class="waiting-screen">
-                <h2>⏳ Esperando al otro jugador...</h2>
-                <div class="score-display">
-                    <p>Tu puntuación:</p>
-                    <h3><span id="myScore">0</span>m</h3>
+            <div class="waiting-screen" id="waitingScreen" style="display: none; text-align: center;">
+                <h2>✅ ¡Has terminado la etapa!</h2>
+                <div class="waiting-message">⏳ Esperando a que el otro jugador termine...</div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <p>Tu avance en esta etapa:</p>
+                    <div style="font-size: 2.5em; color: #f5576c; font-weight: bold;"><span id="myScore">0</span>m</div>
                 </div>
-                <p class="waiting-message">El otro jugador está respondiendo las preguntas...</p>
             </div>
 
-            <!-- Pantalla de Batalla -->
-            <div id="battleScreen" class="battle-screen">
-                <h2 id="raceTitle" class="race-title">Resultados Etapa</h2>
-                
-                <div id="racetrack" class="racetrack">
-                    <div class="finish-line"></div>
-                    
-                    <div class="lane">
-                        <div class="player-label">J1</div>
-                        <div id="horse1" class="horse">🏃</div>
-                        <div id="distance1" class="distance">0m</div>
-                    </div>
-                    
-                    <div class="lane">
-                        <div class="player-label">J2</div>
-                        <div id="horse2" class="horse">🏃</div>
-                        <div id="distance2" class="distance">0m</div>
-                    </div>
-                </div>
-
+            <div class="battle-screen" id="battleScreen">
+                <div class="race-info"><h3 id="raceTitle">Etapa 1 de 9</h3></div>
                 <div class="progress-bars">
-                    <div class="progress-item">
-                        <h4>Jugador 1</h4>
-                        <div class="progress-bar">
-                            <div id="progress1" class="progress">
-                                <span id="progressText1">0m</span>
-                            </div>
-                        </div>
+                    <div class="progress-container">
+                        <div class="progress-label blue">🏃 J1</div>
+                        <div class="progress-bar"><div class="progress-fill blue" id="progress1" style="width: 0%"><span id="progressText1">0m</span></div></div>
                     </div>
-                    <div class="progress-item">
-                        <h4>Jugador 2</h4>
-                        <div class="progress-bar">
-                            <div id="progress2" class="progress">
-                                <span id="progressText2">0m</span>
-                            </div>
-                        </div>
+                    <div class="progress-container">
+                        <div class="progress-label red">🏃‍♀️ J2</div>
+                        <div class="progress-bar"><div class="progress-fill red" id="progress2" style="width: 0%"><span id="progressText2">0m</span></div></div>
                     </div>
                 </div>
-
-                <button class="btn continue-btn" onclick="continueRace()">Continuar Carrera →</button>
+                <div class="racetrack" id="racetrack">
+                    <div class="finish-line"></div>
+                    <div class="race-lane">
+                        <div class="horse blue" id="horse1"><span class="runner">🏃</span></div>
+                        <div class="distance-marker" id="distance1">0m</div>
+                        <div class="player-name-label">Jugador 1</div>
+                    </div>
+                    <div class="race-lane">
+                        <div class="horse red" id="horse2"><span class="runner">🏃‍♀️</span></div>
+                        <div class="distance-marker" id="distance2">0m</div>
+                        <div class="player-name-label">Jugador 2</div>
+                    </div>
+                </div>
+                <div style="text-align:center"><button class="btn" id="continueBtn" onclick="continueRace()">Siguiente Etapa</button></div>
             </div>
 
-            <!-- Pantalla de Ganador -->
-            <div id="winnerScreen" class="winner-screen">
-                <h2 id="winnerText">¡Ganador!</h2>
+            <div class="winner-screen" id="winnerScreen">
                 <div class="trophy">🏆</div>
-                <p style="font-size: 1.3em; color: #666;">¡Felicidades! Has demostrado ser un experto en la Constitución</p>
+                <h2 id="winnerText">¡Ganador!</h2>
+                <button class="btn" onclick="location.reload()">Jugar de Nuevo</button>
             </div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyDW3unoEx8VIvVXeWr9kUJE92Sc7L3maMw",
-            authDomain: "quizappconstitucional.firebaseapp.com",
-            databaseURL: "https://quizappconstitucional-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "quizappconstitucional",
-            storageBucket: "quizappconstitucional.firebasestorage.app",
-            messagingSenderId: "515582919162",
-            appId: "1:515582919162:web:e29e44b7c6c8dfd2aecd2f"
+            apiKey: "AIzaSyJCSHKPGMpezHW3o5AxR5Wzupuz3aI",
+            authDomain: "carrera-constitucional.firebaseapp.com",
+            databaseURL: "https://carrera-constitucional-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "carrera-constitucional",
+            storageBucket: "carrera-constitucional.firebasestorage.app",
+            messagingSenderId: "627786732121",
+            appId: "1:627786732121:web:9f1cc7c0b94887a9501b48"
         };
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const articles = [
-            {
-                title: "Artículo 11",
-                text: `1. La nacionalidad española se adquiere, se conserva y se pierde de acuerdo con lo establecido por la ley.
-2. Ningún español de origen podrá ser privado de su nacionalidad.
-3. El Estado podrá concertar tratados de doble nacionalidad con los países iberoamericanos o con aquellos que hayan tenido o tengan una particular vinculación con España. En estos mismos países, aun cuando no reconozcan a sus ciudadanos un derecho recíproco, podrán naturalizarse los españoles sin perder su nacionalidad de origen.`,
-                questions: [
-                    { q: "¿Qué regula el artículo 11?", options: ["La nacionalidad española", "Los derechos fundamentales", "El sistema electoral", "La organización territorial"], correct: 0 },
-                    { q: "¿Puede un español de origen ser privado de su nacionalidad?", options: ["Sí, en casos excepcionales", "No, en ningún caso", "Sí, por decisión judicial", "Depende de la ley"], correct: 1 },
-                    { q: "¿Con qué países puede España concertar tratados de doble nacionalidad?", options: ["Solo con países de la UE", "Con países iberoamericanos y los que tengan vinculación especial", "Con todos los países del mundo", "Solo con Portugal"], correct: 1 },
-                    { q: "¿Pueden los españoles naturalizarse en países iberoamericanos sin perder la nacionalidad española?", options: ["No, siempre la pierden", "Sí, incluso si no hay reciprocidad", "Solo si hay reciprocidad", "Depende del país"], correct: 1 },
-                    { q: "¿Quién determina cómo se adquiere y pierde la nacionalidad española?", options: ["La Constitución directamente", "La ley", "El Gobierno", "Los tratados internacionales"], correct: 1 }
-                ]
-            },
-            {
-                title: "Artículo 12",
-                text: `Los españoles son mayores de edad a los dieciocho años.`,
-                questions: [
-                    { q: "¿A qué edad se alcanza la mayoría de edad en España?", options: ["16 años", "18 años", "21 años", "17 años"], correct: 1 },
-                    { q: "¿Qué establece el artículo 12?", options: ["Los derechos de los menores", "La edad de jubilación", "La mayoría de edad", "La edad para votar"], correct: 2 },
-                    { q: "¿Es la mayoría de edad igual para todos los españoles?", options: ["Sí, a los 18 años", "No, depende de la comunidad autónoma", "No, depende del sexo", "Depende de la nacionalidad"], correct: 0 },
-                    { q: "Antes de los 18 años, ¿se es mayor de edad?", options: ["Sí", "No", "Depende", "Solo para ciertos actos"], correct: 1 },
-                    { q: "¿Puede una ley ordinaria cambiar la edad de mayoría de edad?", options: ["Sí, libremente", "No, está en la Constitución", "Solo con reforma constitucional", "Depende del Gobierno"], correct: 1 }
-                ]
-            },
-            {
-                title: "Artículo 13.1",
-                text: `1. Los extranjeros gozarán en España de las libertades públicas que garantiza el presente Título en los términos que establezcan los tratados y la ley.`,
-                questions: [
-                    { q: "¿Pueden los extranjeros disfrutar de libertades públicas en España?", options: ["No, son solo para españoles", "Sí, según tratados y la ley", "Sí, sin restricciones", "Solo en casos excepcionales"], correct: 1 },
-                    { q: "¿Qué determina los términos en que los extranjeros gozan de libertades públicas?", options: ["Solo la Constitución", "Los tratados y la ley", "El Gobierno", "Solo los tratados"], correct: 1 },
-                    { q: "¿Tiene el artículo 13.1 el mismo alcance para españoles y extranjeros?", options: ["Sí, exactamente igual", "No, los extranjeros tienen condiciones especiales", "Solo en algunos derechos", "Depende del país de origen"], correct: 1 },
-                    { q: "¿Qué título de la Constitución garantiza las libertades públicas?", options: ["El Título Preliminar", "El Título I", "El Título II", "El Título III"], correct: 0 },
-                    { q: "¿Pueden los tratados internacionales limitar las libertades de los extranjeros?", options: ["No, nunca", "Sí, junto con la ley", "Solo la ley puede", "Solo en guerra"], correct: 1 }
-                ]
-            },
-            {
-                title: "Artículo 13.2",
-                text: `2. Solamente los españoles serán titulares de los derechos reconocidos en el artículo 23, salvo lo que, atendiendo a criterios de reciprocidad, pueda establecerse por tratado o ley para el derecho de sufragio activo y pasivo en las elecciones municipales.`,
-                questions: [
-                    { q: "¿Qué artículo reconoce los derechos políticos?", options: ["Artículo 14", "Artículo 23", "Artículo 13", "Artículo 11"], correct: 1 },
-                    { q: "¿Pueden los extranjeros votar en elecciones municipales?", options: ["No, nunca", "Sí, sin restricciones", "Sí, si hay reciprocidad", "Solo los de la UE"], correct: 2 },
-                    { q: "¿Quiénes son titulares de los derechos del artículo 23?", options: ["Todos los residentes", "Solo los españoles", "Los ciudadanos de la UE", "Todos los mayores de edad"], correct: 1 },
-                    { q: "¿Qué significa 'sufragio pasivo'?", options: ["El derecho a votar", "El derecho a ser elegido", "El derecho a un juicio justo", "El derecho de reunión"], correct: 1 },
-                    { q: "¿Puede un tratado permitir que extranjeros voten en elecciones municipales?", options: ["No, está prohibido", "Sí, si hay reciprocidad", "Solo en la UE", "Depende del Gobierno"], correct: 1 }
-                ]
-            },
-            {
-                title: "Artículo 13.3",
-                text: `3. La extradición sólo se concederá en cumplimiento de un tratado o de la ley, atendiendo al principio de reciprocidad. Quedan excluidos de la extradición los delitos políticos, no considerándose como tales los actos de terrorismo.`,
-                questions: [
-                    { q: "¿Cuándo se puede conceder la extradición?", options: ["Por decisión del Gobierno", "Según tratado o ley", "En cualquier momento", "Solo con países de la UE"], correct: 1 },
-                    { q: "¿Se pueden extraditar personas por delitos políticos?", options: ["Sí, siempre", "No, están excluidos", "Depende del país", "Solo en casos graves"], correct: 1 },
-                    { q: "¿Son los actos de terrorismo considerados delitos políticos?", options: ["Sí", "No", "Depende del caso", "Solo si son internacionales"], correct: 1 },
-                    { q: "¿Qué principio se debe atender en la extradición?", options: ["De legalidad", "De reciprocidad", "De igualdad", "De proporcionalidad"], correct: 1 },
-                    { q: "¿Puede España extraditar sin tratado?", options: ["No, debe haber tratado o ley", "Sí, libremente", "Solo con países vecinos", "Depende del delito"], correct: 0 }
-                ]
-            },
-            {
-                title: "Artículo 13.4",
-                text: `4. La ley establecerá los términos en que los ciudadanos de otros países y los apátridas podrán gozar del derecho de asilo en España.`,
-                questions: [
-                    { q: "¿Quién establece los términos del derecho de asilo?", options: ["La Constitución", "La ley", "El Gobierno", "Los tratados"], correct: 1 },
-                    { q: "¿Pueden los apátridas solicitar asilo en España?", options: ["No", "Sí", "Solo en guerra", "Depende de su origen"], correct: 1 },
-                    { q: "¿Qué es un apátrida?", options: ["Persona sin nacionalidad", "Refugiado político", "Inmigrante ilegal", "Ciudadano de la UE"], correct: 0 },
-                    { q: "¿Está el derecho de asilo regulado directamente en la Constitución?", options: ["Sí, completamente", "No, se remite a la ley", "Solo para europeos", "Depende del caso"], correct: 1 },
-                    { q: "¿Pueden los ciudadanos de otros países gozar del derecho de asilo?", options: ["No, solo apátridas", "Sí, según la ley", "Solo de países en guerra", "Depende del tratado"], correct: 1 }
-                ]
-            }
-        ];
+        let gameId = null, playerNumber = null, currentArticle = null, currentArticleIndex = 0;
+        let player1Fuel = 0, player2Fuel = 0, player1Position = 0, player2Position = 0;
+        let currentQuestion = 0, usedArticles = [], articleInterval = null;
 
-        let gameId = null;
-        let playerNumber = null;
-        let currentArticle = null;
-        let currentQuestion = 0;
-        let player1Fuel = 0;
-        let player2Fuel = 0;
-        let player1Position = 0;
-        let player2Position = 0;
-        let articleInterval = null;
+const articles = [
+    {
+        number: 1,
+        title: "Artículo 1",
+        text: "1. España se constituye en un Estado social y democrático de Derecho, que propugna como valores superiores de su ordenamiento jurídico la libertad, la justicia, la igualdad y el pluralismo político. 2. La soberanía nacional reside en el pueblo español, del que emanan los poderes del Estado. 3. La forma política del Estado español es la Monarquía parlamentaria.",
+        questions: [
+            {q:"Según el art. 1.1, ¿cuál de los siguientes es un valor superior del ordenamiento jurídico?", options:["La seguridad jurídica","El pluralismo político","La jerarquía normativa","La solidaridad"], correct:1},
+            {q:"¿Dónde reside la soberanía nacional según el texto constitucional?", options:["En las Cortes Generales","En el pueblo español","En el Rey","En el Estado"], correct:1},
+            {q:"La forma política del Estado español es la:", options:["Monarquía constitucional","República parlamentaria","Monarquía parlamentaria","Democracia representativa"], correct:2},
+            {q:"España se constituye en un Estado:", options:["Liberal y democrático","Social y democrático de Derecho","Federal y social","Autonómico y de Derecho"], correct:1},
+            {q:"¿De quién emanan los poderes del Estado?", options:["De la Constitución","Del pueblo español","De la Corona","De las Cortes Generales"], correct:1}
+        ]
+    },
+    {
+        number: 2,
+        title: "Artículo 2",
+        text: "La Constitución se fundamenta en la indisoluble unidad de la Nación española, patria común e indivisible de todos los españoles, y reconoce y garantiza el derecho a la autonomía de las nacionalidades y regiones que la integran y la solidaridad entre todas ellas.",
+        questions: [
+            {q:"¿En qué se fundamenta la Constitución Española de 1978?", options:["En el consenso de los partidos","En la indisoluble unidad de la Nación española","En la soberanía de las CCAA","En el Estado de Derecho"], correct:1},
+            {q:"¿Qué reconoce y garantiza el artículo 2 respecto a las nacionalidades y regiones?", options:["Su independencia","Su derecho a la autonomía","Su soberanía propia","Su autodeterminación"], correct:1},
+            {q:"La Constitución define a la Nación española como:", options:["Divisible por ley","Patria común e indivisible","Federación de pueblos","Suma de regiones"], correct:1},
+            {q:"¿Qué principio garantiza el art. 2 entre todas las nacionalidades y regiones?", options:["Jerarquía","Solidaridad","Competencia","Igualdad tributaria"], correct:1},
+            {q:"La unidad de la Nación española se define como:", options:["Reversible administrativamente","Indisoluble","Temporal según Estatutos","Delegable"], correct:1}
+        ]
+    },
+    {
+        number: 3,
+        title: "Artículo 3",
+        text: "1. El castellano es la lengua española oficial del Estado. Todos los españoles tienen el deber de conocerla y el derecho a usarla. 2. Las demás lenguas españolas serán también oficiales en las respectivas Comunidades Autónomas de acuerdo con sus Estatutos. 3. La riqueza de las distintas modalidades lingüísticas de España es un patrimonio cultural que será objeto de especial respeto y protección.",
+        questions: [
+            {q:"¿Cuál es la lengua española oficial del Estado?", options:["El español","El castellano","Todas las peninsulares","El bilingüismo"], correct:1},
+            {q:"Respecto al castellano, los españoles tienen el:", options:["Derecho a ignorarlo","Deber de conocerlo y derecho a usarlo","Deber de usarlo siempre","Derecho a traducirlo"], correct:1},
+            {q:"¿Dónde serán también oficiales las demás lenguas españolas?", options:["En todo el territorio nacional","En las respectivas CCAA según Estatutos","Solo en el ámbito privado","En los municipios fronterizos"], correct:1},
+            {q:"Las modalidades lingüísticas de España son consideradas como:", options:["Un problema administrativo","Patrimonio cultural objeto de respeto","Lenguas secundarias","Obligaciones del Estado"], correct:1},
+            {q:"¿Qué protección deben recibir las modalidades lingüísticas?", options:["Básica","Especial","Opcional","Ninguna"], correct:1}
+        ]
+    },
+    {
+        number: 4,
+        title: "Artículo 4",
+        text: "1. La bandera de España está formada por tres franjas horizontales, roja, amarilla y roja, siendo la amarilla de doble anchura que cada una de las rojas. 2. Los Estatutos podrán reconocer banderas y enseñas propias de las Comunidades Autónomas. Estas se utilizarán junto a la bandera de España en sus edificios públicos y en sus actos oficiales.",
+        questions: [
+            {q:"¿Cuántas franjas componen la bandera de España?", options:["Dos","Tres","Cuatro","Cinco"], correct:1},
+            {q:"¿Qué franja de la bandera española tiene el doble de anchura?", options:["La roja superior","La amarilla","La roja inferior","Todas son iguales"], correct:1},
+            {q:"¿Pueden los Estatutos de Autonomía reconocer banderas propias?", options:["No, está prohibido","Sí, lo establece el art. 4.2","Solo previa Ley Orgánica","Solo en fiestas locales"], correct:1},
+            {q:"Las banderas propias de las CCAA se utilizarán:", options:["En lugar de la de España","Junto a la de España","Solo en edificios locales","Sin protocolo alguno"], correct:1},
+            {q:"¿Cuál es el orden de colores de las franjas según el art. 4.1?", options:["Rojo y Amarillo","Rojo, Amarillo y Azul","Rojo, Amarillo y Rojo","Amarillo, Verde y Rojo"], correct:2}
+        ]
+    },
+    {
+        number: 5,
+        title: "Artículo 5",
+        text: "La capital del Estado es la villa de Madrid.",
+        questions: [
+            {q:"¿Cuál es la capital del Estado español?", options:["La ciudad de Madrid","La villa de Madrid","El municipio de Madrid","La comunidad de Madrid"], correct:1},
+            {q:"Jurídicamente, Madrid se define en la Constitución como:", options:["Ciudad","Villa","Capitalidad","Sede"], correct:1},
+            {q:"Para cambiar la capitalidad de Madrid sería necesaria:", options:["Una Ley Ordinaria","Una Reforma Constitucional","Un Real Decreto","Una Orden Ministerial"], correct:1},
+            {q:"El artículo 5 de la Constitución es el único que trata sobre:", options:["La Corona","La Capitalidad","El Gobierno","Las Cortes"], correct:1},
+            {q:"¿En qué Título se ubica la capitalidad de la villa de Madrid?", options:["Título I","Título Preliminar","Título II","Título III"], correct:1}
+        ]
+    },
+    {
+        number: 6,
+        title: "Artículo 6",
+        text: "Los partidos políticos expresan el pluralismo político, concurren a la formación y manifestación de la voluntad popular y son instrumento fundamental para la participación política. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.",
+        questions: [
+            {q:"¿Qué expresan principalmente los partidos políticos?", options:["La voluntad del Gobierno","El pluralismo político","La unidad nacional","Los intereses locales"], correct:1},
+            {q:"Los partidos son un instrumento fundamental para:", options:["La administración local","La participación política","El control judicial","La seguridad nacional"], correct:1},
+            {q:"La creación y ejercicio de la actividad de los partidos son:", options:["Limitados por el Gobierno","Libres dentro del respeto a la ley","Sujetos a autorización previa","Obligatorios por ley"], correct:1},
+            {q:"Su estructura interna y funcionamiento deberán ser:", options:["Jerárquicos","Democráticos","Autónomos e independientes","Confidenciales"], correct:1},
+            {q:"¿A qué concurren los partidos políticos según el art. 6?", options:["Al orden público","A la formación de la voluntad popular","Al gasto público","A la unidad del Estado"], correct:1}
+        ]
+    },
+    {
+        number: 7,
+        title: "Artículo 7",
+        text: "Los sindicatos de trabajadores y las asociaciones empresariales contribuyen a la defensa y promoción de los intereses económicos y sociales que les son propios. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.",
+        questions: [
+            {q:"¿Qué intereses defienden y promueven los sindicatos?", options:["Políticos","Económicos y sociales propios","Culturales","Religiosos"], correct:1},
+            {q:"¿Dónde se reconoce la libertad de creación de sindicatos en el Título Preliminar?", options:["En el artículo 6","En el artículo 7","En el artículo 10","En el artículo 28"], correct:1},
+            {q:"Las asociaciones empresariales contribuyen a la defensa de:", options:["El pluralismo político","Los intereses económicos y sociales","La administración pública","La legislación mercantil"], correct:1},
+            {q:"La estructura y funcionamiento de sindicatos y asociaciones deben ser:", options:["Asamblearios","Democráticos","Jerarquizados","Libres de norma"], correct:1},
+            {q:"El artículo 7 engloba a:", options:["Sindicatos de trabajadores","Asociaciones empresariales","Ambas organizaciones","Partidos políticos"], correct:2}
+        ]
+    },
+    {
+        number: 8,
+        title: "Artículo 8",
+        text: "1. Las Fuerzas Armadas, constituidas por el Ejército de Tierra, la Armada y el Ejército del Aire, tienen como misión garantizar la soberanía e independencia de España, defender su integridad territorial y el ordenamiento constitucional. 2. Una ley orgánica regulará las bases de la organización militar conforme a los principios de la presente Constitución.",
+        questions: [
+            {q:"¿Cuántos ejércitos constituyen las Fuerzas Armadas?", options:["Dos","Tres","Cuatro","Cinco"], correct:1},
+            {q:"¿Cuál de estas instituciones NO forma parte de las Fuerzas Armadas según el art. 8?", options:["El Ejército de Tierra","La Guardia Civil","La Armada","El Ejército del Aire"], correct:1},
+            {q:"Es misión de las Fuerzas Armadas garantizar:", options:["La soberanía e independencia de España","El cumplimiento de los presupuestos","La seguridad ciudadana","La legalidad administrativa"], correct:0},
+            {q:"¿Qué tipo de ley regulará las bases de la organización militar?", options:["Ley Ordinaria","Ley Orgánica","Decreto Legislativo","Real Decreto"], correct:1},
+            {q:"¿Qué otra función tienen las FF.AA. además de garantizar la soberanía?", options:["Controlar el tráfico","Defender la integridad territorial y el orden constitucional","Dirigir la política exterior","Elegir al Jefe del Estado"], correct:1}
+        ]
+    },
+    {
+        number: 9,
+        title: "Artículo 9",
+        text: "1. Los ciudadanos y los poderes públicos están sujetos a la Constitución y al resto del ordenamiento jurídico. 2. Corresponde a los poderes públicos promover las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas; remover los obstáculos que impidan o dificulten su plenitud y facilitar la participación de todos los ciudadanos en la vida política, económica, cultural y social. 3. La Constitución garantiza el principio de legalidad, la jerarquía normativa, la publicidad de las normas, la irretroactividad de las disposiciones sancionadoras no favorables o restrictivas de derechos individuales, la seguridad jurídica, la responsabilidad y la interdicción de la arbitrariedad de los poderes públicos.",
+        questions: [
+            {q:"¿Quiénes están sujetos a la Constitución y al resto del ordenamiento jurídico?", options:["Solo los ciudadanos","Solo los poderes públicos","Tanto ciudadanos como poderes públicos","Solo el Gobierno"], correct:2},
+            {q:"¿Qué corresponde a los poderes públicos respecto a la libertad e igualdad?", options:["Ignorarlas","Promover que sean reales y efectivas","Limitarlas por ley","Delegarlas en la CCAA"], correct:1},
+            {q:"¿Cuál de estos principios NO está garantizado en el artículo 9.3?", options:["La publicidad de las normas","La arbitrariedad de los poderes públicos","La irretroactividad de disposiciones sancionadoras","La seguridad jurídica"], correct:1},
+            {q:"Los poderes públicos deben facilitar la participación de los ciudadanos en la vida:", options:["Solo política","Política, económica, cultural y social","Laboral","Religiosa"], correct:1},
+            {q:"La Constitución garantiza la responsabilidad y la...", options:["Impunidad de los poderes","Interdicción de la arbitrariedad de los poderes públicos","Delegación de competencias","Inviolabilidad de las Cortes"], correct:1}
+        ]
+    }
+];
 
         function createGame() {
-            gameId = Math.random().toString(36).substr(2, 4).toUpperCase();
+            gameId = Math.floor(1000 + Math.random() * 9000).toString();
             playerNumber = 1;
-            
-            database.ref('games/' + gameId).set({
-                player1: true,
-                player2: false,
-                gameState: 'lobby'
-            });
-
-            document.getElementById('gameCode').textContent = gameId;
-            document.getElementById('createGameSection').classList.remove('hidden');
             updatePlayerIndicator();
-            listenForGameChanges();
+            database.ref('games/' + gameId).set({ 
+                player1: true, 
+                player2: false, 
+                gameState: 'lobby', 
+                player1Position: 0, 
+                player2Position: 0,
+                usedArticles: [] // Inicializar array de usados
+            });
+            document.getElementById('lobbyScreen').querySelector('.lobby-options').style.display = 'none';
+            document.getElementById('gameCreatedDiv').classList.remove('hidden');
+            document.getElementById('gameCodeDisplay').textContent = gameId;
+            listenToGame();
         }
 
-        function showJoinGame() {
-            document.getElementById('joinGameSection').classList.remove('hidden');
-        }
+        function showJoinGame() { document.getElementById('joinGameDiv').classList.remove('hidden'); }
 
         function joinGame() {
-            gameId = document.getElementById('joinCodeInput').value.toUpperCase();
-            if (!gameId) return;
-            
-            database.ref('games/' + gameId).once('value').then(snapshot => {
-                if (!snapshot.exists()) {
-                    alert('Código de partida no válido');
-                    return;
-                }
-                
-                playerNumber = 2;
-                database.ref('games/' + gameId).update({ player2: true });
+            const code = document.getElementById('gameCodeInput').value;
+            database.ref('games/' + code).once('value', s => {
+                if (!s.val() || s.val().player2) return alert("Error en sala");
+                gameId = code; playerNumber = 2;
                 updatePlayerIndicator();
-                listenForGameChanges();
+                database.ref('games/' + code).update({ player2: true });
+                listenToGame();
             });
         }
 
-        function listenForGameChanges() {
-            database.ref('games/' + gameId).on('value', snapshot => {
-                const game = snapshot.val();
+        function listenToGame() {
+            database.ref('games/' + gameId).on('value', s => {
+                const game = s.val();
                 if (!game) return;
+                
+                // Sincronizar artículos usados
+                usedArticles = game.usedArticles || [];
 
-                if (game.player2 && game.gameState === 'lobby') {
-                    document.getElementById('player2Slot').innerHTML = '<span>✅</span><span>Jugador 2: Listo</span>';
-                    document.getElementById('player2Slot').classList.add('ready');
-                    setTimeout(() => {
-                        database.ref('games/' + gameId).update({ gameState: 'welcome' });
-                    }, 1000);
+                if (game.player2) {
+                    document.getElementById('player2Status').classList.add('ready');
+                    document.getElementById('player2Status').innerHTML = '<span>✅</span><span>Jugador 2 Listo</span>';
+                    if (game.gameState === 'lobby') showWelcome();
                 }
 
-                if (game.gameState === 'welcome') {
-                    showWelcome();
+                if (game.gameState === 'article') {
+                    if (!currentArticle || articles.indexOf(currentArticle) !== game.currentArticleIndex) {
+                        currentArticle = articles[game.currentArticleIndex];
+                        currentArticleIndex = game.currentArticleIndex + 1;
+                        hideAll();
+                        showArticle();
+                    }
                 }
 
-                if (game.gameState === 'article' && game.currentArticleIndex !== undefined) {
-                    currentArticle = articles[game.currentArticleIndex];
-                    hideAll();
-                    showArticle();
+                if (game.player1Finished && game.player2Finished && game.gameState !== 'race') {
+                    if (playerNumber === 1) database.ref('games/' + gameId).update({ gameState: 'race', player1Finished: false, player2Finished: false });
                 }
 
-                if (game.player1Finished && game.player2Finished) {
+                if (game.gameState === 'race') {
                     hideAll();
                     document.getElementById('battleScreen').style.display = 'block';
-                    player1Fuel = game.player1Fuel || 0;
-                    player2Fuel = game.player2Fuel || 0;
+                    player1Fuel = game.player1Fuel || 0; player2Fuel = game.player2Fuel || 0;
                     player1Position = game.player1Position || 0; player2Position = game.player2Position || 0;
                     updateRaceVisuals();
                 }
@@ -857,46 +856,29 @@
         function startGame() {
             if (playerNumber !== 1) return;
             
-            // Obtener artículos usados de la base de datos
-            database.ref('games/' + gameId).once('value').then(snapshot => {
-                const gameData = snapshot.val();
-                const usedArticles = gameData.usedArticles || [];
-                
-                // Crear array de índices disponibles (artículos no usados)
-                const availableIndices = [];
-                for (let i = 0; i < articles.length; i++) {
-                    if (!usedArticles.includes(i)) {
-                        availableIndices.push(i);
-                    }
-                }
-                
-                // Si no quedan artículos disponibles, reiniciar el array de usados
-                if (availableIndices.length === 0) {
-                    database.ref('games/' + gameId).update({ 
-                        usedArticles: [],
-                        currentArticleIndex: 0,
-                        gameState: 'article',
-                        player1Finished: false,
-                        player2Finished: false
-                    });
-                    return;
-                }
-                
-                // Seleccionar un artículo aleatorio de los disponibles
-                const randomIndex = Math.floor(Math.random() * availableIndices.length);
-                const selectedArticleIndex = availableIndices[randomIndex];
-                
-                // Agregar el artículo seleccionado a los usados
-                const newUsedArticles = [...usedArticles, selectedArticleIndex];
-                
-                // Actualizar base de datos
-                database.ref('games/' + gameId).update({ 
-                    gameState: 'article', 
-                    currentArticleIndex: selectedArticleIndex,
-                    usedArticles: newUsedArticles,
-                    player1Finished: false, 
-                    player2Finished: false 
-                });
+            // Obtener lista de índices disponibles
+            let availableIndices = [];
+            for(let i=0; i < articles.length; i++) {
+                if(!usedArticles.includes(i)) availableIndices.push(i);
+            }
+
+            // Si se acabaron las preguntas, reiniciar lista (opcional) o avisar
+            if(availableIndices.length === 0) {
+                usedArticles = [];
+                for(let i=0; i < articles.length; i++) availableIndices.push(i);
+            }
+
+            const randomIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            
+            // Actualizar Firebase con el nuevo índice y agregarlo a usados
+            const updatedUsed = [...usedArticles, randomIdx];
+            
+            database.ref('games/' + gameId).update({ 
+                gameState: 'article', 
+                currentArticleIndex: randomIdx, 
+                player1Finished: false, 
+                player2Finished: false,
+                usedArticles: updatedUsed
             });
         }
 
@@ -924,16 +906,12 @@
             document.getElementById('questionText').textContent = q.q;
             const cont = document.getElementById('optionsContainer'); cont.innerHTML = '';
             
-            // Crear array con opciones y sus índices originales
             const shuffledOptions = q.options.map((o, i) => ({text: o, originalIndex: i}));
-            
-            // Mezclar aleatoriamente (algoritmo Fisher-Yates)
             for (let i = shuffledOptions.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
             }
             
-            // Mostrar opciones mezcladas
             shuffledOptions.forEach((option) => {
                 const d = document.createElement('div'); d.className = 'option'; d.textContent = option.text;
                 d.onclick = () => {
@@ -945,7 +923,6 @@
                     }
                     else { 
                         d.classList.add('incorrect'); 
-                        // Marcar la opción correcta
                         opts.forEach(opt => {
                             if (opt.textContent === q.options[q.correct]) {
                                 opt.classList.add('correct');
@@ -976,10 +953,8 @@
             const track = document.getElementById('racetrack').offsetWidth - 150;
             document.getElementById('raceTitle').textContent = `Resultados Etapa`;
             
-            // Reproducir sonido de correr
             playRunningSound();
             
-            // Animación
             document.getElementById('horse1').classList.add('moving');
             document.getElementById('horse2').classList.add('moving');
             
@@ -999,7 +974,6 @@
                 document.getElementById('horse2').classList.remove('moving');
 
                 if (player1Position >= 900 || player2Position >= 900) {
-                    // Reproducir sonido de victoria
                     playVictorySound();
                     hideAll(); document.getElementById('winnerScreen').style.display = 'block';
                     document.getElementById('winnerText').textContent = player1Position > player2Position ? "¡Gana Jugador 1!" : "¡Gana Jugador 2!";
@@ -1021,23 +995,16 @@
 
         function playRunningSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const duration = 1.5; // Duración del sonido de correr
-            
-            // Crear varios pasos rápidos
             for (let i = 0; i < 8; i++) {
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 100 + Math.random() * 50; // Frecuencia baja para simular pasos
+                oscillator.frequency.value = 100 + Math.random() * 50;
                 oscillator.type = 'sine';
-                
                 const startTime = audioContext.currentTime + (i * 0.15);
                 gainNode.gain.setValueAtTime(0.3, startTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
-                
                 oscillator.start(startTime);
                 oscillator.stop(startTime + 0.1);
             }
@@ -1045,43 +1012,30 @@
 
         function playVictorySound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Melodía de victoria ascendente
-            const notes = [262, 330, 392, 523]; // Do, Mi, Sol, Do (octava alta)
-            
+            const notes = [262, 330, 392, 523];
             notes.forEach((freq, index) => {
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-                
                 oscillator.frequency.value = freq;
                 oscillator.type = 'triangle';
-                
                 const startTime = audioContext.currentTime + (index * 0.2);
                 gainNode.gain.setValueAtTime(0.3, startTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.4);
-                
                 oscillator.start(startTime);
                 oscillator.stop(startTime + 0.4);
             });
-            
-            // Agregar un acorde final triunfal
             setTimeout(() => {
-                [523, 659, 784].forEach(freq => { // Do, Mi, Sol (octava alta)
+                [523, 659, 784].forEach(freq => {
                     const oscillator = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
-                    
                     oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
-                    
                     oscillator.frequency.value = freq;
                     oscillator.type = 'triangle';
-                    
                     gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-                    
                     oscillator.start();
                     oscillator.stop(audioContext.currentTime + 1);
                 });
