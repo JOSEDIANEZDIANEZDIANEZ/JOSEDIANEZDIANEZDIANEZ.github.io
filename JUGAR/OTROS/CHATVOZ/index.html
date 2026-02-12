@@ -28,55 +28,6 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
-            position: relative;
-        }
-
-        /* --- Estilos del Chat de Voz --- */
-        .voice-controls {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            z-index: 100;
-        }
-
-        .voice-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .voice-off { background: #f5576c; color: white; }
-        .voice-active { 
-            background: #84fab0; 
-            color: #333; 
-            animation: pulse-voice 2s infinite; 
-        }
-
-        @keyframes pulse-voice {
-            0% { box-shadow: 0 0 0 0px rgba(132, 250, 176, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(132, 250, 176, 0); }
-            100% { box-shadow: 0 0 0 0px rgba(132, 250, 176, 0); }
-        }
-
-        .voice-status {
-            font-size: 0.7em;
-            color: #666;
-            font-weight: bold;
-            background: rgba(255,255,255,0.8);
-            padding: 2px 6px;
-            border-radius: 10px;
         }
 
         .header {
@@ -588,16 +539,33 @@
         .trophy { font-size: 5em; margin: 20px 0; }
         .hidden { display: none; }
         .error-message { background: #f5576c; color: white; padding: 15px; border-radius: 10px; margin: 20px 0; }
+
+.voice-panel{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#fff;
+    border-radius:50px;
+    box-shadow:0 5px 20px rgba(0,0,0,.3);
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    z-index:9999;
+}
+.voice-btn{
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    background:none;
+}
+.voice-active{color:green}
+.voice-off{color:red}
+
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="voice-controls">
-            <button id="voiceBtn" class="voice-btn voice-off" onclick="toggleVoice()" title="Activar/Desactivar Micrófono">🎙️</button>
-            <span id="voiceStatus" class="voice-status">Voz: Off</span>
-        </div>
-        <audio id="remoteAudio" autoplay></audio>
-
         <div class="header">
             <h1>⚔️ Batalla Constitucional Online ⚔️</h1>
             <p>Título Preliminar de la Constitución Española</p>
@@ -720,81 +688,6 @@
         let player1Fuel = 0, player2Fuel = 0, player1Position = 0, player2Position = 0;
         let currentQuestion = 0, usedArticles = [], articleInterval = null;
 
-        // --- SISTEMA DE VOZ WEBRTC INTEGRADO ---
-        let localStream; [cite: 1]
-        let pc; [cite: 2]
-        let isVoiceConnected = false;
-        const iceConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }; [cite: 2]
-
-        async function toggleVoice() { [cite: 3]
-            if (!gameId) return alert("Primero crea o únete a una sala");
-            
-            if (!isVoiceConnected) {
-                try {
-                    document.getElementById('voiceStatus').textContent = "Iniciando..."; [cite: 3]
-                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); [cite: 4]
-                    isVoiceConnected = true;
-                    document.getElementById('voiceBtn').className = "voice-btn voice-active";
-                    document.getElementById('voiceStatus').textContent = "Voz activa";
-
-                    setupPeer(); [cite: 4]
-                    if (playerNumber === 1) { [cite: 5]
-                        const offer = await pc.createOffer(); [cite: 5]
-                        await pc.setLocalDescription(offer); [cite: 6]
-                        database.ref(`games/${gameId}/calls/offer`).set({ sdp: offer.sdp, type: offer.type }); [cite: 6]
-                    }
-                } catch (e) { 
-                    alert("Error acceso micro"); [cite: 6]
-                    document.getElementById('voiceStatus').textContent = "Error micro";
-                }
-            } else {
-                const audioTrack = localStream.getAudioTracks()[0]; [cite: 7]
-                audioTrack.enabled = !audioTrack.enabled; [cite: 8]
-                document.getElementById('voiceBtn').className = audioTrack.enabled ? "voice-btn voice-active" : "voice-btn voice-off";
-                document.getElementById('voiceStatus').textContent = audioTrack.enabled ? "Voz activa" : "Mutado"; [cite: 8]
-            }
-        }
-
-        function setupPeer() { [cite: 9]
-            pc = new RTCPeerConnection(iceConfig); [cite: 10]
-            
-            localStream.getTracks().forEach(t => pc.addTrack(t, localStream)); [cite: 10]
-
-            pc.ontrack = e => { [cite: 10]
-                document.getElementById('remoteAudio').srcObject = e.streams[0]; [cite: 10]
-            };
-
-            pc.onicecandidate = e => { [cite: 11]
-                if(e.candidate) {
-                    database.ref(`games/${gameId}/calls/candidates/${playerNumber}`).push(e.candidate.toJSON()); [cite: 11]
-                }
-            };
-
-            if(playerNumber === 2) { [cite: 13]
-                database.ref(`games/${gameId}/calls/offer`).on('value', async s => { [cite: 13]
-                    if(s.exists() && !pc.remoteDescription) {
-                        await pc.setRemoteDescription(new RTCSessionDescription(s.val())); [cite: 13]
-                        const ans = await pc.createAnswer(); [cite: 14]
-                        await pc.setLocalDescription(ans); [cite: 14]
-                        database.ref(`games/${gameId}/calls/answer`).set({ sdp: ans.sdp, type: ans.type }); [cite: 14]
-                    }
-                });
-            }
-
-            if(playerNumber === 1) { [cite: 15]
-                database.ref(`games/${gameId}/calls/answer`).on('value', async s => { [cite: 15]
-                    if(s.exists() && !pc.remoteDescription) {
-                        await pc.setRemoteDescription(new RTCSessionDescription(s.val())); [cite: 16]
-                    }
-                });
-            }
-
-            const otherP = playerNumber === 1 ? 2 : 1; [cite: 17, 18]
-            database.ref(`games/${gameId}/calls/candidates/${otherP}`).on('child_added', s => { [cite: 18]
-                if(s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val())); [cite: 18]
-            });
-        }
-
 const articles = [
     {
         number: 1,
@@ -916,7 +809,7 @@ const articles = [
                 gameState: 'lobby', 
                 player1Position: 0, 
                 player2Position: 0,
-                usedArticles: []
+                usedArticles: [] // Inicializar array de usados
             });
             document.getElementById('lobbyScreen').querySelector('.lobby-options').style.display = 'none';
             document.getElementById('gameCreatedDiv').classList.remove('hidden');
@@ -942,6 +835,7 @@ const articles = [
                 const game = s.val();
                 if (!game) return;
                 
+                // Sincronizar artículos usados
                 usedArticles = game.usedArticles || [];
 
                 if (game.player2) {
@@ -985,17 +879,21 @@ const articles = [
         function startGame() {
             if (playerNumber !== 1) return;
             
+            // Obtener lista de índices disponibles
             let availableIndices = [];
             for(let i=0; i < articles.length; i++) {
                 if(!usedArticles.includes(i)) availableIndices.push(i);
             }
 
+            // Si se acabaron las preguntas, reiniciar lista (opcional) o avisar
             if(availableIndices.length === 0) {
                 usedArticles = [];
                 for(let i=0; i < articles.length; i++) availableIndices.push(i);
             }
 
             const randomIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            
+            // Actualizar Firebase con el nuevo índice y agregarlo a usados
             const updatedUsed = [...usedArticles, randomIdx];
             
             database.ref('games/' + gameId).update({ 
@@ -1049,7 +947,9 @@ const articles = [
                     else { 
                         d.classList.add('incorrect'); 
                         opts.forEach(opt => {
-                            if (opt.textContent === q.options[q.correct]) opt.classList.add('correct');
+                            if (opt.textContent === q.options[q.correct]) {
+                                opt.classList.add('correct');
+                            }
                         });
                     }
                     document.getElementById('fuelText').textContent = (playerNumber===1?player1Fuel:player2Fuel) + "m";
@@ -1077,6 +977,7 @@ const articles = [
             document.getElementById('raceTitle').textContent = `Resultados Etapa`;
             
             playRunningSound();
+            
             document.getElementById('horse1').classList.add('moving');
             document.getElementById('horse2').classList.add('moving');
             
@@ -1105,7 +1006,9 @@ const articles = [
             if (playerNumber === 1) database.ref('games/' + gameId).update({ player1Position, player2Position, player1Fuel:0, player2Fuel:0 });
         }
 
-        function continueRace() { if (playerNumber === 1) startGame(); }
+        function continueRace() {
+            if (playerNumber === 1) startGame();
+        }
 
         function updatePlayerIndicator() {
             const indicator = document.getElementById('playerIndicator');
@@ -1146,6 +1049,20 @@ const articles = [
                 oscillator.start(startTime);
                 oscillator.stop(startTime + 0.4);
             });
+            setTimeout(() => {
+                [523, 659, 784].forEach(freq => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'triangle';
+                    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 1);
+                });
+            }, 800);
         }
 
         function hideAll() {
@@ -1153,6 +1070,116 @@ const articles = [
                 document.getElementById(id).style.display = 'none';
             });
         }
+
+/* ====== VOZ WEBRTC ====== */
+let localStream;
+let pc;
+let isVoiceConnected = false;
+
+const iceConfig = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+async function toggleVoice(){
+    if(!gameId || !playerNumber){
+        alert("Entra en una sala primero");
+        return;
+    }
+
+    if(!isVoiceConnected){
+        try{
+            document.getElementById('voiceStatus').textContent = "Iniciando...";
+            localStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+            isVoiceConnected = true;
+
+            document.getElementById('voiceBtn').className = "voice-btn voice-active";
+            document.getElementById('voiceStatus').textContent = "Voz activa";
+
+            setupPeer();
+
+            if(playerNumber === 1){
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                database.ref(`games/${gameId}/calls/offer`).set(offer);
+            }
+        }catch(e){
+            alert("No se pudo acceder al micrófono");
+        }
+    }else{
+        const track = localStream.getAudioTracks()[0];
+        track.enabled = !track.enabled;
+
+        document.getElementById('voiceBtn').className =
+            track.enabled ? "voice-btn voice-active" : "voice-btn voice-off";
+
+        document.getElementById('voiceStatus').textContent =
+            track.enabled ? "Voz activa" : "Mutado";
+    }
+}
+
+function setupPeer(){
+    pc = new RTCPeerConnection(iceConfig);
+
+    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+    pc.ontrack = e => {
+        document.getElementById('remoteAudio').srcObject = e.streams[0];
+    };
+
+    pc.onicecandidate = e => {
+        if(e.candidate){
+            database.ref(`games/${gameId}/calls/candidates/${playerNumber}`)
+                .push(e.candidate.toJSON());
+        }
+    };
+
+    // Jugador 2 escucha oferta
+    if(playerNumber === 2){
+        database.ref(`games/${gameId}/calls/offer`).on('value', async s => {
+            if(s.exists() && !pc.remoteDescription){
+                await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                const ans = await pc.createAnswer();
+                await pc.setLocalDescription(ans);
+                database.ref(`games/${gameId}/calls/answer`).set(ans);
+            }
+        });
+    }
+
+    // Jugador 1 escucha respuesta
+    if(playerNumber === 1){
+        database.ref(`games/${gameId}/calls/answer`).on('value', async s => {
+            if(s.exists() && !pc.remoteDescription){
+                await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+            }
+        });
+    }
+
+    const other = playerNumber === 1 ? 2 : 1;
+    database.ref(`games/${gameId}/calls/candidates/${other}`)
+        .on('child_added', s => {
+            if(s.exists()){
+                pc.addIceCandidate(new RTCIceCandidate(s.val()));
+            }
+        });
+}
+
+
+
     </script>
+
+
+
+<!-- === CHAT DE VOZ === -->
+<div class="voice-panel">
+    <button id="voiceBtn" class="voice-btn voice-off" onclick="toggleVoice()">🎤</button>
+    <span id="voiceStatus">Voz apagada</span>
+</div>
+
+<audio id="remoteAudio" autoplay></audio>
+
+
 </body>
 </html>
