@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalla Constitucional Online - Título Preliminar</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .container { max-width: 900px; width: 95%; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; margin: 20px 0; }
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center; color: white; }
+        .header h1 { font-size: 2.2em; margin-bottom: 10px; }
+        .player-indicator { background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 25px; font-weight: bold; margin-top: 15px; display: none; border: 2px solid rgba(255,255,255,0.3); }
+        
+        .content { padding: 30px; }
+        .lobby-screen { text-align: center; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; font-size: 1.1em; border-radius: 50px; cursor: pointer; transition: 0.3s; margin: 10px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn-secondary { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: #333; }
+        
+        .game-code { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px dashed #667eea; }
+        .code { font-size: 2.5em; font-weight: bold; color: #f5576c; letter-spacing: 5px; }
+
+        /* Voz */
+        .voice-panel { background: #f0f2f5; padding: 15px; border-radius: 15px; margin-bottom: 20px; display: none; text-align: center; border: 1px solid #ddd; }
+        .voice-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.5em; transition: 0.3s; }
+        .voice-active { background: #f5576c; color: white; animation: pulse 1.5s infinite; }
+        .voice-off { background: #ccc; }
+        
+        /* Juego */
+        .article-box { background: #f8f9fa; border-left: 5px solid #667eea; padding: 20px; margin-bottom: 20px; text-align: left; }
+        .option { background: white; border: 2px solid #ddd; padding: 12px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .option:hover { border-color: #667eea; background: #f0f2ff; }
+        .correct { background: #84fab0 !important; border-color: #27ae60; }
+        .incorrect { background: #ff7675 !important; border-color: #d63031; color: white; }
+
+        /* Pista de carreras */
+        .racetrack { background: #78e08f; padding: 20px; border-radius: 10px; position: relative; margin-top: 20px; height: 180px; border-right: 15px double #fff; }
+        .lane { height: 70px; border-bottom: 2px dashed rgba(255,255,255,0.5); position: relative; }
+        .runner { position: absolute; left: 0; top: 10px; font-size: 2.5em; transition: left 1s ease-in-out; }
+        
+        .hidden { display: none; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ Batalla Constitucional ⚔️</h1>
+            <div id="playerIndicator" class="player-indicator"></div>
+        </div>
+
+        <div class="content">
+            <div id="voicePanel" class="voice-panel">
+                <div style="margin-bottom: 10px; font-weight: bold; font-size: 0.9em;">Chat de Voz</div>
+                <button id="voiceBtn" class="voice-btn voice-off" onclick="toggleVoice()">🎤</button>
+                <div id="voiceStatus" style="font-size: 0.8em; margin-top: 5px;">Click para conectar voz</div>
+                <audio id="remoteAudio" autoplay></audio>
+            </div>
+
+            <div id="lobbyScreen" class="lobby-screen">
+                <h2>Modo Online</h2>
+                <div id="lobbyActions">
+                    <button class="btn" onclick="createGame()">Crear Sala</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('joinInput').classList.toggle('hidden')">Unirse</button>
+                    <div id="joinInput" class="hidden" style="margin-top: 15px;">
+                        <input type="text" id="gameCodeInput" placeholder="Código" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <button class="btn" onclick="joinGame()">Entrar</button>
+                    </div>
+                </div>
+                <div id="waitingRoom" class="hidden">
+                    <div class="game-code">Código: <span class="code" id="gameCodeDisplay">----</span></div>
+                    <p>Esperando al oponente...</p>
+                </div>
+            </div>
+
+            <div id="welcomeScreen" class="hidden lobby-screen">
+                <h2>¡Jugadores Listos!</h2>
+                <p>9 Etapas. 9 Artículos. Acierta para avanzar.</p>
+                <button id="startBtn" class="btn" onclick="hostStartGame()">¡Empezar Juego!</button>
+                <p id="guestWait" class="hidden">El anfitrión está por comenzar...</p>
+            </div>
+
+            <div id="articleScreen" class="hidden">
+                <div class="article-box" id="articleContent"></div>
+                <div style="text-align:center; font-weight:bold; color:#f5576c; font-size: 1.2em;">
+                    Tiempo: <span id="timer">30</span>s
+                </div>
+            </div>
+
+            <div id="quizScreen" class="hidden">
+                <h3 id="questionTitle" style="margin-bottom: 15px;">Pregunta</h3>
+                <div id="optionsList"></div>
+            </div>
+
+            <div id="waitTurnScreen" class="hidden lobby-screen">
+                <h2>Etapa completada</h2>
+                <p>Esperando a que el otro jugador termine sus preguntas...</p>
+            </div>
+
+            <div id="raceScreen" class="hidden">
+                <h2 style="text-align: center;">Progreso de la Carrera</h2>
+                <div class="racetrack">
+                    <div class="lane"><div id="p1Runner" class="runner">🏃</div></div>
+                    <div class="lane"><div id="p2Runner" class="runner">🏃‍♀️</div></div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p id="raceStatus">Calculando distancias...</p>
+                    <button id="nextEtapaBtn" class="btn hidden" onclick="hostStartGame()">Siguiente Etapa</button>
+                </div>
+            </div>
+
+            <div id="winScreen" class="hidden lobby-screen">
+                <h1 style="font-size: 4em;">🏆</h1>
+                <h2 id="winnerName">¡Ganador!</h2>
+                <button class="btn" onclick="location.reload()">Jugar otra vez</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // CONFIGURACIÓN FIREBASE (Usa la tuya propia)
+        const firebaseConfig = {
+            apiKey: "AIzaSyJCSHKPGMpezHW3o5AxR5Wzupuz3aI",
+            authDomain: "carrera-constitucional.firebaseapp.com",
+            databaseURL: "https://carrera-constitucional-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "carrera-constitucional",
+            storageBucket: "carrera-constitucional.firebasestorage.app",
+            messagingSenderId: "627786732121",
+            appId: "1:627786732121:web:9f1cc7c0b94887a9501b48"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // VARIABLES DE JUEGO
+        let gid = null;
+        let pNum = null;
+        let currentArtIdx = 0;
+        let score = 0;
+        let p1Pos = 0, p2Pos = 0;
+
+        // WEBRTC VOZ
+        let localStream;
+        let pc;
+        let isVoiceConnected = false;
+        const iceConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+
+        const articles = [
+            { n:1, t:"Artículo 1", txt:"1. España se constituye en un Estado social y democrático de Derecho, que propugna como valores superiores de su ordenamiento jurídico la libertad, la justicia, la igualdad y el pluralismo político. 2. La soberanía nacional reside en el pueblo español...", qs:[ {q:"¿Cuál es un valor superior?", o:["Justicia","Paz","Orden"], c:0}, {q:"¿Dónde reside la soberanía?", o:["En el Rey","En el pueblo","En el Congreso"], c:1} ] },
+            { n:2, t:"Artículo 2", txt:"La Constitución se fundamenta en la indisoluble unidad de la Nación española, patria común e indivisible de todos los españoles...", qs:[ {q:"¿Cómo es la unidad de la nación?", o:["Indisoluble","Delegable","Opcional"], c:0} ] },
+            { n:3, t:"Artículo 3", txt:"1. El castellano es la lengua española oficial del Estado. Todos los españoles tienen el deber de conocerla y el derecho a usarla...", qs:[ {q:"¿Cuál es la lengua oficial?", o:["Español","Castellano","Latín"], c:1} ] }
+            // Añade más artículos aquí siguiendo el mismo formato
+        ];
+
+        // LÓGICA DE SALAS
+        function createGame() {
+            gid = Math.floor(1000 + Math.random() * 9000).toString();
+            pNum = 1;
+            db.ref('games/' + gid).set({
+                p1Connected: true,
+                state: 'lobby',
+                p1Pos: 0, p2Pos: 0,
+                artIdx: -1
+            });
+            initLobbyUI();
+            listenGame();
+        }
+
+        function joinGame() {
+            const code = document.getElementById('gameCodeInput').value;
+            db.ref('games/' + code).once('value', s => {
+                if(s.exists() && !s.val().p2Connected) {
+                    gid = code;
+                    pNum = 2;
+                    db.ref('games/' + gid).update({ p2Connected: true });
+                    initLobbyUI();
+                    listenGame();
+                } else { alert("Sala llena o no existe"); }
+            });
+        }
+
+        function initLobbyUI() {
+            document.getElementById('lobbyActions').classList.add('hidden');
+            document.getElementById('waitingRoom').classList.remove('hidden');
+            document.getElementById('gameCodeDisplay').textContent = gid;
+            document.getElementById('playerIndicator').style.display = 'block';
+            document.getElementById('playerIndicator').textContent = "Jugador " + pNum;
+            document.getElementById('voicePanel').style.display = 'block';
+        }
+
+        function listenGame() {
+            db.ref('games/' + gid).on('value', s => {
+                const data = s.val();
+                if(!data) return;
+
+                // Control de estados
+                if(data.p1Connected && data.p2Connected && data.state === 'lobby') {
+                    showScreen('welcomeScreen');
+                    if(pNum === 2) {
+                        document.getElementById('startBtn').classList.add('hidden');
+                        document.getElementById('guestWait').classList.remove('hidden');
+                    }
+                }
+
+                if(data.state === 'reading' && data.artIdx !== currentArtIdx) {
+                    currentArtIdx = data.artIdx;
+                    startReading(articles[currentArtIdx]);
+                }
+
+                if(data.p1Ready && data.p2Ready && data.state === 'reading') {
+                    if(pNum === 1) db.ref('games/' + gid).update({ state: 'racing' });
+                }
+
+                if(data.state === 'racing') {
+                    showRace(data.p1Pos, data.p2Pos, data.p1Step || 0, data.p2Step || 0);
+                }
+            });
+        }
+
+        // LÓGICA DEL JUEGO
+        function hostStartGame() {
+            const nextIdx = (currentArtIdx + 1) % articles.length;
+            db.ref('games/' + gid).update({
+                state: 'reading',
+                artIdx: nextIdx,
+                p1Ready: false,
+                p2Ready: false,
+                p1Step: 0,
+                p2Step: 0
+            });
+        }
+
+        function startReading(art) {
+            showScreen('articleScreen');
+            document.getElementById('articleContent').innerHTML = `<h3>${art.t}</h3><p>${art.txt}</p>`;
+            let timeLeft = 15;
+            const t = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                if(timeLeft <= 0) {
+                    clearInterval(t);
+                    startQuiz(art);
+                }
+            }, 1000);
+        }
+
+        function startQuiz(art) {
+            showScreen('quizScreen');
+            let qIdx = 0;
+            let currentScore = 0;
+
+            function renderQuestion() {
+                const q = art.qs[qIdx];
+                document.getElementById('questionTitle').textContent = q.q;
+                const list = document.getElementById('optionsList');
+                list.innerHTML = '';
+                q.o.forEach((opt, i) => {
+                    const b = document.createElement('div');
+                    b.className = 'option';
+                    b.textContent = opt;
+                    b.onclick = () => {
+                        if(i === q.c) { b.classList.add('correct'); currentScore += 30; }
+                        else { b.classList.add('incorrect'); }
+                        
+                        setTimeout(() => {
+                            qIdx++;
+                            if(qIdx < art.qs.length) renderQuestion();
+                            else finishQuiz(currentScore);
+                        }, 800);
+                    };
+                    list.appendChild(b);
+                });
+            }
+            renderQuestion();
+        }
+
+        function finishQuiz(pts) {
+            showScreen('waitTurnScreen');
+            const updates = {};
+            updates[`p${pNum}Ready`] = true;
+            updates[`p${pNum}Step`] = pts;
+            db.ref('games/' + gid).update(updates);
+        }
+
+        function showRace(pos1, pos2, step1, step2) {
+            showScreen('raceScreen');
+            const total1 = pos1 + step1;
+            const total2 = pos2 + step2;
+
+            // Animación
+            setTimeout(() => {
+                document.getElementById('p1Runner').style.left = Math.min(total1 / 10, 90) + "%";
+                document.getElementById('p2Runner').style.left = Math.min(total2 / 10, 90) + "%";
+                document.getElementById('raceStatus').textContent = `J1: ${total1}m | J2: ${total2}m`;
+                
+                if(pNum === 1) {
+                    db.ref('games/' + gid).update({ p1Pos: total1, p2Pos: total2, p1Step: 0, p2Step: 0 });
+                    if(total1 >= 900 || total2 >= 900) {
+                        db.ref('games/' + gid).update({ state: 'finished' });
+                    } else {
+                        document.getElementById('nextEtapaBtn').classList.remove('hidden');
+                    }
+                }
+            }, 500);
+
+            if(total1 >= 900 || total2 >= 900) {
+                setTimeout(() => {
+                    showScreen('winScreen');
+                    document.getElementById('winnerName').textContent = total1 >= 900 ? "¡Gana Jugador 1!" : "¡Gana Jugador 2!";
+                }, 2000);
+            }
+        }
+
+        // --- SISTEMA DE VOZ WEBRTC ---
+        async function toggleVoice() {
+            if (!isVoiceConnected) {
+                try {
+                    document.getElementById('voiceStatus').textContent = "Iniciando...";
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    isVoiceConnected = true;
+                    document.getElementById('voiceBtn').className = "voice-btn voice-active";
+                    document.getElementById('voiceStatus').textContent = "Voz activa";
+
+                    setupPeer();
+
+                    if (pNum === 1) {
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        db.ref(`games/${gid}/calls/offer`).set({ sdp: offer.sdp, type: offer.type });
+                    }
+                } catch (e) { alert("Error acceso micro"); }
+            } else {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                document.getElementById('voiceBtn').className = audioTrack.enabled ? "voice-btn voice-active" : "voice-btn voice-off";
+                document.getElementById('voiceStatus').textContent = audioTrack.enabled ? "Voz activa" : "Mutado";
+            }
+        }
+
+        function setupPeer() {
+            pc = RTCPeerConnection ? new RTCPeerConnection(iceConfig) : new webkitRTCPeerConnection(iceConfig);
+            
+            localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+            pc.ontrack = e => {
+                document.getElementById('remoteAudio').srcObject = e.streams[0];
+            };
+
+            pc.onicecandidate = e => {
+                if(e.candidate) {
+                    db.ref(`games/${gid}/calls/candidates/${pNum}`).push(e.candidate.toJSON());
+                }
+            };
+
+            // Escuchar Oferta (si soy P2)
+            if(pNum === 2) {
+                db.ref(`games/${gid}/calls/offer`).on('value', async s => {
+                    if(s.exists() && !pc.remoteDescription) {
+                        await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                        const ans = await pc.createAnswer();
+                        await pc.setLocalDescription(ans);
+                        db.ref(`games/${gid}/calls/answer`).set({ sdp: ans.sdp, type: ans.type });
+                    }
+                });
+            }
+
+            // Escuchar Respuesta (si soy P1)
+            if(pNum === 1) {
+                db.ref(`games/${gid}/calls/answer`).on('value', async s => {
+                    if(s.exists() && !pc.remoteDescription) {
+                        await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+                    }
+                });
+            }
+
+            // Candidatos ICE
+            const otherP = pNum === 1 ? 2 : 1;
+            db.ref(`games/${gid}/calls/candidates/${otherP}`).on('child_added', s => {
+                if(s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val()));
+            });
+        }
+
+        function showScreen(id) {
+            ['lobbyScreen','welcomeScreen','articleScreen','quizScreen','waitTurnScreen','raceScreen','winScreen']
+            .forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
