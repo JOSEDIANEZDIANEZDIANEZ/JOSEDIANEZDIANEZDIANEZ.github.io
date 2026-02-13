@@ -2,65 +2,62 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Chanclazo Online - Diseño Original</title>
+  <title>Chanclazo Online - Edición Montañas</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
-    /* TODO TU DISEÑO ORIGINAL */
-    html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; font-family: sans-serif; text-align: center; background: #87CEEB; }
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; font-family: sans-serif; background: #87CEEB; }
     canvas { display: block; }
-    #info { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 8px; text-align: left; pointer-events: none; border: 2px solid #4682B4; }
-    .controles { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid #4682B4; }
-    button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; background: #4682B4; color: white; font-weight: bold; transition: background 0.3s; }
-    button:hover { background: #5f9ea0; }
     
-    /* INTERFAZ DE RED */
-    #overlay-red { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; display: flex; justify-content: center; align-items: center; z-index: 2000; }
-    .panel-red { background: white; color: #333; padding: 30px; border-radius: 20px; width: 350px; border: 4px solid #4682B4; }
+    /* Interfaz de Red */
+    #overlay-red { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+    .panel { background: white; padding: 30px; border-radius: 20px; text-align: center; border: 4px solid #4682B4; width: 320px; }
+    button { padding: 12px 25px; margin: 10px; cursor: pointer; border: none; border-radius: 8px; background: #4682B4; color: white; font-weight: bold; }
+    input { padding: 10px; width: 80%; margin-bottom: 10px; text-align: center; border: 2px solid #ddd; border-radius: 5px; }
+    
+    #info-partida { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.8); padding: 15px; border-radius: 10px; border: 2px solid #4682B4; pointer-events: none; }
+    #indicador-turno { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 30px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    .controles { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); padding: 20px; border-radius: 15px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     .hidden { display: none; }
-    #turno-display { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 28px; font-weight: bold; color: white; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); z-index: 100; pointer-events: none; }
   </style>
 </head>
 <body>
 
-  <div id="turno-display">CONECTANDO A FIREBASE...</div>
+  <div id="indicador-turno">CONECTANDO...</div>
 
   <div id="overlay-red">
-    <div class="panel-red">
+    <div class="panel" id="menu-inicial">
       <h2 style="color:#4682B4">CHANCLAZO ONLINE</h2>
-      <div id="opciones-inicio">
-        <button onclick="crearSala()">CREAR SALA</button>
-        <button onclick="mostrarUnirse()" style="background:#f5576c">UNIRSE</button>
+      <button onclick="crearPartida()">CREAR SALA</button>
+      <button onclick="mostrarUnirse()" style="background:#f5576c">UNIRSE A SALA</button>
+      <div id="div-unirse" class="hidden">
+        <hr>
+        <input type="text" id="input-codigo" placeholder="Código de sala">
+        <button onclick="unirsePartida()">ENTRAR</button>
       </div>
-      <div id="seccion-unirse" class="hidden">
-        <input type="text" id="codigo-sala" placeholder="Código" style="padding:10px; width:80%; margin-bottom:10px">
-        <button onclick="unirseSala()">ENTRAR</button>
-        <button onclick="location.reload()" style="background:#666">VOLVER</button>
-      </div>
-      <div id="espera-sala" class="hidden">
-        <p>Comparte este código:</p>
-        <h1 id="num-sala" style="font-size:40px; margin:10px 0; color:#f5576c">----</h1>
-        <p>Esperando oponente...</p>
+      <div id="div-espera" class="hidden">
+        <p>Código de tu sala:</p>
+        <h1 id="codigo-display" style="color:#f5576c; font-size: 45px; margin: 10px;">----</h1>
+        <p>Esperando al otro jugador...</p>
       </div>
     </div>
   </div>
 
-  <div id="info">
-    <div id="indicador-jugador1">Jugador 1: 100%</div>
-    <div id="indicador-jugador2">Jugador 2: 100%</div>
+  <div id="info-partida">
+    <div id="v-j1">Jugador 1: 100%</div>
+    <div id="v-j2">Jugador 2: 100%</div>
   </div>
 
   <div class="controles">
-    Ángulo: <input type="range" id="entradaAngulo" min="0" max="180" value="45"> <span id="valorAngulo">45</span>° | 
-    Potencia: <input type="range" id="entradaPotencia" min="0" max="140" value="70"> <span id="valorPotencia">70</span>
-    <button id="botonDisparar">¡LANZAR!</button>
+    Ángulo: <input type="range" id="rangeAngulo" min="0" max="180" value="45"> <span id="txtAngulo">45</span>° | 
+    Potencia: <input type="range" id="rangePotencia" min="0" max="140" value="70"> <span id="txtPotencia">70</span>
+    <button id="btnLanzar">¡LANZAR!</button>
   </div>
 
-  <audio id="remoteAudio" autoplay></audio>
-  <canvas id="lienzoJuego"></canvas>
+  <canvas id="canvasJuego"></canvas>
 
   <script>
-    // CONFIGURACIÓN FIREBASE
+    // --- CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyJCSHKPGMpezHW3o5AxR5Wzupuz3aI",
         authDomain: "carrera-constitucional.firebaseapp.com",
@@ -73,232 +70,201 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // VARIABLES MOTOR DE JUEGO
-    const lienzo = document.getElementById('lienzoJuego');
-    const ctx = lienzo.getContext('2d');
+    // --- VARIABLES DEL JUEGO ---
+    const canvas = document.getElementById('canvasJuego');
+    const ctx = canvas.getContext('2d');
     let gameId, miRol, turnoActual;
-    let islas = [], jugadores = [], proyectiles = [], nubes = [], particulas = [];
+    let jugadores = [], proyectiles = [], montañas = [], nubes = [];
     let gravedad = 0.25;
-    let juegoIniciado = false;
+    let juegoActivo = false;
 
-    // --- LÓGICA DE RED ---
-    function crearSala() {
+    // --- RED Y LOBBY ---
+    function crearPartida() {
       gameId = Math.floor(1000 + Math.random() * 9000).toString();
       miRol = 1;
-      document.getElementById('opciones-inicio').classList.add('hidden');
-      document.getElementById('espera-sala').classList.remove('hidden');
-      document.getElementById('num-sala').textContent = gameId;
+      document.getElementById('menu-inicial').querySelector('button').classList.add('hidden');
+      document.getElementById('div-espera').classList.remove('hidden');
+      document.getElementById('codigo-display').textContent = gameId;
       db.ref('games/' + gameId).set({ estado: 'esperando', turno: 1 });
-      escucharCambios();
+      escucharFirebase();
     }
 
-    function mostrarUnirse() {
-      document.getElementById('opciones-inicio').classList.add('hidden');
-      document.getElementById('seccion-unirse').classList.remove('hidden');
-    }
+    function mostrarUnirse() { document.getElementById('div-unirse').classList.toggle('hidden'); }
 
-    function unirseSala() {
-      gameId = document.getElementById('codigo-sala').value;
+    function unirsePartida() {
+      gameId = document.getElementById('input-codigo').value;
       miRol = 2;
       db.ref('games/' + gameId).once('value', s => {
         if(s.exists() && s.val().estado === 'esperando') {
           db.ref('games/' + gameId).update({ estado: 'jugando' });
-          iniciarMotor();
-        } else alert("Sala no válida");
+          iniciarJuego();
+        } else alert("Sala no disponible");
       });
-      escucharCambios();
+      escucharFirebase();
     }
 
-    function escucharCambios() {
+    function escucharFirebase() {
       db.ref('games/' + gameId).on('value', s => {
         const d = s.val();
         if(!d) return;
-        if(d.estado === 'jugando' && !juegoIniciado) iniciarMotor();
+        if(d.estado === 'jugando' && !juegoActivo) iniciarJuego();
         turnoActual = d.turno;
-        actualizarInterfaz();
         
-        if(d.disparo && d.disparo.autor !== miRol) {
-          procesarDisparoEnemigo(d.disparo);
-          db.ref('games/' + gameId + '/disparo').set(null); // Limpiar para el siguiente
+        // Sincronizar disparo oponente
+        if(d.ultimoDisparo && d.ultimoDisparo.autor !== miRol) {
+          const l = d.ultimoDisparo;
+          crearProyectil(l.x, l.y, l.vx, l.vy, l.autor);
+          db.ref('games/' + gameId + '/ultimoDisparo').set(null); 
         }
+        actualizarUI();
       });
     }
 
-    function actualizarInterfaz() {
-      const display = document.getElementById('turno-display');
+    function actualizarUI() {
+      const indicador = document.getElementById('indicador-turno');
       const controles = document.querySelector('.controles');
       if(turnoActual === miRol) {
-        display.textContent = "TU TURNO";
-        display.style.color = "#2ecc71";
+        indicador.textContent = "TU TURNO";
+        indicador.style.color = "#2ecc71";
         controles.style.display = 'block';
       } else {
-        display.textContent = "TURNO DEL OPONENTE";
-        display.style.color = "#e74c3c";
+        indicador.textContent = "ESPERANDO AL RIVAL...";
+        indicador.style.color = "#e74c3c";
         controles.style.display = 'none';
       }
     }
 
-    // --- MOTOR DEL JUEGO ORIGINAL ---
-    function iniciarMotor() {
+    // --- MOTOR GRÁFICO ---
+    function iniciarJuego() {
+      juegoActivo = true;
       document.getElementById('overlay-red').style.display = 'none';
-      juegoIniciado = true;
       redimensionar();
-      generarMundo();
-      setupVoiceChat();
-      buclePrincipal();
+      generarMapa();
+      bucle();
     }
 
-    function generarMundo() {
-      // Islas fijas para sincronía
-      islas = [
-        { x: 200, y: lienzo.height - 150, w: 150, h: 50, color: '#2ed573' },
-        { x: lienzo.width - 200, y: lienzo.height - 150, w: 150, h: 50, color: '#ffa502' }
-      ];
+    function redimensionar() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function generarMapa() {
+      // Terreno (Montañas)
+      montañas = [];
+      let puntos = 10;
+      for(let i=0; i<=puntos; i++) {
+        montañas.push({
+          x: (canvas.width / puntos) * i,
+          y: canvas.height - (100 + Math.random() * 200)
+        });
+      }
+      // Jugadores en posiciones fijas para evitar desincronía
       jugadores = [
-        { id: 1, x: 200, y: lienzo.height - 180, vida: 100, color: '#ff4757' },
-        { id: 2, x: lienzo.width - 200, y: lienzo.height - 180, vida: 100, color: '#1e90ff' }
+        { id: 1, x: 150, y: 0, vida: 100, color: '#FF4757' },
+        { id: 2, x: canvas.width - 150, y: 0, vida: 100, color: '#1E90FF' }
       ];
-      for(let i=0; i<5; i++) nubes.push({ x: Math.random()*lienzo.width, y: Math.random()*200, v: 0.5 + Math.random() });
+      // Ajustar Y al terreno
+      jugadores.forEach(j => j.y = obtenerAlturaTerreno(j.x) - 15);
+      
+      for(let i=0; i<6; i++) nubes.push({ x: Math.random()*canvas.width, y: Math.random()*200, v: 0.3+Math.random() });
     }
 
-    document.getElementById('botonDisparar').onclick = () => {
-      if(turnoActual !== miRol) return;
-      const ang = document.getElementById('entradaAngulo').value;
-      const pot = document.getElementById('entradaPotencia').value;
-      const rad = ang * Math.PI / 180;
-      const p = jugadores[miRol-1];
-      
-      const vx = Math.cos(rad) * (pot/6) * (miRol === 1 ? 1 : -1);
-      const vy = -Math.sin(rad) * (pot/6);
+    function obtenerAlturaTerreno(x) {
+      for(let i=0; i<montañas.length-1; i++) {
+        if(x >= montañas[i].x && x <= montañas[i+1].x) {
+          let t = (x - montañas[i].x) / (montañas[i+1].x - montañas[i].x);
+          return montañas[i].y + t * (montañas[i+1].y - montañas[i].y);
+        }
+      }
+      return canvas.height;
+    }
 
+    document.getElementById('btnLanzar').onclick = () => {
+      if(turnoActual !== miRol) return;
+      const ang = document.getElementById('rangeAngulo').value;
+      const pot = document.getElementById('rangePotencia').value;
+      const rad = ang * Math.PI / 180;
+      const j = jugadores[miRol-1];
+      
+      const vx = Math.cos(rad) * (pot/5) * (miRol === 1 ? 1 : -1);
+      const vy = -Math.sin(rad) * (pot/5);
+
+      crearProyectil(j.x, j.y, vx, vy, miRol);
       db.ref('games/' + gameId).update({
         turno: miRol === 1 ? 2 : 1,
-        disparo: { x: p.x, y: p.y, vx, vy, autor: miRol }
+        ultimoDisparo: { x: j.x, y: j.y, vx, vy, autor: miRol }
       });
-      lanzarProyectil(p.x, p.y, vx, vy, miRol);
     };
 
-    function procesarDisparoEnemigo(d) {
-      lanzarProyectil(d.x, d.y, d.vx, d.vy, d.autor);
+    function crearProyectil(x, y, vx, vy, autor) {
+      proyectiles.push({ x, y, vx, vy, autor, radio: 8 });
     }
 
-    function lanzarProyectil(x, y, vx, vy, autor) {
-      proyectiles.push({ x, y, vx, vy, autor });
-    }
-
-    function buclePrincipal() {
-      ctx.clearRect(0,0,lienzo.width, lienzo.height);
-      dibujarFondo();
+    function bucle() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      dibujarCielo();
+      dibujarTerreno();
       
-      // Islas
-      islas.forEach(i => {
-        ctx.fillStyle = i.color;
-        ctx.fillRect(i.x - i.w/2, i.y, i.w, i.h);
+      // Nubes
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      nubes.forEach(n => {
+        n.x += n.v; if(n.x > canvas.width) n.x = -50;
+        ctx.beginPath(); ctx.arc(n.x, n.y, 25, 0, Math.PI*2); ctx.fill();
       });
 
-      // Jugadores e indicadores
-      jugadores.forEach((j, idx) => {
+      // Jugadores
+      jugadores.forEach((j, i) => {
         ctx.fillStyle = j.color;
         ctx.beginPath(); ctx.arc(j.x, j.y, 15, 0, Math.PI*2); ctx.fill();
-        document.getElementById(`indicador-jugador${idx+1}`).textContent = `Jugador ${idx+1}: ${j.vida}%`;
+        document.getElementById(`v-j${i+1}`).textContent = `Jugador ${i+1}: ${j.vida}%`;
       });
 
-      // Proyectiles
+      // Física de Proyectiles
       for(let i=proyectiles.length-1; i>=0; i--) {
         let p = proyectiles[i];
         p.x += p.vx; p.vy += gravedad; p.y += p.vy;
         
-        ctx.fillStyle = '#333';
-        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#333";
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radio, 0, Math.PI*2); ctx.fill();
 
-        // Colisiones
+        // Colisión Suelo
+        if(p.y > obtenerAlturaTerreno(p.x)) proyectiles.splice(i, 1);
+
+        // Colisión Oponente
         jugadores.forEach(j => {
           if(p.autor !== j.id) {
-            let dist = Math.hypot(p.x - j.x, p.y - j.y);
-            if(dist < 20) {
+            let d = Math.hypot(p.x - j.x, p.y - j.y);
+            if(d < 20) {
               j.vida -= 20;
-              crearExplosion(p.x, p.y);
               proyectiles.splice(i, 1);
-              if(j.vida <= 0) { alert("FIN DE LA PARTIDA"); location.reload(); }
+              if(j.vida <= 0) { alert("¡PARTIDA TERMINADA!"); location.reload(); }
             }
           }
         });
-        if(p.y > lienzo.height) proyectiles.splice(i,1);
       }
-
-      dibujarParticulas();
-      requestAnimationFrame(buclePrincipal);
+      requestAnimationFrame(bucle);
     }
 
-    function dibujarFondo() {
-      let grad = ctx.createLinearGradient(0,0,0,lienzo.height);
-      grad.addColorStop(0, '#87CEEB'); grad.addColorStop(1, '#E0F7FA');
-      ctx.fillStyle = grad; ctx.fillRect(0,0,lienzo.width, lienzo.height);
-      
-      ctx.fillStyle = 'white';
-      nubes.forEach(n => {
-        n.x += n.v; if(n.x > lienzo.width) n.x = -50;
-        ctx.beginPath(); ctx.arc(n.x, n.y, 20, 0, Math.PI*2); ctx.fill();
-      });
+    function dibujarCielo() {
+      let g = ctx.createLinearGradient(0,0,0,canvas.height);
+      g.addColorStop(0, '#87CEEB'); g.addColorStop(1, '#E0F7FA');
+      ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width, canvas.height);
     }
 
-    function crearExplosion(x, y) {
-      for(let i=0; i<10; i++) particulas.push({ x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, vida: 1 });
+    function dibujarTerreno() {
+      ctx.fillStyle = "#2ecc71";
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      montañas.forEach(m => ctx.lineTo(m.x, m.y));
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.fill();
     }
 
-    function dibujarParticulas() {
-      for(let i=particulas.length-1; i>=0; i--) {
-        let p = particulas[i];
-        p.x += p.vx; p.y += p.vy; p.vida -= 0.02;
-        ctx.fillStyle = `rgba(255, 69, 0, ${p.vida})`;
-        ctx.fillRect(p.x, p.y, 4, 4);
-        if(p.vida <= 0) particulas.splice(i,1);
-      }
-    }
+    // Actualizar labels de los inputs
+    document.getElementById('rangeAngulo').oninput = e => document.getElementById('txtAngulo').textContent = e.target.value;
+    document.getElementById('rangePotencia').oninput = e => document.getElementById('txtPotencia').textContent = e.target.value;
 
-    function redimensionar() { lienzo.width = window.innerWidth; lienzo.height = window.innerHeight; }
-    
-    // INPUTS VISUALES
-    document.getElementById('entradaAngulo').oninput = (e) => document.getElementById('valorAngulo').textContent = e.target.value;
-    document.getElementById('entradaPotencia').oninput = (e) => document.getElementById('valorPotencia').textContent = e.target.value;
-
-    // CHAT VOZ (Sincronizado con inicio de motor)
-    async function setupVoiceChat() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-        stream.getTracks().forEach(t => pc.addTrack(t, stream));
-        pc.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
-        
-        if(miRol === 1) {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          db.ref(`games/${gameId}/call/offer`).set(offer);
-        }
-        pc.onicecandidate = e => {
-          if(e.candidate) db.ref(`games/${gameId}/call/ice/${miRol}`).push(e.candidate.toJSON());
-        };
-        if(miRol === 2) {
-          db.ref(`games/${gameId}/call/offer`).on('value', async s => {
-            if(s.exists() && !pc.remoteDescription) {
-              await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
-              const ans = await pc.createAnswer();
-              await pc.setLocalDescription(ans);
-              db.ref(`games/${gameId}/call/answer`).set(ans);
-            }
-          });
-        }
-        if(miRol === 1) {
-          db.ref(`games/${gameId}/call/answer`).on('value', async s => {
-            if(s.exists() && !pc.remoteDescription) await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
-          });
-        }
-        const otro = miRol === 1 ? 2 : 1;
-        db.ref(`games/${gameId}/call/ice/${otro}`).on('child_added', s => {
-          if(s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val()));
-        });
-      } catch(e) {}
-    }
+    window.onresize = redimensionar;
   </script>
 </body>
 </html>
