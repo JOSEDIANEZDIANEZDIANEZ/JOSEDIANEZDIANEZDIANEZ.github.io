@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Batalla de Islas ONLINE - Firebase</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden; height: 100%;
+      font-family: sans-serif; text-align: center; background: #87CEEB;
+    }
+    canvas { display: block; background: #87CEEB; }
+    
+    /* Interfaz de Red */
+    #network-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); color: white; display: flex;
+      flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .panel { background: white; color: #333; padding: 20px; border-radius: 15px; width: 300px; }
+    button { 
+      padding: 10px 20px; margin: 10px; cursor: pointer; border: none; 
+      border-radius: 5px; background: #f5576c; color: white; font-weight: bold;
+    }
+    input { padding: 10px; width: 80%; margin-bottom: 10px; text-align: center; }
+    
+    .controles {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px;
+      display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    #indicador-turno {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      font-size: 24px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="network-overlay">
+    <div class="panel" id="lobby-panel">
+      <h2>CHANCLAZO ONLINE</h2>
+      <div id="setup-options">
+        <button onclick="crearPartida()">Crear Partida</button>
+        <button onclick="mostrarUnirse()">Unirse a Partida</button>
+      </div>
+      <div id="join-section" class="hidden">
+        <input type="text" id="game-code-input" placeholder="Código de 4 cifras">
+        <button onclick="unirsePartida()">Entrar</button>
+        <button onclick="regresarLobby()" style="background:#666">Volver</button>
+      </div>
+      <div id="waiting-section" class="hidden">
+        <p>Código de sala:</p>
+        <h1 id="display-code">----</h1>
+        <p id="status-text">Esperando al oponente...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="indicador-turno">CONECTANDO...</div>
+
+  <div class="controles">
+    Ángulo: <input type="range" id="entradaAngulo" min="0" max="180" value="45"> <span id="valorAngulo">45</span>° | 
+    Potencia: <input type="range" id="entradaPotencia" min="0" max="140" value="70"> <span id="valorPotencia">70</span>
+    <button id="botonDisparar">¡ZAS!</button>
+  </div>
+
+  <audio id="remoteAudio" autoplay></audio>
+  <canvas id="lienzoJuego"></canvas>
+
+  <script>
+    // --- CONFIGURACIÓN FIREBASE (La misma que la anterior) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyJCSHKPGMpezHW3o5AxR5Wzupuz3aI",
+        authDomain: "carrera-constitucional.firebaseapp.com",
+        databaseURL: "https://carrera-constitucional-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "carrera-constitucional",
+        storageBucket: "carrera-constitucional.firebasestorage.app",
+        messagingSenderId: "627786732121",
+        appId: "1:627786732121:web:9f1cc7c0b94887a9501b48"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // --- VARIABLES DE JUEGO ---
+    const lienzo = document.getElementById('lienzoJuego');
+    const ctx = lienzo.getContext('2d');
+    let gameId = null;
+    let miNumeroJugador = null; // 1 o 2
+    let turnoActual = 1;
+    let jugadores = [];
+    let islas = [];
+    let proyectiles = [];
+    let gravedad = 0.25;
+    let juegoActivo = false;
+
+    // --- LÓGICA DE RED ---
+    function crearPartida() {
+      gameId = Math.floor(1000 + Math.random() * 9000).toString();
+      miNumeroJugador = 1;
+      document.getElementById('setup-options').classList.add('hidden');
+      document.getElementById('waiting-section').classList.remove('hidden');
+      document.getElementById('display-code').textContent = gameId;
+      
+      database.ref('games/' + gameId).set({
+        estado: 'esperando',
+        turno: 1,
+        ultimoDisparo: null
+      });
+      escucharCambios();
+    }
+
+    function mostrarUnirse() {
+      document.getElementById('setup-options').classList.add('hidden');
+      document.getElementById('join-section').classList.remove('hidden');
+    }
+
+    function regresarLobby() {
+      document.getElementById('setup-options').classList.remove('hidden');
+      document.getElementById('join-section').classList.add('hidden');
+    }
+
+    function unirsePartida() {
+      const code = document.getElementById('game-code-input').value;
+      database.ref('games/' + code).once('value', snapshot => {
+        if(snapshot.exists() && snapshot.val().estado === 'esperando') {
+          gameId = code;
+          miNumeroJugador = 2;
+          database.ref('games/' + gameId).update({ estado: 'jugando' });
+          iniciarJuego();
+        } else {
+          alert("Sala no encontrada o llena");
+        }
+      });
+    }
+
+    function escucharCambios() {
+      database.ref('games/' + gameId).on('value', snapshot => {
+        const data = snapshot.val();
+        if(!data) return;
+
+        if(data.estado === 'jugando' && !juegoActivo) {
+          iniciarJuego();
+        }
+
+        turnoActual = data.turno;
+        actualizarUI();
+
+        // Escuchar disparos del oponente
+        if(data.ultimoDisparo && data.ultimoDisparo.jugador !== miNumeroJugador) {
+          // Si recibimos un disparo que no hemos procesado
+          const d = data.ultimoDisparo;
+          dispararProyectil(d.x, d.y, d.vx, d.vy, d.jugador, false);
+          // Limpiar el disparo para no repetirlo
+          database.ref('games/' + gameId + '/ultimoDisparo').set(null);
+        }
+      });
+    }
+
+    function actualizarUI() {
+      const indicador = document.getElementById('indicador-turno');
+      if(turnoActual === miNumeroJugador) {
+        indicador.textContent = "¡TU TURNO!";
+        document.querySelector('.controles').style.display = 'block';
+      } else {
+        indicador.textContent = "Esperando al oponente...";
+        document.querySelector('.controles').style.display = 'none';
+      }
+    }
+
+    // --- LÓGICA DEL JUEGO (ADAPTADA) ---
+    function iniciarJuego() {
+      document.getElementById('network-overlay').style.display = 'none';
+      juegoActivo = true;
+      redimensionar();
+      generarMapa();
+      setupVoiceChat(); // Activar chat de voz al empezar
+      bucle();
+    }
+
+    function redimensionar() {
+      lienzo.width = window.innerWidth;
+      lienzo.height = window.innerHeight;
+    }
+
+    function generarMapa() {
+      // Posiciones fijas para evitar desincronización entre pantallas
+      islas = [
+        { x: lienzo.width * 0.2, y: lienzo.height * 0.7, w: 120, h: 40, color: '#7ed6df' },
+        { x: lienzo.width * 0.8, y: lienzo.height * 0.7, w: 120, h: 40, color: '#ffbe76' }
+      ];
+      jugadores = [
+        { id: 1, x: islas[0].x, y: islas[0].y - 30, vida: 100, color: 'red' },
+        { id: 2, x: islas[1].x, y: islas[1].y - 30, vida: 100, color: 'blue' }
+      ];
+    }
+
+    // Disparar
+    document.getElementById('botonDisparar').onclick = () => {
+      if(turnoActual !== miNumeroJugador) return;
+
+      const ang = document.getElementById('entradaAngulo').value;
+      const pot = document.getElementById('entradaPotencia').value;
+      const rad = ang * Math.PI / 180;
+      
+      const p = jugadores[miNumeroJugador - 1];
+      const vx = Math.cos(rad) * (pot / 5) * (miNumeroJugador === 1 ? 1 : -1);
+      const vy = -Math.sin(rad) * (pot / 5);
+
+      // 1. Ejecutar localmente
+      dispararProyectil(p.x, p.y, vx, vy, miNumeroJugador, true);
+
+      // 2. Enviar a Firebase
+      database.ref('games/' + gameId).update({
+        turno: miNumeroJugador === 1 ? 2 : 1,
+        ultimoDisparo: { x: p.x, y: p.y, vx: vx, vy: vy, jugador: miNumeroJugador }
+      });
+    };
+
+    function dispararProyectil(x, y, vx, vy, id, esLocal) {
+      proyectiles.push({ x, y, vx, vy, radio: 8, jugadorId: id });
+    }
+
+    function bucle() {
+      ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+      
+      // Dibujar Islas
+      islas.forEach(isla => {
+        ctx.fillStyle = isla.color;
+        ctx.fillRect(isla.x - isla.w/2, isla.y, isla.w, isla.h);
+      });
+
+      // Dibujar Jugadores
+      jugadores.forEach(j => {
+        ctx.fillStyle = j.color;
+        ctx.beginPath();
+        ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        // Barra de vida
+        ctx.fillStyle = 'black';
+        ctx.fillRect(j.x - 20, j.y - 30, 40, 5);
+        ctx.fillStyle = 'lime';
+        ctx.fillRect(j.x - 20, j.y - 30, (j.vida/100) * 40, 5);
+      });
+
+      // Mover y Dibujar Proyectiles
+      for (let i = proyectiles.length - 1; i >= 0; i--) {
+        let p = proyectiles[i];
+        p.x += p.vx;
+        p.vy += gravedad;
+        p.y += p.vy;
+
+        ctx.fillStyle = 'brown';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radio, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Colisión con suelo (agua)
+        if(p.y > lienzo.height) proyectiles.splice(i, 1);
+
+        // Colisión con jugadores
+        jugadores.forEach(j => {
+          if(p.jugadorId !== j.id) {
+            let dx = p.x - j.x;
+            let dy = p.y - j.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist < 20) {
+              j.vida -= 25;
+              proyectiles.splice(i, 1);
+              if(j.vida <= 0) {
+                alert("JUGADOR " + p.jugadorId + " GANA!");
+                location.reload();
+              }
+            }
+          }
+        });
+      }
+
+      requestAnimationFrame(bucle);
+    }
+
+    // --- CHAT DE VOZ WEBRTC (Misma lógica que el anterior) ---
+    async function setupVoiceChat() {
+      try {
+        const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+        pc.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
+
+        if(miNumeroJugador === 1) {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          database.ref(`games/${gameId}/calls/offer`).set(offer);
+        }
+
+        pc.onicecandidate = e => {
+          if(e.candidate) {
+            database.ref(`games/${gameId}/calls/candidates/${miNumeroJugador}`).push(e.candidate.toJSON());
+          }
+        };
+
+        if(miNumeroJugador === 2) {
+          database.ref(`games/${gameId}/calls/offer`).on('value', async s => {
+            if(s.exists() && !pc.remoteDescription) {
+              await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+              const ans = await pc.createAnswer();
+              await pc.setLocalDescription(ans);
+              database.ref(`games/${gameId}/calls/answer`).set(ans);
+            }
+          });
+        }
+
+        if(miNumeroJugador === 1) {
+          database.ref(`games/${gameId}/calls/answer`).on('value', async s => {
+            if(s.exists() && !pc.remoteDescription) {
+              await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
+            }
+          });
+        }
+
+        const otroJugador = miNumeroJugador === 1 ? 2 : 1;
+        database.ref(`games/${gameId}/calls/candidates/${otroJugador}`).on('child_added', s => {
+          if(s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val()));
+        });
+      } catch (e) { console.error("Error en voz:", e); }
+    }
+
+    // Inputs visuales
+    document.getElementById('entradaAngulo').oninput = (e) => document.getElementById('valorAngulo').textContent = e.target.value;
+    document.getElementById('entradaPotencia').oninput = (e) => document.getElementById('valorPotencia').textContent = e.target.value;
+
+  </script>
+</body>
+</html>
