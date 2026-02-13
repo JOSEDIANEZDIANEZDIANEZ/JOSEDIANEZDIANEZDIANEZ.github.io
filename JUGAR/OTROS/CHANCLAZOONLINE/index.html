@@ -2,76 +2,65 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Batalla de Islas ONLINE - Firebase</title>
+  <title>Chanclazo Online - Diseño Original</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
-    html, body {
-      margin: 0; padding: 0; overflow: hidden; height: 100%;
-      font-family: sans-serif; text-align: center; background: #87CEEB;
-    }
-    canvas { display: block; background: #87CEEB; }
+    /* TODO TU DISEÑO ORIGINAL */
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; font-family: sans-serif; text-align: center; background: #87CEEB; }
+    canvas { display: block; }
+    #info { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 8px; text-align: left; pointer-events: none; border: 2px solid #4682B4; }
+    .controles { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid #4682B4; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; background: #4682B4; color: white; font-weight: bold; transition: background 0.3s; }
+    button:hover { background: #5f9ea0; }
     
-    /* Interfaz de Red */
-    #network-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8); color: white; display: flex;
-      flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
-    }
-    .panel { background: white; color: #333; padding: 20px; border-radius: 15px; width: 300px; }
-    button { 
-      padding: 10px 20px; margin: 10px; cursor: pointer; border: none; 
-      border-radius: 5px; background: #f5576c; color: white; font-weight: bold;
-    }
-    input { padding: 10px; width: 80%; margin-bottom: 10px; text-align: center; }
-    
-    .controles {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px;
-      display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    #indicador-turno {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      font-size: 24px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
+    /* INTERFAZ DE RED */
+    #overlay-red { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; display: flex; justify-content: center; align-items: center; z-index: 2000; }
+    .panel-red { background: white; color: #333; padding: 30px; border-radius: 20px; width: 350px; border: 4px solid #4682B4; }
     .hidden { display: none; }
+    #turno-display { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 28px; font-weight: bold; color: white; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); z-index: 100; pointer-events: none; }
   </style>
 </head>
 <body>
 
-  <div id="network-overlay">
-    <div class="panel" id="lobby-panel">
-      <h2>CHANCLAZO ONLINE</h2>
-      <div id="setup-options">
-        <button onclick="crearPartida()">Crear Partida</button>
-        <button onclick="mostrarUnirse()">Unirse a Partida</button>
+  <div id="turno-display">CONECTANDO A FIREBASE...</div>
+
+  <div id="overlay-red">
+    <div class="panel-red">
+      <h2 style="color:#4682B4">CHANCLAZO ONLINE</h2>
+      <div id="opciones-inicio">
+        <button onclick="crearSala()">CREAR SALA</button>
+        <button onclick="mostrarUnirse()" style="background:#f5576c">UNIRSE</button>
       </div>
-      <div id="join-section" class="hidden">
-        <input type="text" id="game-code-input" placeholder="Código de 4 cifras">
-        <button onclick="unirsePartida()">Entrar</button>
-        <button onclick="regresarLobby()" style="background:#666">Volver</button>
+      <div id="seccion-unirse" class="hidden">
+        <input type="text" id="codigo-sala" placeholder="Código" style="padding:10px; width:80%; margin-bottom:10px">
+        <button onclick="unirseSala()">ENTRAR</button>
+        <button onclick="location.reload()" style="background:#666">VOLVER</button>
       </div>
-      <div id="waiting-section" class="hidden">
-        <p>Código de sala:</p>
-        <h1 id="display-code">----</h1>
-        <p id="status-text">Esperando al oponente...</p>
+      <div id="espera-sala" class="hidden">
+        <p>Comparte este código:</p>
+        <h1 id="num-sala" style="font-size:40px; margin:10px 0; color:#f5576c">----</h1>
+        <p>Esperando oponente...</p>
       </div>
     </div>
   </div>
 
-  <div id="indicador-turno">CONECTANDO...</div>
+  <div id="info">
+    <div id="indicador-jugador1">Jugador 1: 100%</div>
+    <div id="indicador-jugador2">Jugador 2: 100%</div>
+  </div>
 
   <div class="controles">
     Ángulo: <input type="range" id="entradaAngulo" min="0" max="180" value="45"> <span id="valorAngulo">45</span>° | 
     Potencia: <input type="range" id="entradaPotencia" min="0" max="140" value="70"> <span id="valorPotencia">70</span>
-    <button id="botonDisparar">¡ZAS!</button>
+    <button id="botonDisparar">¡LANZAR!</button>
   </div>
 
   <audio id="remoteAudio" autoplay></audio>
   <canvas id="lienzoJuego"></canvas>
 
   <script>
-    // --- CONFIGURACIÓN FIREBASE (La misma que la anterior) ---
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyJCSHKPGMpezHW3o5AxR5Wzupuz3aI",
         authDomain: "carrera-constitucional.firebaseapp.com",
@@ -82,256 +71,234 @@
         appId: "1:627786732121:web:9f1cc7c0b94887a9501b48"
     };
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    const db = firebase.database();
 
-    // --- VARIABLES DE JUEGO ---
+    // VARIABLES MOTOR DE JUEGO
     const lienzo = document.getElementById('lienzoJuego');
     const ctx = lienzo.getContext('2d');
-    let gameId = null;
-    let miNumeroJugador = null; // 1 o 2
-    let turnoActual = 1;
-    let jugadores = [];
-    let islas = [];
-    let proyectiles = [];
+    let gameId, miRol, turnoActual;
+    let islas = [], jugadores = [], proyectiles = [], nubes = [], particulas = [];
     let gravedad = 0.25;
-    let juegoActivo = false;
+    let juegoIniciado = false;
 
     // --- LÓGICA DE RED ---
-    function crearPartida() {
+    function crearSala() {
       gameId = Math.floor(1000 + Math.random() * 9000).toString();
-      miNumeroJugador = 1;
-      document.getElementById('setup-options').classList.add('hidden');
-      document.getElementById('waiting-section').classList.remove('hidden');
-      document.getElementById('display-code').textContent = gameId;
-      
-      database.ref('games/' + gameId).set({
-        estado: 'esperando',
-        turno: 1,
-        ultimoDisparo: null
-      });
+      miRol = 1;
+      document.getElementById('opciones-inicio').classList.add('hidden');
+      document.getElementById('espera-sala').classList.remove('hidden');
+      document.getElementById('num-sala').textContent = gameId;
+      db.ref('games/' + gameId).set({ estado: 'esperando', turno: 1 });
       escucharCambios();
     }
 
     function mostrarUnirse() {
-      document.getElementById('setup-options').classList.add('hidden');
-      document.getElementById('join-section').classList.remove('hidden');
+      document.getElementById('opciones-inicio').classList.add('hidden');
+      document.getElementById('seccion-unirse').classList.remove('hidden');
     }
 
-    function regresarLobby() {
-      document.getElementById('setup-options').classList.remove('hidden');
-      document.getElementById('join-section').classList.add('hidden');
-    }
-
-    function unirsePartida() {
-      const code = document.getElementById('game-code-input').value;
-      database.ref('games/' + code).once('value', snapshot => {
-        if(snapshot.exists() && snapshot.val().estado === 'esperando') {
-          gameId = code;
-          miNumeroJugador = 2;
-          database.ref('games/' + gameId).update({ estado: 'jugando' });
-          iniciarJuego();
-        } else {
-          alert("Sala no encontrada o llena");
-        }
+    function unirseSala() {
+      gameId = document.getElementById('codigo-sala').value;
+      miRol = 2;
+      db.ref('games/' + gameId).once('value', s => {
+        if(s.exists() && s.val().estado === 'esperando') {
+          db.ref('games/' + gameId).update({ estado: 'jugando' });
+          iniciarMotor();
+        } else alert("Sala no válida");
       });
+      escucharCambios();
     }
 
     function escucharCambios() {
-      database.ref('games/' + gameId).on('value', snapshot => {
-        const data = snapshot.val();
-        if(!data) return;
-
-        if(data.estado === 'jugando' && !juegoActivo) {
-          iniciarJuego();
-        }
-
-        turnoActual = data.turno;
-        actualizarUI();
-
-        // Escuchar disparos del oponente
-        if(data.ultimoDisparo && data.ultimoDisparo.jugador !== miNumeroJugador) {
-          // Si recibimos un disparo que no hemos procesado
-          const d = data.ultimoDisparo;
-          dispararProyectil(d.x, d.y, d.vx, d.vy, d.jugador, false);
-          // Limpiar el disparo para no repetirlo
-          database.ref('games/' + gameId + '/ultimoDisparo').set(null);
+      db.ref('games/' + gameId).on('value', s => {
+        const d = s.val();
+        if(!d) return;
+        if(d.estado === 'jugando' && !juegoIniciado) iniciarMotor();
+        turnoActual = d.turno;
+        actualizarInterfaz();
+        
+        if(d.disparo && d.disparo.autor !== miRol) {
+          procesarDisparoEnemigo(d.disparo);
+          db.ref('games/' + gameId + '/disparo').set(null); // Limpiar para el siguiente
         }
       });
     }
 
-    function actualizarUI() {
-      const indicador = document.getElementById('indicador-turno');
-      if(turnoActual === miNumeroJugador) {
-        indicador.textContent = "¡TU TURNO!";
-        document.querySelector('.controles').style.display = 'block';
+    function actualizarInterfaz() {
+      const display = document.getElementById('turno-display');
+      const controles = document.querySelector('.controles');
+      if(turnoActual === miRol) {
+        display.textContent = "TU TURNO";
+        display.style.color = "#2ecc71";
+        controles.style.display = 'block';
       } else {
-        indicador.textContent = "Esperando al oponente...";
-        document.querySelector('.controles').style.display = 'none';
+        display.textContent = "TURNO DEL OPONENTE";
+        display.style.color = "#e74c3c";
+        controles.style.display = 'none';
       }
     }
 
-    // --- LÓGICA DEL JUEGO (ADAPTADA) ---
-    function iniciarJuego() {
-      document.getElementById('network-overlay').style.display = 'none';
-      juegoActivo = true;
+    // --- MOTOR DEL JUEGO ORIGINAL ---
+    function iniciarMotor() {
+      document.getElementById('overlay-red').style.display = 'none';
+      juegoIniciado = true;
       redimensionar();
-      generarMapa();
-      setupVoiceChat(); // Activar chat de voz al empezar
-      bucle();
+      generarMundo();
+      setupVoiceChat();
+      buclePrincipal();
     }
 
-    function redimensionar() {
-      lienzo.width = window.innerWidth;
-      lienzo.height = window.innerHeight;
-    }
-
-    function generarMapa() {
-      // Posiciones fijas para evitar desincronización entre pantallas
+    function generarMundo() {
+      // Islas fijas para sincronía
       islas = [
-        { x: lienzo.width * 0.2, y: lienzo.height * 0.7, w: 120, h: 40, color: '#7ed6df' },
-        { x: lienzo.width * 0.8, y: lienzo.height * 0.7, w: 120, h: 40, color: '#ffbe76' }
+        { x: 200, y: lienzo.height - 150, w: 150, h: 50, color: '#2ed573' },
+        { x: lienzo.width - 200, y: lienzo.height - 150, w: 150, h: 50, color: '#ffa502' }
       ];
       jugadores = [
-        { id: 1, x: islas[0].x, y: islas[0].y - 30, vida: 100, color: 'red' },
-        { id: 2, x: islas[1].x, y: islas[1].y - 30, vida: 100, color: 'blue' }
+        { id: 1, x: 200, y: lienzo.height - 180, vida: 100, color: '#ff4757' },
+        { id: 2, x: lienzo.width - 200, y: lienzo.height - 180, vida: 100, color: '#1e90ff' }
       ];
+      for(let i=0; i<5; i++) nubes.push({ x: Math.random()*lienzo.width, y: Math.random()*200, v: 0.5 + Math.random() });
     }
 
-    // Disparar
     document.getElementById('botonDisparar').onclick = () => {
-      if(turnoActual !== miNumeroJugador) return;
-
+      if(turnoActual !== miRol) return;
       const ang = document.getElementById('entradaAngulo').value;
       const pot = document.getElementById('entradaPotencia').value;
       const rad = ang * Math.PI / 180;
+      const p = jugadores[miRol-1];
       
-      const p = jugadores[miNumeroJugador - 1];
-      const vx = Math.cos(rad) * (pot / 5) * (miNumeroJugador === 1 ? 1 : -1);
-      const vy = -Math.sin(rad) * (pot / 5);
+      const vx = Math.cos(rad) * (pot/6) * (miRol === 1 ? 1 : -1);
+      const vy = -Math.sin(rad) * (pot/6);
 
-      // 1. Ejecutar localmente
-      dispararProyectil(p.x, p.y, vx, vy, miNumeroJugador, true);
-
-      // 2. Enviar a Firebase
-      database.ref('games/' + gameId).update({
-        turno: miNumeroJugador === 1 ? 2 : 1,
-        ultimoDisparo: { x: p.x, y: p.y, vx: vx, vy: vy, jugador: miNumeroJugador }
+      db.ref('games/' + gameId).update({
+        turno: miRol === 1 ? 2 : 1,
+        disparo: { x: p.x, y: p.y, vx, vy, autor: miRol }
       });
+      lanzarProyectil(p.x, p.y, vx, vy, miRol);
     };
 
-    function dispararProyectil(x, y, vx, vy, id, esLocal) {
-      proyectiles.push({ x, y, vx, vy, radio: 8, jugadorId: id });
+    function procesarDisparoEnemigo(d) {
+      lanzarProyectil(d.x, d.y, d.vx, d.vy, d.autor);
     }
 
-    function bucle() {
-      ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+    function lanzarProyectil(x, y, vx, vy, autor) {
+      proyectiles.push({ x, y, vx, vy, autor });
+    }
+
+    function buclePrincipal() {
+      ctx.clearRect(0,0,lienzo.width, lienzo.height);
+      dibujarFondo();
       
-      // Dibujar Islas
-      islas.forEach(isla => {
-        ctx.fillStyle = isla.color;
-        ctx.fillRect(isla.x - isla.w/2, isla.y, isla.w, isla.h);
+      // Islas
+      islas.forEach(i => {
+        ctx.fillStyle = i.color;
+        ctx.fillRect(i.x - i.w/2, i.y, i.w, i.h);
       });
 
-      // Dibujar Jugadores
-      jugadores.forEach(j => {
+      // Jugadores e indicadores
+      jugadores.forEach((j, idx) => {
         ctx.fillStyle = j.color;
-        ctx.beginPath();
-        ctx.arc(j.x, j.y, 15, 0, Math.PI * 2);
-        ctx.fill();
-        // Barra de vida
-        ctx.fillStyle = 'black';
-        ctx.fillRect(j.x - 20, j.y - 30, 40, 5);
-        ctx.fillStyle = 'lime';
-        ctx.fillRect(j.x - 20, j.y - 30, (j.vida/100) * 40, 5);
+        ctx.beginPath(); ctx.arc(j.x, j.y, 15, 0, Math.PI*2); ctx.fill();
+        document.getElementById(`indicador-jugador${idx+1}`).textContent = `Jugador ${idx+1}: ${j.vida}%`;
       });
 
-      // Mover y Dibujar Proyectiles
-      for (let i = proyectiles.length - 1; i >= 0; i--) {
+      // Proyectiles
+      for(let i=proyectiles.length-1; i>=0; i--) {
         let p = proyectiles[i];
-        p.x += p.vx;
-        p.vy += gravedad;
-        p.y += p.vy;
+        p.x += p.vx; p.vy += gravedad; p.y += p.vy;
+        
+        ctx.fillStyle = '#333';
+        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
 
-        ctx.fillStyle = 'brown';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radio, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Colisión con suelo (agua)
-        if(p.y > lienzo.height) proyectiles.splice(i, 1);
-
-        // Colisión con jugadores
+        // Colisiones
         jugadores.forEach(j => {
-          if(p.jugadorId !== j.id) {
-            let dx = p.x - j.x;
-            let dy = p.y - j.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
+          if(p.autor !== j.id) {
+            let dist = Math.hypot(p.x - j.x, p.y - j.y);
             if(dist < 20) {
-              j.vida -= 25;
+              j.vida -= 20;
+              crearExplosion(p.x, p.y);
               proyectiles.splice(i, 1);
-              if(j.vida <= 0) {
-                alert("JUGADOR " + p.jugadorId + " GANA!");
-                location.reload();
-              }
+              if(j.vida <= 0) { alert("FIN DE LA PARTIDA"); location.reload(); }
             }
           }
         });
+        if(p.y > lienzo.height) proyectiles.splice(i,1);
       }
 
-      requestAnimationFrame(bucle);
+      dibujarParticulas();
+      requestAnimationFrame(buclePrincipal);
     }
 
-    // --- CHAT DE VOZ WEBRTC (Misma lógica que el anterior) ---
+    function dibujarFondo() {
+      let grad = ctx.createLinearGradient(0,0,0,lienzo.height);
+      grad.addColorStop(0, '#87CEEB'); grad.addColorStop(1, '#E0F7FA');
+      ctx.fillStyle = grad; ctx.fillRect(0,0,lienzo.width, lienzo.height);
+      
+      ctx.fillStyle = 'white';
+      nubes.forEach(n => {
+        n.x += n.v; if(n.x > lienzo.width) n.x = -50;
+        ctx.beginPath(); ctx.arc(n.x, n.y, 20, 0, Math.PI*2); ctx.fill();
+      });
+    }
+
+    function crearExplosion(x, y) {
+      for(let i=0; i<10; i++) particulas.push({ x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, vida: 1 });
+    }
+
+    function dibujarParticulas() {
+      for(let i=particulas.length-1; i>=0; i--) {
+        let p = particulas[i];
+        p.x += p.vx; p.y += p.vy; p.vida -= 0.02;
+        ctx.fillStyle = `rgba(255, 69, 0, ${p.vida})`;
+        ctx.fillRect(p.x, p.y, 4, 4);
+        if(p.vida <= 0) particulas.splice(i,1);
+      }
+    }
+
+    function redimensionar() { lienzo.width = window.innerWidth; lienzo.height = window.innerHeight; }
+    
+    // INPUTS VISUALES
+    document.getElementById('entradaAngulo').oninput = (e) => document.getElementById('valorAngulo').textContent = e.target.value;
+    document.getElementById('entradaPotencia').oninput = (e) => document.getElementById('valorPotencia').textContent = e.target.value;
+
+    // CHAT VOZ (Sincronizado con inicio de motor)
     async function setupVoiceChat() {
       try {
-        const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-        
-        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+        stream.getTracks().forEach(t => pc.addTrack(t, stream));
         pc.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
-
-        if(miNumeroJugador === 1) {
+        
+        if(miRol === 1) {
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-          database.ref(`games/${gameId}/calls/offer`).set(offer);
+          db.ref(`games/${gameId}/call/offer`).set(offer);
         }
-
         pc.onicecandidate = e => {
-          if(e.candidate) {
-            database.ref(`games/${gameId}/calls/candidates/${miNumeroJugador}`).push(e.candidate.toJSON());
-          }
+          if(e.candidate) db.ref(`games/${gameId}/call/ice/${miRol}`).push(e.candidate.toJSON());
         };
-
-        if(miNumeroJugador === 2) {
-          database.ref(`games/${gameId}/calls/offer`).on('value', async s => {
+        if(miRol === 2) {
+          db.ref(`games/${gameId}/call/offer`).on('value', async s => {
             if(s.exists() && !pc.remoteDescription) {
               await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
               const ans = await pc.createAnswer();
               await pc.setLocalDescription(ans);
-              database.ref(`games/${gameId}/calls/answer`).set(ans);
+              db.ref(`games/${gameId}/call/answer`).set(ans);
             }
           });
         }
-
-        if(miNumeroJugador === 1) {
-          database.ref(`games/${gameId}/calls/answer`).on('value', async s => {
-            if(s.exists() && !pc.remoteDescription) {
-              await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
-            }
+        if(miRol === 1) {
+          db.ref(`games/${gameId}/call/answer`).on('value', async s => {
+            if(s.exists() && !pc.remoteDescription) await pc.setRemoteDescription(new RTCSessionDescription(s.val()));
           });
         }
-
-        const otroJugador = miNumeroJugador === 1 ? 2 : 1;
-        database.ref(`games/${gameId}/calls/candidates/${otroJugador}`).on('child_added', s => {
+        const otro = miRol === 1 ? 2 : 1;
+        db.ref(`games/${gameId}/call/ice/${otro}`).on('child_added', s => {
           if(s.exists()) pc.addIceCandidate(new RTCIceCandidate(s.val()));
         });
-      } catch (e) { console.error("Error en voz:", e); }
+      } catch(e) {}
     }
-
-    // Inputs visuales
-    document.getElementById('entradaAngulo').oninput = (e) => document.getElementById('valorAngulo').textContent = e.target.value;
-    document.getElementById('entradaPotencia').oninput = (e) => document.getElementById('valorPotencia').textContent = e.target.value;
-
   </script>
 </body>
 </html>
