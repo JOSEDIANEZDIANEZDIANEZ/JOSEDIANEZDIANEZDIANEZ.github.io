@@ -408,8 +408,8 @@
     <p class="game-subtitle">Desactiva la Bomba de los Dioses</p>
     <div class="ornament">⚡ ✦ ⚡</div>
     <p class="start-description">
-      Responde correctamente las <strong>26 preguntas</strong> sobre los 13 dioses griegos antes de que el contador llegue a cero.
-      Por cada dios tendrás que adivinar su <strong>nombre romano</strong> y lo que <strong>lleva o simboliza</strong>.
+      Responde correctamente las <strong>39 preguntas</strong> sobre los 13 dioses griegos antes de que el contador llegue a cero.
+      Por cada dios tendrás que adivinar su <strong>nombre romano</strong>, lo que <strong>representa</strong> y lo que <strong>porta o lleva</strong>.
       Si fallas, la pregunta volverá a aparecer más adelante. ¡Tienes <strong>60 segundos</strong>!
     </p>
     <button class="btn-primary" onclick="startGame()">⚡ COMENZAR ⚡</button>
@@ -438,55 +438,153 @@
 </div>
 
 <script>
-// ==============================
+// ============================================================
+//  SONIDOS — Web Audio API (sin archivos externos)
+// ============================================================
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function sonarCorrecto() {
+  try {
+    const ctx = getAudioCtx();
+    // Acorde mayor ascendente: Do - Mi - Sol
+    [[523.25, 0], [659.25, 0.12], [783.99, 0.24]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.start(t); osc.stop(t + 0.4);
+    });
+  } catch(e) {}
+}
+
+function sonarError() {
+  try {
+    const ctx = getAudioCtx();
+    // Dos pulsos descendentes disonantes
+    [[320, 0], [260, 0.18]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t); osc.stop(t + 0.35);
+    });
+  } catch(e) {}
+}
+
+function sonarVictoria() {
+  try {
+    const ctx = getAudioCtx();
+    // Fanfarria corta: 5 notas en crescendo
+    [[523, 0], [659, 0.13], [784, 0.26], [1047, 0.39], [1319, 0.52]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+      osc.start(t); osc.stop(t + 0.6);
+    });
+  } catch(e) {}
+}
+
+function sonarDerrota() {
+  try {
+    const ctx = getAudioCtx();
+    // Tres notas graves descendentes dramáticas
+    [[220, 0], [185, 0.28], [147, 0.56]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.35, t + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      osc.start(t); osc.stop(t + 0.65);
+    });
+    // Ruido de explosión (burst de ruido blanco)
+    const bufSize = ctx.sampleRate * 0.4;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gNoise = ctx.createGain();
+    gNoise.gain.setValueAtTime(0.4, ctx.currentTime + 0.56);
+    gNoise.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+    src.connect(gNoise); gNoise.connect(ctx.destination);
+    src.start(ctx.currentTime + 0.56);
+  } catch(e) {}
+}
+
+// ============================================================
 //  DATOS DE LOS DIOSES
-// ==============================
+//  3 campos: romano, representa, porta
+// ============================================================
 const dioses = [
-  { nombre: "Atenea",   romano: "Minerva",  objetos: "Escudo y lanza" },
-  { nombre: "Apolo",    romano: "Apolo",    objetos: "Lira, arcos y flechas" },
-  { nombre: "Afrodita", romano: "Venus",    objetos: "Paloma y concha" },
-  { nombre: "Artemisa", romano: "Diana",    objetos: "Arco y flechas" },
-  { nombre: "Hades",    romano: "Plutón",   objetos: "Perro de tres cabezas" },
-  { nombre: "Hera",     romano: "Juno",     objetos: "Diadema y pavo real" },
-  { nombre: "Hefesto",  romano: "Vulcano",  objetos: "Fragua y martillo" },
-  { nombre: "Poseidón", romano: "Neptuno",  objetos: "Tridente" },
-  { nombre: "Hestia",   romano: "Vesta",    objetos: "Fuego sagrado" },
-  { nombre: "Deméter",  romano: "Ceres",    objetos: "Grano" },
-  { nombre: "Zeus",     romano: "Júpiter",  objetos: "Rayo y águila" },
-  { nombre: "Hermes",   romano: "Mercurio", objetos: "Casco y sandalias aladas" },
-  { nombre: "Ares",     romano: "Marte",    objetos: "Casco, armadura y armas" },
+  { nombre: "Atenea",   romano: "Minerva",   representa: "Sabiduría",                    porta: "Escudo y lanza" },
+  { nombre: "Apolo",    romano: "Apolo",     representa: "Las artes",                    porta: "Lira, arcos y flechas" },
+  { nombre: "Afrodita", romano: "Venus",     representa: "Amor y belleza",               porta: "Paloma y concha" },
+  { nombre: "Artemisa", romano: "Diana",     representa: "La caza",                      porta: "Arco y flechas" },
+  { nombre: "Hades",    romano: "Plutón",    representa: "El inframundo",                porta: "Perro de tres cabezas" },
+  { nombre: "Hera",     romano: "Juno",      representa: "Matrimonio y familia",         porta: "Diadema y pavo real" },
+  { nombre: "Hefesto",  romano: "Vulcano",   representa: "Fuego y metalurgia",           porta: "Fragua y martillo" },
+  { nombre: "Poseidón", romano: "Neptuno",   representa: "El mar",                       porta: "Tridente" },
+  { nombre: "Hestia",   romano: "Vesta",     representa: "El hogar",                     porta: "Fuego sagrado" },
+  { nombre: "Deméter",  romano: "Ceres",     representa: "La agricultura",               porta: "Grano" },
+  { nombre: "Zeus",     romano: "Júpiter",   representa: "Padre de todos los dioses",    porta: "Rayo y águila" },
+  { nombre: "Hermes",   romano: "Mercurio",  representa: "Mensajero de los dioses",      porta: "Casco y sandalias aladas" },
+  { nombre: "Ares",     romano: "Marte",     representa: "La guerra",                    porta: "Casco, armadura y armas" },
 ];
 
-// Total preguntas: 13 (nombre romano) + 13 (objetos) = 26
-const TOTAL_PREGUNTAS = 26;
+// 3 preguntas × 13 dioses = 39
+const TOTAL_PREGUNTAS = 39;
 
-// ==============================
+// ============================================================
 //  GENERADOR DE PREGUNTAS
-// ==============================
+// ============================================================
+// tipo: "romano" | "representa" | "porta"
+const TIPOS = ["romano", "representa", "porta"];
+
+const CONFIG_TIPO = {
+  romano:     { etiqueta: "🏛 NOMBRE ROMANO",       pregunta: (d) => `¿Cómo se llama <strong>${d.nombre}</strong> en la mitología romana?` },
+  representa: { etiqueta: "⚡ LO QUE REPRESENTA",   pregunta: (d) => `¿Qué representa o es el dios/la diosa <strong>${d.nombre}</strong>?` },
+  porta:      { etiqueta: "🗡 LO QUE PORTA / LLEVA", pregunta: (d) => `¿Qué porta o lleva <strong>${d.nombre}</strong>?` },
+};
+
 function crearPregunta(dios, tipo) {
-  // tipo: "romano" | "objetos"
-  let enunciado, respCorrecta, clave;
+  const cfg = CONFIG_TIPO[tipo];
+  const respCorrecta = dios[tipo];
 
-  if (tipo === "romano") {
-    enunciado = `¿Cómo se llama <strong>${dios.nombre}</strong> en la mitología romana?`;
-    respCorrecta = dios.romano;
-    clave = "romano";
-  } else {
-    enunciado = `¿Qué lleva o simboliza <strong>${dios.nombre}</strong>?`;
-    respCorrecta = dios.objetos;
-    clave = "objetos";
-  }
-
-  // 3 respuestas incorrectas de otros dioses
   const otrosDioses = dioses.filter(d => d.nombre !== dios.nombre);
   shuffle(otrosDioses);
-  const incorrectas = otrosDioses.slice(0, 3).map(d => d[clave]);
+  const incorrectas = otrosDioses.slice(0, 3).map(d => d[tipo]);
 
   const opciones = [respCorrecta, ...incorrectas];
   shuffle(opciones);
 
   return {
-    enunciado,
+    enunciado: cfg.pregunta(dios),
+    etiqueta: cfg.etiqueta,
     opciones,
     correcta: respCorrecta,
     tipo,
@@ -502,28 +600,28 @@ function shuffle(arr) {
   return arr;
 }
 
-// ==============================
+// ============================================================
 //  ESTADO DEL JUEGO
-// ==============================
+// ============================================================
 let cola = [];
 let preguntaActual = null;
 let timerInterval = null;
 let segundosRestantes = 120;
-let correctasAcumuladas = 0;  // cuántas han salido bien (ya eliminadas de cola)
+let correctasAcumuladas = 0;
 let bloqueado = false;
 
 function buildCola() {
-  // Una pregunta de nombre romano + una de objetos por cada dios
   const preguntas = [];
   dioses.forEach(d => {
-    preguntas.push(crearPregunta(d, "romano"));
-    preguntas.push(crearPregunta(d, "objetos"));
+    TIPOS.forEach(tipo => preguntas.push(crearPregunta(d, tipo)));
   });
   shuffle(preguntas);
   return preguntas;
 }
 
 function startGame() {
+  // Inicializar contexto de audio al primer gesto del usuario
+  getAudioCtx();
   cola = buildCola();
   correctasAcumuladas = 0;
   bloqueado = false;
@@ -578,12 +676,10 @@ function mostrarSiguiente() {
   document.getElementById('progress-text').textContent =
     `RESPONDIDAS: ${correctasAcumuladas} / ${TOTAL_PREGUNTAS} — EN COLA: ${cola.length}`;
 
-  document.getElementById('question-type').textContent =
-    preguntaActual.tipo === 'romano' ? '🏛 NOMBRE ROMANO' : '🏛 SÍMBOLO / OBJETO';
-
+  document.getElementById('question-type').textContent = preguntaActual.etiqueta;
   document.getElementById('question-text').innerHTML = preguntaActual.enunciado;
 
-  // Re-barajar opciones en cada aparición
+  // Re-barajar opciones en cada nueva aparición (por si la pregunta volvió al fallar)
   const diosBuscado = dioses.find(d => d.nombre === preguntaActual.nombreDios);
   const q = crearPregunta(diosBuscado, preguntaActual.tipo);
   preguntaActual.opciones = q.opciones;
@@ -591,7 +687,7 @@ function mostrarSiguiente() {
 
   const grid = document.getElementById('options-grid');
   grid.innerHTML = '';
-  const letras = ['A','B','C','D'];
+  const letras = ['A', 'B', 'C', 'D'];
   preguntaActual.opciones.forEach((op, i) => {
     const btn = document.createElement('button');
     btn.className = 'option-btn';
@@ -614,28 +710,29 @@ function seleccionar(btn, opcion) {
   buttons.forEach(b => b.disabled = true);
 
   if (opcion === preguntaActual.correcta) {
+    sonarCorrecto();
     btn.classList.add('correct');
     document.getElementById('feedback').innerHTML = '✅ ¡Correcto! La bomba se estabiliza...';
     cola.shift();
     correctasAcumuladas++;
-    setTimeout(mostrarSiguiente, 1000);
+    setTimeout(mostrarSiguiente, 1100);
   } else {
+    sonarError();
     btn.classList.add('wrong');
-    // Marcar la correcta en verde
+    // Destacar la correcta
     buttons.forEach(b => {
-      if (b.textContent.trim().slice(1).trim() === preguntaActual.correcta) {
-        b.classList.add('correct');
-      }
+      const texto = b.childNodes[1] ? b.childNodes[1].textContent.trim() : b.textContent.replace(/^[A-D]/, '').trim();
+      if (texto === preguntaActual.correcta) b.classList.add('correct');
     });
     document.getElementById('feedback').innerHTML = `❌ Incorrecto. La respuesta era: <em>${preguntaActual.correcta}</em>`;
-    // Reinsertar en posición aleatoria NO inmediata
+    // Reinsertar en posición aleatoria no inmediata
     cola.shift();
     const pos = cola.length > 1
       ? Math.floor(Math.random() * (cola.length - 1)) + 1
       : 1;
     const diosBuscado = dioses.find(d => d.nombre === preguntaActual.nombreDios);
     cola.splice(pos, 0, crearPregunta(diosBuscado, preguntaActual.tipo));
-    setTimeout(mostrarSiguiente, 1600);
+    setTimeout(mostrarSiguiente, 1700);
   }
 }
 
@@ -646,20 +743,21 @@ function finJuego(victoria) {
   endScreen.classList.remove('hidden');
   endScreen.style.display = 'flex';
 
-  const icon = document.getElementById('end-icon');
+  const icon  = document.getElementById('end-icon');
   const title = document.getElementById('end-title');
-  const msg = document.getElementById('end-msg');
   const video = document.getElementById('end-video');
 
   if (victoria) {
+    sonarVictoria();
     icon.textContent = '🏆';
     title.textContent = '¡Has desconectado la bomba!';
-    msg.textContent = '¡Extraordinario! Conoces bien a los dioses del Olimpo. ¡Zeus está orgulloso de ti!';
+    document.getElementById('end-msg').textContent = '¡Extraordinario! Conoces bien a los dioses del Olimpo. ¡Zeus está orgulloso de ti!';
     tryVideo(video, 'bien.mp4', '¡Lo has hecho muy bien! Has desconectado la bomba. ⚡');
   } else {
+    sonarDerrota();
     icon.textContent = '💥';
     title.textContent = '¡La bomba ha explotado!';
-    msg.textContent = 'El tiempo se agotó. Los dioses no son pacientes. ¡Inténtalo de nuevo!';
+    document.getElementById('end-msg').textContent = 'El tiempo se agotó. Los dioses no son pacientes. ¡Inténtalo de nuevo!';
     tryVideo(video, 'mal.mp4', '💣 ¡La bomba ha explotado! No llegaste a tiempo.');
   }
 }
