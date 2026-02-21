@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ Olimpo Quiz — Desactiva la Bomba</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #d4a017;
+    --gold-light: #f5c842;
+    --red: #c0392b;
+    --blue-dark: #0a0e1a;
+    --blue-mid: #111827;
+    --blue-glow: #1e3a5f;
+    --white: #f0ead6;
+    --gray: #8a8a9a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--blue-dark);
+    color: var(--white);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(30,58,95,0.4) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,23,0.08) 0%, transparent 50%);
+  }
+
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 5%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 85%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 90%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 50%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ===== TIMER ===== */
+  #timer-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10,14,26,0.95);
+    border-bottom: 1px solid rgba(212,160,23,0.3);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(8px);
+  }
+
+  #timer-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.7rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  #timer-track {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(212,160,23,0.2);
+  }
+
+  #timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-light), var(--gold));
+    border-radius: 4px;
+    transition: width 1s linear, background 0.5s;
+    width: 100%;
+  }
+
+  #timer-fill.danger {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    animation: pulse-red 0.5s ease infinite alternate;
+  }
+
+  @keyframes pulse-red {
+    from { opacity: 1; }
+    to { opacity: 0.6; }
+  }
+
+  #timer-count {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.2rem;
+    color: var(--gold-light);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  #timer-count.danger { color: #e74c3c; }
+
+  /* ===== BOMB ICON ===== */
+  #bomb-display {
+    font-size: 5rem;
+    text-align: center;
+    margin-bottom: 8px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(212,160,23,0.4));
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* ===== TITLES ===== */
+  .game-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.2rem, 4vw, 2rem);
+    color: var(--gold-light);
+    text-align: center;
+    letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(212,160,23,0.5);
+    margin-bottom: 4px;
+  }
+
+  .game-subtitle {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    color: var(--gray);
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 30px;
+  }
+
+  /* ===== PROGRESS ===== */
+  #progress-text {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.65rem;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  /* ===== QUESTION CARD ===== */
+  #question-card {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(17,24,39,0.9), rgba(30,58,95,0.3));
+    border: 1px solid rgba(212,160,23,0.3);
+    border-radius: 16px;
+    padding: 32px 28px;
+    margin-bottom: 20px;
+    box-shadow:
+      0 0 40px rgba(212,160,23,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+    animation: card-in 0.4s ease;
+  }
+
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  #question-type {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+
+  #question-text {
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    line-height: 1.5;
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  /* ===== OPTIONS ===== */
+  #options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  @media (max-width: 500px) {
+    #options-grid { grid-template-columns: 1fr; }
+  }
+
+  .option-btn {
+    background: rgba(17,24,39,0.8);
+    border: 1px solid rgba(212,160,23,0.25);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: var(--white);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(212,160,23,0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(212,160,23,0.15);
+  }
+
+  .option-btn:hover:not(:disabled)::before { opacity: 1; }
+
+  .option-btn.correct {
+    border-color: #27ae60;
+    background: rgba(39,174,96,0.15);
+    animation: correct-flash 0.5s ease;
+  }
+
+  .option-btn.wrong {
+    border-color: var(--red);
+    background: rgba(192,57,43,0.15);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes correct-flash {
+    0% { box-shadow: 0 0 0 rgba(39,174,96,0); }
+    50% { box-shadow: 0 0 30px rgba(39,174,96,0.5); }
+    100% { box-shadow: 0 0 0 rgba(39,174,96,0); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .option-letter {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(212,160,23,0.15);
+    border: 1px solid rgba(212,160,23,0.3);
+    text-align: center;
+    line-height: 22px;
+    font-size: 0.75rem;
+    font-family: 'Cinzel Decorative', serif;
+    color: var(--gold);
+    margin-right: 10px;
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+
+  /* ===== FEEDBACK ===== */
+  #feedback {
+    min-height: 28px;
+    text-align: center;
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--gold-light);
+    margin: 12px 0 4px;
+    transition: opacity 0.3s;
+  }
+
+  /* ===== START SCREEN ===== */
+  #start-screen {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .start-description {
+    font-size: 1.1rem;
+    color: var(--gray);
+    max-width: 500px;
+    line-height: 1.7;
+  }
+
+  .btn-primary {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, var(--gold), #a07810);
+    color: var(--blue-dark);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(212,160,23,0.3);
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(212,160,23,0.5);
+  }
+
+  /* ===== END SCREEN ===== */
+  #end-screen {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .end-icon { font-size: 5rem; animation: float 3s ease infinite; }
+
+  .end-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.3rem, 5vw, 2.2rem);
+    color: var(--gold-light);
+    text-shadow: 0 0 40px rgba(212,160,23,0.6);
+  }
+
+  .end-msg {
+    font-size: 1.2rem;
+    color: var(--white);
+    max-width: 480px;
+    line-height: 1.7;
+  }
+
+  #end-video {
+    width: 100%;
+    max-width: 560px;
+    border-radius: 12px;
+    border: 1px solid rgba(212,160,23,0.3);
+    display: none;
+  }
+
+  /* ===== ORNAMENT ===== */
+  .ornament {
+    color: var(--gold);
+    opacity: 0.4;
+    font-size: 1.2rem;
+    letter-spacing: 8px;
+  }
+
+  /* ===== HIDDEN ===== */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Timer bar (shown during game) -->
+<div id="timer-bar" class="hidden">
+  <span id="timer-label">⏱ TIEMPO</span>
+  <div id="timer-track"><div id="timer-fill"></div></div>
+  <span id="timer-count">60</span>
+</div>
+
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <div id="bomb-display">💣</div>
+    <h1 class="game-title">OLIMPO QUIZ</h1>
+    <p class="game-subtitle">Desactiva la Bomba de los Dioses</p>
+    <div class="ornament">⚡ ✦ ⚡</div>
+    <p class="start-description">
+      Responde correctamente las <strong>26 preguntas</strong> sobre los 13 dioses griegos antes de que el contador llegue a cero.
+      Por cada dios tendrás que adivinar su <strong>nombre romano</strong> y lo que <strong>lleva o simboliza</strong>.
+      Si fallas, la pregunta volverá a aparecer más adelante. ¡Tienes <strong>60 segundos</strong>!
+    </p>
+    <button class="btn-primary" onclick="startGame()">⚡ COMENZAR ⚡</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="hidden" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:0; padding-top:60px;">
+    <p id="progress-text">PREGUNTA 1 DE 13</p>
+    <div id="question-card">
+      <p id="question-type">PREGUNTA</p>
+      <p id="question-text">¿...?</p>
+    </div>
+    <div id="feedback"></div>
+    <div id="options-grid"></div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="end-screen" class="hidden">
+    <div class="end-icon" id="end-icon">🏆</div>
+    <h2 class="end-title" id="end-title">¡Lo has conseguido!</h2>
+    <p class="end-msg" id="end-msg">Has desconectado la bomba con tiempo de sobra.</p>
+    <video id="end-video" autoplay controls></video>
+    <button class="btn-primary" onclick="restartGame()">⚡ JUGAR DE NUEVO ⚡</button>
+  </div>
+
+</div>
+
+<script>
+// ==============================
+//  DATOS DE LOS DIOSES
+// ==============================
+const dioses = [
+  { nombre: "Atenea",   romano: "Minerva",  objetos: "Escudo y lanza" },
+  { nombre: "Apolo",    romano: "Apolo",    objetos: "Lira, arcos y flechas" },
+  { nombre: "Afrodita", romano: "Venus",    objetos: "Paloma y concha" },
+  { nombre: "Artemisa", romano: "Diana",    objetos: "Arco y flechas" },
+  { nombre: "Hades",    romano: "Plutón",   objetos: "Perro de tres cabezas" },
+  { nombre: "Hera",     romano: "Juno",     objetos: "Diadema y pavo real" },
+  { nombre: "Hefesto",  romano: "Vulcano",  objetos: "Fragua y martillo" },
+  { nombre: "Poseidón", romano: "Neptuno",  objetos: "Tridente" },
+  { nombre: "Hestia",   romano: "Vesta",    objetos: "Fuego sagrado" },
+  { nombre: "Deméter",  romano: "Ceres",    objetos: "Grano" },
+  { nombre: "Zeus",     romano: "Júpiter",  objetos: "Rayo y águila" },
+  { nombre: "Hermes",   romano: "Mercurio", objetos: "Casco y sandalias aladas" },
+  { nombre: "Ares",     romano: "Marte",    objetos: "Casco, armadura y armas" },
+];
+
+// Total preguntas: 13 (nombre romano) + 13 (objetos) = 26
+const TOTAL_PREGUNTAS = 26;
+
+// ==============================
+//  GENERADOR DE PREGUNTAS
+// ==============================
+function crearPregunta(dios, tipo) {
+  // tipo: "romano" | "objetos"
+  let enunciado, respCorrecta, clave;
+
+  if (tipo === "romano") {
+    enunciado = `¿Cómo se llama <strong>${dios.nombre}</strong> en la mitología romana?`;
+    respCorrecta = dios.romano;
+    clave = "romano";
+  } else {
+    enunciado = `¿Qué lleva o simboliza <strong>${dios.nombre}</strong>?`;
+    respCorrecta = dios.objetos;
+    clave = "objetos";
+  }
+
+  // 3 respuestas incorrectas de otros dioses
+  const otrosDioses = dioses.filter(d => d.nombre !== dios.nombre);
+  shuffle(otrosDioses);
+  const incorrectas = otrosDioses.slice(0, 3).map(d => d[clave]);
+
+  const opciones = [respCorrecta, ...incorrectas];
+  shuffle(opciones);
+
+  return {
+    enunciado,
+    opciones,
+    correcta: respCorrecta,
+    tipo,
+    nombreDios: dios.nombre
+  };
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ==============================
+//  ESTADO DEL JUEGO
+// ==============================
+let cola = [];
+let preguntaActual = null;
+let timerInterval = null;
+let segundosRestantes = 120;
+let correctasAcumuladas = 0;  // cuántas han salido bien (ya eliminadas de cola)
+let bloqueado = false;
+
+function buildCola() {
+  // Una pregunta de nombre romano + una de objetos por cada dios
+  const preguntas = [];
+  dioses.forEach(d => {
+    preguntas.push(crearPregunta(d, "romano"));
+    preguntas.push(crearPregunta(d, "objetos"));
+  });
+  shuffle(preguntas);
+  return preguntas;
+}
+
+function startGame() {
+  cola = buildCola();
+  correctasAcumuladas = 0;
+  bloqueado = false;
+
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+  document.getElementById('game-screen').style.display = 'flex';
+  document.getElementById('timer-bar').classList.remove('hidden');
+
+  startTimer();
+  mostrarSiguiente();
+}
+
+function startTimer() {
+  segundosRestantes = 120;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    segundosRestantes--;
+    updateTimerUI();
+    if (segundosRestantes <= 0) {
+      clearInterval(timerInterval);
+      finJuego(false);
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const fill = document.getElementById('timer-fill');
+  const count = document.getElementById('timer-count');
+  const pct = (segundosRestantes / 60) * 100;
+  fill.style.width = pct + '%';
+  count.textContent = segundosRestantes;
+  if (segundosRestantes <= 15) {
+    fill.classList.add('danger');
+    count.classList.add('danger');
+  } else {
+    fill.classList.remove('danger');
+    count.classList.remove('danger');
+  }
+}
+
+function mostrarSiguiente() {
+  if (cola.length === 0) {
+    clearInterval(timerInterval);
+    finJuego(true);
+    return;
+  }
+  bloqueado = false;
+  preguntaActual = cola[0];
+  document.getElementById('feedback').textContent = '';
+
+  document.getElementById('progress-text').textContent =
+    `RESPONDIDAS: ${correctasAcumuladas} / ${TOTAL_PREGUNTAS} — EN COLA: ${cola.length}`;
+
+  document.getElementById('question-type').textContent =
+    preguntaActual.tipo === 'romano' ? '🏛 NOMBRE ROMANO' : '🏛 SÍMBOLO / OBJETO';
+
+  document.getElementById('question-text').innerHTML = preguntaActual.enunciado;
+
+  // Re-barajar opciones en cada aparición
+  const diosBuscado = dioses.find(d => d.nombre === preguntaActual.nombreDios);
+  const q = crearPregunta(diosBuscado, preguntaActual.tipo);
+  preguntaActual.opciones = q.opciones;
+  preguntaActual.correcta = q.correcta;
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letras = ['A','B','C','D'];
+  preguntaActual.opciones.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letras[i]}</span>${op}`;
+    btn.onclick = () => seleccionar(btn, op);
+    grid.appendChild(btn);
+  });
+
+  // Animar tarjeta
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'card-in 0.4s ease';
+}
+
+function seleccionar(btn, opcion) {
+  if (bloqueado) return;
+  bloqueado = true;
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  if (opcion === preguntaActual.correcta) {
+    btn.classList.add('correct');
+    document.getElementById('feedback').innerHTML = '✅ ¡Correcto! La bomba se estabiliza...';
+    cola.shift();
+    correctasAcumuladas++;
+    setTimeout(mostrarSiguiente, 1000);
+  } else {
+    btn.classList.add('wrong');
+    // Marcar la correcta en verde
+    buttons.forEach(b => {
+      if (b.textContent.trim().slice(1).trim() === preguntaActual.correcta) {
+        b.classList.add('correct');
+      }
+    });
+    document.getElementById('feedback').innerHTML = `❌ Incorrecto. La respuesta era: <em>${preguntaActual.correcta}</em>`;
+    // Reinsertar en posición aleatoria NO inmediata
+    cola.shift();
+    const pos = cola.length > 1
+      ? Math.floor(Math.random() * (cola.length - 1)) + 1
+      : 1;
+    const diosBuscado = dioses.find(d => d.nombre === preguntaActual.nombreDios);
+    cola.splice(pos, 0, crearPregunta(diosBuscado, preguntaActual.tipo));
+    setTimeout(mostrarSiguiente, 1600);
+  }
+}
+
+function finJuego(victoria) {
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('timer-bar').classList.add('hidden');
+  const endScreen = document.getElementById('end-screen');
+  endScreen.classList.remove('hidden');
+  endScreen.style.display = 'flex';
+
+  const icon = document.getElementById('end-icon');
+  const title = document.getElementById('end-title');
+  const msg = document.getElementById('end-msg');
+  const video = document.getElementById('end-video');
+
+  if (victoria) {
+    icon.textContent = '🏆';
+    title.textContent = '¡Has desconectado la bomba!';
+    msg.textContent = '¡Extraordinario! Conoces bien a los dioses del Olimpo. ¡Zeus está orgulloso de ti!';
+    tryVideo(video, 'bien.mp4', '¡Lo has hecho muy bien! Has desconectado la bomba. ⚡');
+  } else {
+    icon.textContent = '💥';
+    title.textContent = '¡La bomba ha explotado!';
+    msg.textContent = 'El tiempo se agotó. Los dioses no son pacientes. ¡Inténtalo de nuevo!';
+    tryVideo(video, 'mal.mp4', '💣 ¡La bomba ha explotado! No llegaste a tiempo.');
+  }
+}
+
+function tryVideo(videoEl, src, fallbackText) {
+  videoEl.src = src;
+  videoEl.style.display = 'block';
+  videoEl.load();
+  videoEl.onerror = () => {
+    videoEl.style.display = 'none';
+    document.getElementById('end-msg').textContent = fallbackText;
+  };
+}
+
+function restartGame() {
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('end-screen').style.display = 'none';
+  document.getElementById('end-video').style.display = 'none';
+  document.getElementById('end-video').src = '';
+  document.getElementById('start-screen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
