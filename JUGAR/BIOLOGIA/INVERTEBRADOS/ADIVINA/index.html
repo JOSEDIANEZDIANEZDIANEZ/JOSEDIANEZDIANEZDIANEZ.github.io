@@ -702,6 +702,9 @@ var baraja = [
     // Falladas pendientes de reinsertar (se guardan aquí y se reinsertan aleatoriamente)
     var falladas = [];
 
+    // Registro único de preguntas falladas al menos una vez (para el informe)
+    var falladasUnicas = [];
+
     var cartaActual = null;
     var respuestaCorrectaActual = '';
     var jugando = false;
@@ -868,6 +871,10 @@ var baraja = [
         numerodefallos++;
         document.querySelector('.numerodeerrores').textContent = numerodefallos;
         mostrarFeedback('❌ Incorrecto', 'mal');
+        // Guardar en falladasUnicas si no estaba ya registrada
+        if (!falladasUnicas.some(function(c) { return c._id === cartaActual._id; })) {
+          falladasUnicas.push(cartaActual);
+        }
         // La carta fallada va a la lista de pendientes; se reinsertará más adelante
         falladas.push(cartaActual);
         setTimeout(function () {
@@ -908,12 +915,34 @@ var baraja = [
     // Informe
     document.getElementById('btn-informe').addEventListener('click', function () {
       var fechaHora = new Date();
-      var contenido = 'Informe: adivinainvertebrados\nFecha: ' + fechaHora.toLocaleDateString() + ' ' + fechaHora.toLocaleTimeString() + '\nFallos: ' + numerodefallos + '\nPreguntas: ' + totalPreguntas;
-      var blob = new Blob([contenido], { type: 'text/plain' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'adivinainvertebrados.txt';
-      a.click();
+      var fechaStr = fechaHora.toLocaleDateString() + ' ' + fechaHora.toLocaleTimeString();
+
+      // TXT 1: Resumen general (igual que antes)
+      var contenido = 'Informe: adivinainvertebrados\nFecha: ' + fechaStr + '\nFallos: ' + numerodefallos + '\nPreguntas: ' + totalPreguntas;
+      var blob1 = new Blob([contenido], { type: 'text/plain' });
+      var a1 = document.createElement('a');
+      a1.href = URL.createObjectURL(blob1);
+      a1.download = 'adivinainvertebrados.txt';
+      a1.click();
+
+      // TXT 2: Preguntas falladas
+      var lineas = 'PREGUNTAS FALLADAS — adivinainvertebrados\n';
+      lineas += 'Fecha: ' + fechaStr + '\n';
+      lineas += '==========================================\n\n';
+      if (falladasUnicas.length === 0) {
+        lineas += '¡Sin ningún fallo! Todas las preguntas superadas a la primera.\n';
+      } else {
+        lineas += 'Total de animales fallados: ' + falladasUnicas.length + '\n\n';
+        falladasUnicas.forEach(function (c, i) {
+          lineas += (i + 1) + '. ' + c.pregunta + '\n';
+          lineas += '   Respuesta correcta: ' + c.respCorrecta + '\n\n';
+        });
+      }
+      var blob2 = new Blob([lineas], { type: 'text/plain' });
+      var a2 = document.createElement('a');
+      a2.href = URL.createObjectURL(blob2);
+      a2.download = 'adivinainvertebrados_falladas.txt';
+      setTimeout(function () { a2.click(); }, 400);
     });
   </script>
 </body>
