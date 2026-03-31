@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comprobador</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0c10; --panel: #0f1318; --border: #1e2530;
+    --accent: #00e5ff; --ok: #00ff9d; --fail: #ff3c6e;
+    --text: #c8d6e8; --dim: #4a5568;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh; display: flex;
+    align-items: center; justify-content: center; overflow: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed; width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none; z-index: 0;
+  }
+  .card {
+    position: relative; z-index: 1; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 48px 52px; width: 420px;
+    box-shadow: 0 0 0 1px rgba(0,229,255,0.05), 0 32px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+    animation: fadeIn 0.6s ease both;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .card::before, .card::after { content:''; position:absolute; width:16px; height:16px; border-color:var(--accent); border-style:solid; }
+  .card::before { top:-1px; left:-1px; border-width:2px 0 0 2px; }
+  .card::after  { bottom:-1px; right:-1px; border-width:0 2px 2px 0; }
+  .label-top { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:0.3em; color:var(--accent); text-transform:uppercase; margin-bottom:6px; opacity:0.7; }
+  h1 { font-size:28px; font-weight:700; letter-spacing:0.05em; color:#fff; margin-bottom:8px; line-height:1; }
+  .subtitle { font-size:14px; color:var(--dim); margin-bottom:36px; letter-spacing:0.02em; }
+  .field-wrap { margin-bottom:20px; }
+  label { display:block; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; font-family:'Share Tech Mono',monospace; }
+  input[type="text"] {
+    width:100%; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:3px;
+    padding:14px 18px; font-size:22px; font-family:'Share Tech Mono',monospace; color:#fff; outline:none;
+    letter-spacing:0.15em; transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,229,255,0.08); }
+  button {
+    width:100%; background:transparent; border:1px solid var(--accent); color:var(--accent);
+    font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; letter-spacing:0.3em;
+    text-transform:uppercase; padding:14px; border-radius:3px; cursor:pointer;
+    position:relative; overflow:hidden; transition:color 0.2s, box-shadow 0.2s; margin-bottom:28px;
+  }
+  button::before { content:''; position:absolute; inset:0; background:var(--accent); opacity:0; transition:opacity 0.2s; }
+  button:hover { color:var(--bg); box-shadow:0 0 24px rgba(0,229,255,0.25); }
+  button:hover::before { opacity:1; }
+  button span { position:relative; z-index:1; }
+  button:active { transform:scale(0.98); }
+  #resultado {
+    position:relative; overflow:hidden; min-height:58px; border-radius:3px;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    font-size:18px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase;
+    opacity:0; transition:opacity 0.35s, background 0.35s, border-color 0.35s;
+    border:1px solid transparent; padding:14px 20px;
+  }
+  #resultado.show { opacity:1; }
+  #resultado.correcto  { background:rgba(0,255,157,0.07); border-color:rgba(0,255,157,0.3); color:var(--ok); box-shadow:0 0 20px rgba(0,255,157,0.08); }
+  #resultado.incorrecto{ background:rgba(255,60,110,0.07); border-color:rgba(255,60,110,0.3); color:var(--fail); box-shadow:0 0 20px rgba(255,60,110,0.08); }
+  .icon { font-size:22px; line-height:1; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="label-top">Sistema de verificacion</p>
+  <h1>Comprobador</h1>
+  <p class="subtitle">Introduce un numero y comprueba si es valido.</p>
+  <div class="field-wrap">
+    <label for="numero">Valor de entrada</label>
+    <input type="text" id="numero" placeholder="..." autocomplete="off" />
+  </div>
+  <button onclick="_v()"><span>Comprobar</span></button>
+  <div id="resultado"></div>
+</div>
+<script>
+(function(){
+  var _a=[50,48,52];
+  var _t=_a.map(function(c){return String.fromCharCode(c);}).join('');
+  window._v=function(){
+    var el=document.getElementById('numero');
+    var box=document.getElementById('resultado');
+    var v=el.value.trim();
+    box.className='';
+    void box.offsetWidth;
+    if(v===''){
+      box.innerHTML='<span class="icon">&#9888;</span><span>Ingresa un numero</span>';
+      box.className='show incorrecto';
+      return;
+    }
+    if(v===_t){
+      box.innerHTML='<span class="icon">&#10004;</span><span>Correcto</span>';
+      box.className='show correcto';
+    }else{
+      box.innerHTML='<span class="icon">&#10008;</span><span>Incorrecto</span>';
+      box.className='show incorrecto';
+    }
+  };
+  document.getElementById('numero').addEventListener('keydown',function(e){
+    if(e.key==='Enter')window._v();
+  });
+})();
+</script>
+</body>
+</html>
