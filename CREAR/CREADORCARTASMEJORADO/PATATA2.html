@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convertidor DOCX → Juego completo</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #2c2c2e;
+      --surface: #3a3a3c;
+      --border: rgba(255,255,255,0.08);
+      --text: #ececec;
+      --muted: rgba(236,236,236,0.4);
+      --accent: rgba(255,255,255,0.85);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* ── DROP ZONE ── */
+    .drop-zone {
+      border: 1.5px dashed rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 80px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.25s, background 0.25s;
+      background: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .drop-zone.dragover {
+      border-color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .drop-icon {
+      font-size: 3.2em;
+      display: block;
+      margin-bottom: 20px;
+      transition: transform 0.3s;
+      line-height: 1;
+    }
+
+    .drop-zone.dragover .drop-icon {
+      transform: scale(1.12) translateY(-4px);
+    }
+
+    .drop-label {
+      font-size: 0.9em;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    #fileInput { display: none; }
+
+    /* ── CUSTOM PROMPT OVERLAY ── */
+    .prompt-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .prompt-overlay.active {
+      display: flex;
+    }
+
+    .prompt-box {
+      background: #3a3a3c;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+
+    .prompt-box p {
+      font-size: 0.85em;
+      font-weight: 300;
+      color: var(--muted);
+      margin-bottom: 18px;
+      letter-spacing: 0.02em;
+    }
+
+    .prompt-box input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95em;
+      font-weight: 400;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .prompt-box input:focus {
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    .prompt-box input::placeholder {
+      color: rgba(255,255,255,0.25);
+    }
+
+    .prompt-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 11px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-cancel:hover {
+      border-color: rgba(255,255,255,0.28);
+      color: var(--text);
+    }
+
+    .btn-confirm {
+      flex: 2;
+      padding: 11px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 10px;
+      color: #2c2c2e;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-confirm:hover {
+      background: #fff;
+    }
+
+    /* ── GEARS OVERLAY ── */
+    .gears-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(28,28,30,0.96);
+      backdrop-filter: blur(12px);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+
+    .gears-overlay.active {
+      display: flex;
+    }
+
+    .gears-wrap {
+      position: relative;
+      width: 210px;
+      height: 170px;
+    }
+
+    .gear-svg {
+      position: absolute;
+      overflow: visible;
+    }
+
+    .gear-svg.big {
+      width: 140px;
+      height: 140px;
+      bottom: 0;
+      left: 0;
+      animation: spin-cw 4s linear infinite;
+      transform-origin: center center;
+    }
+
+    .gear-svg.small {
+      width: 90px;
+      height: 90px;
+      top: 0;
+      right: 0;
+      animation: spin-ccw 2.545s linear infinite;
+      transform-origin: center center;
+    }
+
+    .gear-body {
+      fill: none;
+      stroke: rgba(255,255,255,0.18);
+      stroke-width: 1.5;
+    }
+
+    .gear-ring {
+      fill: none;
+      stroke: rgba(255,255,255,0.55);
+      stroke-width: 2;
+    }
+
+    .gear-hole {
+      fill: rgba(255,255,255,0.08);
+      stroke: rgba(255,255,255,0.3);
+      stroke-width: 1.5;
+    }
+
+    @keyframes spin-cw  { to { transform: rotate(360deg);  } }
+    @keyframes spin-ccw { to { transform: rotate(-360deg); } }
+
+    .gears-label {
+      font-size: 0.78em;
+      font-weight: 300;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    /* ── STATUS ── */
+    #status { display: none; }
+
+    /* ── ERROR ── */
+    .error-box {
+      margin-top: 20px;
+      background: rgba(255,80,80,0.08);
+      border: 1px solid rgba(255,80,80,0.2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: #ff8080;
+      font-size: 0.85em;
+      font-weight: 300;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── CUSTOM PROMPT ── -->
+<div class="prompt-overlay" id="promptOverlay">
+  <div class="prompt-box">
+    <p>Nombre de la carpeta del juego</p>
+    <input type="text" id="promptInput" placeholder="Mi Juego" value="Mi Juego" />
+    <div class="prompt-actions">
+      <button class="btn-confirm" id="promptConfirm">Crear juego</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── GEARS ── -->
+<div class="gears-overlay" id="gearsOverlay">
+  <div class="gears-wrap">
+    <!-- Engranaje grande: 12 dientes, centrado geométricamente en 70,70 -->
+    <svg class="gear-svg big" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <path class="gear-body" d="M 65.43,24.23 L 65.43,24.23 L 65.69,8.15 L 74.31,8.15 L 74.57,24.23 L 88.93,28.08 L 88.93,28.08 L 97.19,14.28 L 104.66,18.59 L 96.84,32.64 L 107.36,43.16 L 107.36,43.16 L 121.41,35.34 L 125.72,42.81 L 111.92,51.07 L 115.77,65.43 L 115.77,65.43 L 131.85,65.69 L 131.85,74.31 L 115.77,74.57 L 111.92,88.93 L 111.92,88.93 L 125.72,97.19 L 121.41,104.66 L 107.36,96.84 L 96.84,107.36 L 96.84,107.36 L 104.66,121.41 L 97.19,125.72 L 88.93,111.92 L 74.57,115.77 L 74.57,115.77 L 74.31,131.85 L 65.69,131.85 L 65.43,115.77 L 51.07,111.92 L 51.07,111.92 L 42.81,125.72 L 35.34,121.41 L 43.16,107.36 L 32.64,96.84 L 32.64,96.84 L 18.59,104.66 L 14.28,97.19 L 28.08,88.93 L 24.23,74.57 L 24.23,74.57 L 8.15,74.31 L 8.15,65.69 L 24.23,65.43 L 28.08,51.07 L 28.08,51.07 L 14.28,42.81 L 18.59,35.34 L 32.64,43.16 L 43.16,32.64 L 43.16,32.64 L 35.34,18.59 L 42.81,14.28 L 51.07,28.08 Z"/>
+      <circle class="gear-ring" cx="70" cy="70" r="36"/>
+      <circle class="gear-hole" cx="70" cy="70" r="13"/>
+    </svg>
+
+    <!-- Engranaje pequeño: 8 dientes, centrado geométricamente en 45,45 -->
+    <svg class="gear-svg small" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <path class="gear-body" d="M 40.69,16.32 L 40.69,16.32 L 40.83,5.22 L 49.17,5.22 L 49.31,16.32 L 62.23,21.67 L 62.23,21.67 L 70.18,13.92 L 76.08,19.82 L 68.33,27.77 L 73.68,40.69 L 73.68,40.69 L 84.78,40.83 L 84.78,49.17 L 73.68,49.31 L 68.33,62.23 L 68.33,62.23 L 76.08,70.18 L 70.18,76.08 L 62.23,68.33 L 49.31,73.68 L 49.31,73.68 L 49.17,84.78 L 40.83,84.78 L 40.69,73.68 L 27.77,68.33 L 27.77,68.33 L 19.82,76.08 L 13.92,70.18 L 21.67,62.23 L 16.32,49.31 L 16.32,49.31 L 5.22,49.17 L 5.22,40.83 L 16.32,40.69 L 21.67,27.77 L 21.67,27.77 L 13.92,19.82 L 19.82,13.92 L 27.77,21.67 Z"/>
+      <circle class="gear-ring" cx="45" cy="45" r="23"/>
+      <circle class="gear-hole" cx="45" cy="45" r="9"/>
+    </svg>
+  </div>
+  <span class="gears-label">Fabricando tu juego</span>
+</div>
+
+<div class="container">
+
+  <div class="drop-zone" id="dropZone">
+    <span class="drop-icon">📄</span>
+    <div class="drop-label">Arrastra tu documento aquí</div>
+    <input type="file" id="fileInput" accept=".docx,.doc">
+  </div>
+
+  <div id="status"></div>
+
+  <div class="error-box" id="errorBox"></div>
+
+</div>
+
+<script>
+
+// =========================================================
+// ARCHIVOS QUE DEBEN ESTAR EN LA MISMA CARPETA QUE creador.html
+// =========================================================
+
+const ARCHIVOS_BASE = [
+  
+  'flip.mp3',
+  'ganador.MP3',
+  'baile.gif',
+'cartaaleatira.html',
+'cartaordenada.html',
+'claud6.html',
+'index.html',
+'palabraborrosa.html',
+'pro.html'
+];
+
+// =========================================================
+// DRAG & DROP
+// =========================================================
+
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+let preguntasGeneradas = [];
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.docx') || file.name.endsWith('.doc'))) {
+    processFile(file);
+  } else {
+    showError('Por favor arrastra un archivo .docx o .doc válido.');
+  }
+});
+
+// =========================================================
+// UI HELPERS
+// =========================================================
+
+function setStatus(label, progress) {
+  // status interno (sin UI visible, todo se muestra en gears)
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = '⚠ ' + msg;
+  box.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+function showGears() {
+  document.getElementById('gearsOverlay').classList.add('active');
+}
+
+function hideGears() {
+  document.getElementById('gearsOverlay').classList.remove('active');
+}
+
+// =========================================================
+// CUSTOM PROMPT
+// =========================================================
+
+function showPrompt(defaultVal) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('promptOverlay');
+    const input   = document.getElementById('promptInput');
+    const btnOk   = document.getElementById('promptConfirm');
+
+    input.value = defaultVal || 'Mi Juego';
+    overlay.classList.add('active');
+    setTimeout(() => { input.focus(); input.select(); }, 60);
+
+    function confirm() {
+      cleanup();
+      resolve(input.value.trim() || 'Mi Juego');
+    }
+
+    function onKey(e) {
+      if (e.key === 'Enter') confirm();
+    }
+
+    function cleanup() {
+      overlay.classList.remove('active');
+      btnOk.removeEventListener('click', confirm);
+      input.removeEventListener('keydown', onKey);
+    }
+
+    btnOk.addEventListener('click', confirm);
+    input.addEventListener('keydown', onKey);
+  });
+}
+
+// =========================================================
+// PROCESAR DOCX
+// =========================================================
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+async function processFile(file) {
+
+  hideError();
+  showGears();
+
+  try {
+
+    const arrayBuffer = await file.arrayBuffer();
+
+    // Leemos el XML del docx directamente con JSZip para detectar
+    // el subrayado de forma fiable (mammoth no lo convierte bien en todos los casos)
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const xmlStr = await zip.file('word/document.xml').async('string');
+
+    const preguntas = parsearPreguntas(xmlStr);
+
+    if (preguntas.length === 0) {
+      hideGears();
+      showError('No se detectaron preguntas válidas.');
+      return;
+    }
+
+    preguntasGeneradas = preguntas;
+
+    // Esperar 3 segundos para ver los engranajes antes del prompt
+    await delay(3000);
+    hideGears();
+
+    // Pedir nombre
+    const nombreJuego = await showPrompt('Mi Juego');
+    if (!nombreJuego) return;
+
+    // Volver a mostrar engranajes mientras se genera y descarga
+    showGears();
+    await descargarJuegoCompleto(nombreJuego);
+
+  } catch (err) {
+    hideGears();
+    showError('Error procesando archivo: ' + err.message);
+  }
+}
+
+// =========================================================
+// PARSER — lee el XML de word/document.xml directamente
+// =========================================================
+
+function parsearPreguntas(xmlStr) {
+
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlStr, 'application/xml');
+
+  // Cada <w:p> es un párrafo
+  const wParrafos = Array.from(xmlDoc.getElementsByTagNameNS(
+    'http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'p'
+  ));
+
+  // Dado un elemento <w:p>, devuelve { texto, subrayadas[] }
+  // Recorre sus <w:r> (runs); si el run tiene <w:u w:val!="none">, sus palabras son subrayadas
+  function analizarParrafo(wp) {
+    const NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+    const runs = Array.from(wp.getElementsByTagNameNS(NS, 'r'));
+    let textoCompleto = [];
+    let subrayadas    = [];
+
+    for (const run of runs) {
+      const rPr   = run.getElementsByTagNameNS(NS, 'rPr')[0];
+      const uElem = rPr ? rPr.getElementsByTagNameNS(NS, 'u')[0] : null;
+      const esSubrayado = uElem &&
+        uElem.getAttributeNS(NS, 'val') !== 'none' &&
+        uElem.getAttribute('w:val') !== 'none';
+
+      const tElems = run.getElementsByTagNameNS(NS, 't');
+      for (const t of tElems) {
+        const txt = t.textContent;
+        textoCompleto.push(txt);
+        if (esSubrayado) {
+          // Extraemos cada palabra del texto subrayado
+          txt.split(/\s+/).filter(w => w.length > 0).forEach(w => subrayadas.push(w));
+        }
+      }
+    }
+
+    return {
+      texto:      textoCompleto.join('').trim(),
+      subrayadas: subrayadas
+    };
+  }
+
+  const preguntas = [];
+
+  let modoPregunta  = false;
+  let modoRespuesta = false;
+  let preguntaActual      = [];
+  let respuestaActual     = [];
+  let subralyadasActuales = [];
+
+  const esPregunta  = t => /^PREGUNTA\s*$/i.test(t);
+  const esRespuesta = t =>
+    /^RESPUESTA[S]?\s*:?\s*$/i.test(t) ||
+    /^Respuesta\s*:?\s*$/i.test(t);
+
+  for (const wp of wParrafos) {
+
+    const { texto, subrayadas } = analizarParrafo(wp);
+
+    if (esPregunta(texto)) {
+      if (preguntaActual.length > 0 && respuestaActual.length > 0) {
+        preguntas.push(crearEntrada(
+          preguntaActual.join(' '),
+          respuestaActual.join(' '),
+          subralyadasActuales
+        ));
+      }
+      preguntaActual      = [];
+      respuestaActual     = [];
+      subralyadasActuales = [];
+      modoPregunta  = true;
+      modoRespuesta = false;
+      continue;
+    }
+
+    if (esRespuesta(texto)) {
+      modoPregunta  = false;
+      modoRespuesta = true;
+      continue;
+    }
+
+    if (modoPregunta) {
+      if (texto) preguntaActual.push(texto);
+    } else if (modoRespuesta) {
+      if (texto) respuestaActual.push(texto);
+      subralyadasActuales.push(...subrayadas);
+    }
+  }
+
+  if (preguntaActual.length > 0 && respuestaActual.length > 0) {
+    preguntas.push(crearEntrada(
+      preguntaActual.join(' '),
+      respuestaActual.join(' '),
+      subralyadasActuales
+    ));
+  }
+
+  return preguntas;
+}
+
+function crearEntrada(pregunta, respuesta, subrayadas) {
+  // palabrasclave = palabras subrayadas en la respuesta (sin duplicados, en minúsculas)
+  const unicas = [...new Set(subrayadas.map(w => w.toLowerCase()))];
+  const palabrasclave = unicas.join(',');
+  return { pregunta: pregunta.trim(), respuesta: respuesta.trim(), palabrasclave };
+}
+
+// =========================================================
+// CREAR preguntas.js
+// =========================================================
+
+function generarPreguntasJS(preguntas, tituloJuego) {
+
+  const entries = preguntas.map(p =>
+`
+  {
+    pregunta: ${JSON.stringify(p.pregunta)},
+    respuesta: ${JSON.stringify(p.respuesta)},
+    palabrasclave: ${JSON.stringify(p.palabrasclave)}
+  }
+`
+  ).join(',');
+
+  return `const titulo_del_juego = ${JSON.stringify(tituloJuego)};
+
+const preguntas = [
+${entries}
+];`;
+}
+
+// =========================================================
+// DESCARGAR JUEGO COMPLETO
+// =========================================================
+
+async function descargarJuegoCompleto(nombreJuego) {
+
+  try {
+
+    const zip     = new JSZip();
+    const carpeta = zip.folder(nombreJuego);
+
+    const preguntasJS = generarPreguntasJS(preguntasGeneradas, nombreJuego);
+    carpeta.file('preguntas.js', preguntasJS);
+
+    for (let i = 0; i < ARCHIVOS_BASE.length; i++) {
+      const archivo  = ARCHIVOS_BASE[i];
+      const response = await fetch(archivo);
+      if (!response.ok) throw new Error('No se encontró el archivo: ' + archivo);
+      const blob = await response.blob();
+      carpeta.file(archivo, blob);
+    }
+
+    const [contenidoZip] = await Promise.all([
+      zip.generateAsync({ type: 'blob' }),
+      delay(3000)
+    ]);
+
+    const url = URL.createObjectURL(contenidoZip);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = nombreJuego + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    hideGears();
+    fileInput.value = '';
+    preguntasGeneradas = [];
+
+  } catch (err) {
+    hideGears();
+    showError(err.message);
+  }
+}
+
+// =========================================================
+// RESET
+// =========================================================
+
+function resetear() {
+  document.getElementById('result').style.display = 'none';
+  hideError();
+  fileInput.value = '';
+  preguntasGeneradas = [];
+}
+
+</script>
+</body>
+</html>
