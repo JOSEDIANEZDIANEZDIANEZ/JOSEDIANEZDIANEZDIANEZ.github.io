@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Test de Música</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a24;
+    --surface2: #23232f;
+    --card-front: #1e1e2e;
+    --card-back: #14213d;
+    --text: #e8e6f0;
+    --text-muted: #8b88a8;
+    --accent: #c084fc;
+    --accent2: #818cf8;
+    --good: #4ade80;
+    --bad: #f87171;
+    --border: rgba(255,255,255,0.08);
+    --shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  [data-theme="light"] {
+    --bg: #f5f3ff;
+    --surface: #ffffff;
+    --surface2: #ede9fe;
+    --card-front: #ffffff;
+    --card-back: #e0e7ff;
+    --text: #1e1b4b;
+    --text-muted: #6b7280;
+    --accent: #7c3aed;
+    --accent2: #4f46e5;
+    --good: #16a34a;
+    --bad: #dc2626;
+    --border: rgba(0,0,0,0.08);
+    --shadow: 0 20px 60px rgba(109,40,217,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.4s, color 0.4s;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(192,132,252,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(129,140,248,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+
+  .header-right { display: flex; align-items: center; gap: 14px; }
+
+  .round-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .progress-bar {
+    width: 120px;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .theme-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+  .theme-btn:hover { transform: scale(1.1); background: var(--accent); }
+
+  main {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+    min-height: calc(100vh - 70px);
+  }
+
+  .card-counter {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    letter-spacing: 0.5px;
+  }
+  .card-counter span { color: var(--accent); font-weight: 600; }
+
+  .scene {
+    width: 100%;
+    max-width: 620px;
+    height: 400px;
+    perspective: 1200px;
+    cursor: pointer;
+    margin-bottom: 28px;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+    border-radius: 20px;
+  }
+
+  .card.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .card-front { background: var(--card-front); }
+  .card-front::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(192,132,252,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .card-back {
+    background: var(--card-back);
+    transform: rotateY(180deg);
+  }
+  .card-back::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(129,140,248,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .card-icon { font-size: 2.5rem; margin-bottom: 16px; line-height: 1; }
+  .card-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .card-question {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .card-hint {
+    position: absolute;
+    bottom: 20px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .card-answer {
+    font-size: 0.94rem;
+    color: var(--text);
+    line-height: 1.65;
+    font-weight: 400;
+    overflow-y: auto;
+    max-height: 300px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+    text-align: left;
+    width: 100%;
+  }
+  .card-answer::-webkit-scrollbar { width: 4px; }
+  .card-answer::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 99px; }
+
+  .action-buttons {
+    display: flex;
+    gap: 16px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.35s ease;
+    pointer-events: none;
+  }
+  .action-buttons.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 99px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+  }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  .btn:active { transform: translateY(0); }
+  .btn-good { background: var(--good); color: #052e16; }
+  .btn-bad { background: var(--bad); color: #fff; }
+
+  .end-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    animation: fadeIn 0.6s ease;
+  }
+  .end-screen.visible { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .end-emoji { font-size: 5rem; margin-bottom: 8px; }
+  .end-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .end-sub { color: var(--text-muted); font-size: 1rem; max-width: 400px; }
+
+  .btn-restart {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    padding: 16px 40px;
+    border-radius: 99px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: all 0.2s;
+    box-shadow: 0 8px 30px rgba(192,132,252,0.3);
+  }
+  .btn-restart:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(192,132,252,0.4); }
+
+  .scene { animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .scene { height: 360px; }
+    .card-question { font-size: 1.1rem; }
+    .progress-wrap { display: none; }
+    .logo { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎵 Test Música</div>
+  <div class="header-right">
+    <div class="round-badge" id="roundBadge">Ronda 1</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span id="progressText">0 / 0</span>
+    </div>
+    <button class="theme-btn" id="themeBtn" title="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<main>
+  <div id="gameArea" style="display:flex;flex-direction:column;align-items:center;width:100%;">
+    <div class="card-counter">Pregunta <span id="cardNum">1</span> de <span id="cardTotal">1</span></div>
+
+    <div class="scene" id="scene" onclick="flipCard()">
+      <div class="card" id="card">
+        <div class="card-face card-front">
+          <div class="card-icon">🎼</div>
+          <div class="card-label">Pregunta</div>
+          <div class="card-question" id="questionText">Cargando...</div>
+          <div class="card-hint">👆 Toca para ver la respuesta</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-label">Respuesta</div>
+          <div class="card-answer" id="answerText"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons" id="actionBtns">
+      <button class="btn btn-bad" onclick="answer(false)">❌ Me he equivocado</button>
+      <button class="btn btn-good" onclick="answer(true)">✅ Lo he dicho bien</button>
+    </div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <div class="end-emoji">🏆</div>
+    <div class="end-title">¡Lo has conseguido!</div>
+    <div class="end-sub">Has repasado todas las preguntas del tema de música. ¡Estás listo/a para el examen!</div>
+    <button class="btn-restart" onclick="restart()">🔄 Volver a empezar</button>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QA = [
+  {
+    q: "¿Qué es el timbre?",
+    a: "El timbre es la cualidad del sonido que proporciona el toque personal a los distintos instrumentos o voces. En el DNI (nuestro documento de identidad), el timbre sería el equivalente a la huella dactilar: cada instrumento o voz se reconoce por un timbre propio que lo diferencia del resto, como sucede con la huella de cada persona."
+  },
+  {
+    q: "¿Qué hace la organología musical?",
+    a: "La organología musical es la disciplina que estudia todo lo relacionado con los instrumentos musicales. Los instrumentos se agrupan en familias, y el parentesco viene dado por la forma de producir el sonido."
+  },
+  {
+    q: "¿Qué es un concierto?",
+    a: "El concierto es una composición concebida para uno o varios solistas acompañados por orquesta. El papel del solista destaca por encima del resto en cuanto al grado de exigencia técnica y expresiva."
+  },
+  {
+    q: "¿Qué es la cadencia en un concierto?",
+    a: "La cadencia es el momento del concierto donde el solista toca sin el acompañamiento orquestal. Es el punto de mayor exigencia técnica y expresiva del solista."
+  },
+  {
+    q: "¿En cuántos movimientos suele dividirse un concierto?",
+    a: "El concierto se suele dividir en tres movimientos."
+  },
+  {
+    q: "¿Qué suele variar entre movimiento y movimiento dentro de un concierto?",
+    a: "Entre los movimientos de un concierto varían el tempo y el carácter."
+  },
+  {
+    q: "¿Qué es un intervalo?",
+    a: "El intervalo es la diferencia de altura entre dos notas. Puede producirse entre notas simultáneas o sucesivas."
+  },
+  {
+    q: "¿Qué es un intervalo armónico?",
+    a: "Un intervalo armónico es aquel en el que las dos notas suenan simultáneamente, es decir, al mismo tiempo."
+  },
+  {
+    q: "¿Qué es un intervalo melódico?",
+    a: "Un intervalo melódico es aquel en el que las dos notas suenan sucesivamente, es decir, una después de la otra."
+  },
+  {
+    q: "¿Cómo se denominan los intervalos, es decir cómo se sabe qué intervalo es?",
+    a: "Salvo una excepción, los intervalos se denominan con un número ordinal en femenino: segunda, tercera, cuarta, quinta, sexta, séptima y octava. La excepción es el unísono, ya que no hay diferencia de altura entre una nota y esa misma nota. El resto se calcula contando el número de notas contenidas en el intervalo, incluyendo la nota inicial y la final."
+  },
+  {
+    q: "¿Qué es un intervalo ascendente?",
+    a: "El intervalo es ascendente cuando la segunda nota es más aguda que la primera. Para detectarlo, se puede trazar una flecha imaginaria entre una y otra nota: si la flecha sube, es ascendente."
+  },
+  {
+    q: "¿Qué es un intervalo descendente?",
+    a: "El intervalo es descendente cuando la segunda nota es más grave que la primera. Para detectarlo, se puede trazar una flecha imaginaria entre una y otra nota: si la flecha baja, es descendente."
+  },
+  {
+    q: "¿Qué es una familia respecto a un instrumento musical? Pon un ejemplo.",
+    a: "En el DNI aparece el nombre de nuestros padres para constatar el origen y nuestro «grupo familiar». Los instrumentos musicales también se agrupan en familias; el parentesco viene dado por la forma de producir el sonido. Por ejemplo, la familia de cuerda agrupa a los instrumentos que producen el sonido mediante la vibración de una o más cuerdas."
+  },
+  {
+    q: "Dame dos ejemplos de la familia de instrumentos de cuerda.",
+    a: "Dos ejemplos de la familia de cuerda son el violín y el violonchelo (ambos pertenecen a la subfamilia de cuerda frotada)."
+  },
+  {
+    q: "Dame dos ejemplos de la familia de instrumentos electrófonos.",
+    a: "Dos ejemplos de instrumentos electrófonos son la guitarra eléctrica (mecánica tradicional amplificada) y el theremin (generación eléctrica completa)."
+  },
+  {
+    q: "¿Qué cuatro familias de instrumentos hemos visto en el temario?",
+    a: "Las cuatro familias de instrumentos vistas en el temario son: familia de cuerda, familia de electrófonos, familia de viento y familia de percusión."
+  },
+  {
+    q: "¿En qué tres tipos se subdivide la familia de cuerda?",
+    a: "Según la forma de poner en vibración la cuerda, existen tres categorías dentro de la familia de cuerda: cuerda frotada, cuerda pulsada y cuerda percutida."
+  },
+  {
+    q: "¿En qué tres tipos se subdivide la familia de cuerda pulsada?",
+    a: "La familia de cuerda pulsada se subdivide en tres tipos: con mango, con bastidor y de tecla."
+  },
+  {
+    q: "¿En qué dos tipos se subdivide la familia de electrófonos?",
+    a: "Los instrumentos electrófonos se subdividen en dos tipos: instrumentos de mecánica tradicional amplificados (usan la electricidad para amplificar el sonido) e instrumentos con generación eléctrica completa (tanto la onda vibratoria como la amplificación se producen de forma eléctrica)."
+  },
+  {
+    q: "¿En qué dos subtipos se subdivide los instrumentos de mecánica tradicional amplificados?",
+    a: "Dentro de los instrumentos de mecánica tradicional amplificados encontramos en el libro los ejemplos de la guitarra eléctrica y el bajo eléctrico, que comparten las mismas características básicas de amplificación: cuerpo macizo, pastillas y pedalera conectada a un amplificador."
+  },
+  {
+    q: "Define la familia de cuerda.",
+    a: "En la familia de cuerda, también llamada familia de instrumentos cordófonos, el sonido se produce por la vibración de una o más cuerdas y se amplifica por medio de una caja de resonancia. Según la forma de poner en vibración la cuerda, existen tres categorías: cuerda frotada, cuerda pulsada y cuerda percutida."
+  },
+  {
+    q: "Háblame y dame ejemplos de la cuerda frotada.",
+    a: "Los instrumentos de cuerda frotada requieren de un arco para frotar las cuerdas. El arco es una vara de madera a la que se sujetan unas finas hebras de crin de caballo o sintéticas, llamadas «cerdas». Para que las cerdas se «agarren» a las cuerdas es necesario frotarlas previamente con resina. De más agudo a más grave, los instrumentos más comunes son: violín, viola, violonchelo y contrabajo. Constituyen la base de la orquesta sinfónica. En ocasiones, en lugar de usar el arco, el intérprete pulsa las cuerdas directamente con los dedos, lo que se conoce como pizzicato."
+  },
+  {
+    q: "Háblame y dame un ejemplo de la cuerda pulsada.",
+    a: "En los instrumentos de cuerda pulsada, el sonido se produce «pellizcando la cuerda» con los dedos o usando una púa o plectro. Hay infinidad de tipos y variedades, aunque se subdividen en tres categorías: con mango, con bastidor y de tecla."
+  },
+  {
+    q: "Háblame y dame un ejemplo de la cuerda pulsada con mango.",
+    a: "Al igual que los de cuerda frotada, estos instrumentos disponen de un mango o mástil donde los dedos «pisan» las cuerdas para obtener las diferentes notas. También su caja de resonancia es el cuerpo del instrumento. La diferencia es la forma de hacer vibrar las cuerdas: en lugar de usar un arco, son los dedos —o una púa que los sustituye— los que pulsan las cuerdas. El instrumento más representativo es la guitarra, pero hay muchos otros: banjo, ukelele, laúd, vihuela, mandolina, bandurria, balalaika, tiorba, etc."
+  },
+  {
+    q: "Háblame y dame un ejemplo de la cuerda pulsada con bastidor.",
+    a: "La característica principal de este grupo es que las cuerdas están dispuestas en una especie de armazón o bastidor. Su origen se remonta a la Antigüedad. El instrumento representativo de este grupo es el arpa. Apolo, dios de las artes y de la música, es representado portando este instrumento."
+  },
+  {
+    q: "Háblame y dame un ejemplo de la cuerda pulsada con tecla.",
+    a: "El instrumento más representativo de la cuerda pulsada de tecla es el clavicémbalo. Parece un piano de cola, pero no lo es. Su sonido se obtiene mediante un mecanismo de plectros que puntean las cuerdas contenidas en la caja del instrumento. Su origen se remonta al siglo XIV y XV, pero es en el periodo barroco donde alcanza su mayor apogeo. Aunque la invención del piano hizo que cayera en desuso durante un tiempo, en la actualidad ha resurgido con fuerza gracias a la labor de los intérpretes de música antigua."
+  },
+  {
+    q: "Háblame y dame un ejemplo de la cuerda percutida.",
+    a: "El piano es el instrumento más representativo de la cuerda percutida. Cuando se inventó se le llamó pianoforte, ya que permitía al intérprete modificar la intensidad con solo variar la fuerza de ataque a las teclas. Cuando tocamos una tecla del piano, un mecanismo interno lanza un pequeño martillo que golpea la cuerda en lugar de pulsarla, como sucede en el clavicémbalo."
+  },
+  {
+    q: "Define la familia de electrófonos.",
+    a: "Los instrumentos electrófonos o electrónicos son aquellos que precisan de la energía eléctrica para: 1) Amplificar el sonido: instrumentos de mecánica tradicional amplificados. 2) Producir y amplificar el sonido: instrumentos con generación eléctrica completa."
+  },
+  {
+    q: "Define dentro de la familia de electrófonos la familia de instrumentos de mecánica tradicional amplificados.",
+    a: "En los instrumentos de mecánica tradicional amplificados, el sonido se produce de manera similar a un instrumento tradicional; por ejemplo, pulsando una cuerda: el sonido es producto de una vibración mecánica. Esta onda vibratoria se transforma en una señal eléctrica que se amplía y manipula mediante un amplificador."
+  },
+  {
+    q: "Háblame de la guitarra eléctrica.",
+    a: "Principales diferencias con la guitarra acústica: el cuerpo del instrumento es macizo, es decir, carece de caja de resonancia, ya que su cometido ahora lo realiza el amplificador. Cuenta con una o más pastillas para transformar la vibración mecánica en señal eléctrica. Se puede conectar a una pedalera de efectos con el fin de alterar el sonido. El origen de la guitarra eléctrica está en las primitivas bandas de jazz. Será en los años 50, con las guitarras Fender y Gibson, cuando se alcance un estándar de instrumento con gran éxito comercial, coincidiendo con el boom del rock&roll."
+  },
+  {
+    q: "Háblame del bajo eléctrico.",
+    a: "El bajo eléctrico comparte las características de la guitarra en cuanto a componentes básicos para la amplificación del sonido (cuerpo de instrumento macizo, uso de pastillas y pedalera, y conexión a un amplificador). Sin embargo, hay diferencias notables: tiene cuatro cuerdas en lugar de seis; el registro es más grave; es de mayores dimensiones; las cuerdas se pueden pulsar con los dedos o con una púa. En el bajo no se rasguean acordes como en la guitarra: las notas principales del acorde se despliegan en líneas melódicas. El bajo es el soporte armónico-rítmico de la banda, el instrumento que conecta las armonías guitarrísticas con el ritmo de la batería."
+  },
+  {
+    q: "Define la subfamilia de instrumentos con generación eléctrica completa y un ejemplo.",
+    a: "En este tipo de instrumentos, tanto la onda vibratoria como la amplificación de la misma se producen de forma eléctrica. El primer instrumento de esta categoría es el theremin, diseñado en 1919 por Leo Theremin. Consiste en una caja con dos antenas a las que se aproximan o de las que se alejan las manos para controlar la frecuencia del sonido (mano derecha) y la intensidad (mano izquierda)."
+  },
+  {
+    q: "¿Qué es un acorde?",
+    a: "Los acordes son combinaciones simultáneas de tres o más sonidos. La armonía es el conjunto de reglas que nos permite combinar distintos sonidos simultáneamente."
+  },
+  {
+    q: "¿Qué es un acorde triada y cómo se forman?",
+    a: "Los acordes básicos de tres notas se llaman acordes tríada. Su nombre lo toman de la nota considerada fundamental. A esta nota que sirve de base se le añaden otras dos: una a distancia de tercera y otra a distancia de quinta."
+  },
+  {
+    q: "¿Qué es una escala y tipos de escala?",
+    a: "Una escala es un conjunto de notas ordenadas de manera ascendente (o descendente). Las notas de la escala se sitúan dentro de un intervalo de octava, es decir, en el espacio que va desde una nota cualquiera hasta la siguiente nota del mismo nombre. Según el número de peldaños y cómo estén distribuidos, el tipo de escala varía. Por ejemplo: la escala pentafónica tiene cinco sonidos, la dodecafónica doce sonidos y la diatónica siete sonidos."
+  },
+  {
+    q: "Define la escala mayor.",
+    a: "La escala mayor es una escala diatónica de siete sonidos. Su distribución de tonos (T) y semitonos (St) es: T T St T T T St. Por ejemplo, la escala de Do mayor: Do Re Mi Fa Sol La Si Do."
+  },
+  {
+    q: "Define la escala menor.",
+    a: "La escala menor es una escala diatónica de siete sonidos. Su distribución de tonos (T) y semitonos (St) es: T St T T St T T. Ambas escalas (mayor y menor) tienen cinco tonos y dos semitonos, pero esos dos semitonos aparecen en peldaños diferentes."
+  },
+  {
+    q: "¿Para qué sirve una escala?",
+    a: "Las escalas son para los músicos lo que la paleta de color para los pintores. Cuando un compositor se pone a trabajar, debe tomar una serie de decisiones previas: la instrumentación, el tempo, el compás, etc. Entre esas decisiones está la gama de notas que quiere para su obra, es decir, el tipo de escala. La primera nota de una escala se le da el nombre de tónica, y es el tono principal que prevalecerá sobre el resto. A las escalas también se les llama tonalidades."
+  },
+  {
+    q: "Define la familia de viento.",
+    a: "En la familia de viento, también llamada familia de instrumentos aerófonos, el sonido se produce por la vibración de una columna de aire. Se pueden dividir en tres grupos principales, en función de cómo se produzca el sonido: de bisel, de lengüeta y de boquilla. Más conocida es la clasificación según su colocación en la orquesta: viento madera y viento metal."
+  },
+  {
+    q: "¿Qué tres tipos de instrumentos de viento hay? Pon ejemplos.",
+    a: "Los tres tipos de viento son: 1) Viento madera: flauta travesera (de bisel), clarinete (lengüeta simple), oboe y fagot (lengüeta doble). 2) Viento metal: trompa, trompeta, trombón y tuba (todos de boquilla en forma de copa o cónica). 3) Otros instrumentos de viento que no precisan del soplo humano: acordeón y órgano de tubos."
+  },
+  {
+    q: "Define la familia de percusión.",
+    a: "Los instrumentos de percusión son aquellos cuyo sonido es resultado de la vibración que produce una parte del instrumento (o todo él) al ser golpeados o agitados."
+  },
+  {
+    q: "Clasifica los instrumentos de percusión.",
+    a: "Los instrumentos de percusión se pueden distribuir en dos grandes grupos según la altura: 1) Instrumentos de altura definida: aquellos que producen tonos correspondientes a la escala musical (ejemplos: timbales, xilófono, glockenspiel). 2) Instrumentos de altura indefinida: aquellos que producen sonidos que no se corresponden con notas de la escala musical (ejemplos: bombo, caja). Otra clasificación es según el elemento que vibra: 1) Membranófonos: el elemento que vibra es una membrana tensa, que en la mayoría de los casos se golpea con las manos o con baquetas (ejemplos: timbal, bombo, caja). 2) Idiófonos: el elemento que vibra es el cuerpo del instrumento en su totalidad (ejemplos: xilófono, glockenspiel, gong, triángulo, castañuelas)."
+  }
+];
+
+let rounds = [];
+let currentRound = 0;
+let currentIndex = 0;
+let wrongCards = [];
+let isFlipped = false;
+
+function buildRounds() {
+  rounds = [QA.map((_, i) => i)];
+  currentRound = 0;
+  currentIndex = 0;
+  wrongCards = [];
+}
+
+function getCurrentDeck() { return rounds[currentRound]; }
+
+function loadCard() {
+  const deck = getCurrentDeck();
+  if (!deck || currentIndex >= deck.length) {
+    if (wrongCards.length > 0) {
+      rounds.push([...wrongCards]);
+      wrongCards = [];
+      currentRound++;
+      currentIndex = 0;
+      showToast(`⚠️ Ronda ${currentRound + 1}: ${rounds[currentRound].length} preguntas para repasar`);
+      loadCard();
+    } else {
+      showEndScreen();
+    }
+    return;
+  }
+
+  const idx = deck[currentIndex];
+  const item = QA[idx];
+
+  isFlipped = false;
+  document.getElementById('card').classList.remove('flipped');
+  document.getElementById('actionBtns').classList.remove('visible');
+
+  document.getElementById('questionText').textContent = item.q;
+  document.getElementById('answerText').textContent = item.a;
+  document.getElementById('cardNum').textContent = currentIndex + 1;
+  document.getElementById('cardTotal').textContent = deck.length;
+  document.getElementById('roundBadge').textContent = `Ronda ${currentRound + 1}`;
+
+  const total = QA.length;
+  const done = rounds.slice(0, currentRound).reduce((acc, r) => acc + r.length, 0) + currentIndex;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total}`;
+
+  const scene = document.getElementById('scene');
+  scene.style.animation = 'none';
+  scene.offsetHeight;
+  scene.style.animation = 'slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+}
+
+function flipCard() {
+  if (isFlipped) return;
+  isFlipped = true;
+  document.getElementById('card').classList.add('flipped');
+  setTimeout(() => {
+    document.getElementById('actionBtns').classList.add('visible');
+  }, 400);
+}
+
+function answer(correct) {
+  const deck = getCurrentDeck();
+  const idx = deck[currentIndex];
+  if (!correct) wrongCards.push(idx);
+  currentIndex++;
+  loadCard();
+}
+
+function showEndScreen() {
+  document.getElementById('gameArea').style.display = 'none';
+  document.getElementById('endScreen').classList.add('visible');
+}
+
+function restart() {
+  document.getElementById('endScreen').classList.remove('visible');
+  document.getElementById('gameArea').style.display = 'flex';
+  buildRounds();
+  loadCard();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+const themeBtn = document.getElementById('themeBtn');
+let isDark = true;
+themeBtn.addEventListener('click', () => {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  themeBtn.textContent = isDark ? '🌙' : '☀️';
+});
+
+buildRounds();
+loadCard();
+</script>
+</body>
+</html>
