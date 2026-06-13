@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Ville Bouillonne</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bleu:     #1a2e4a;
+    --rouge:    #c0392b;
+    --blanc:    #f7f5f0;
+    --or:       #c9a84c;
+    --gris:     #7a7a7a;
+    --gris-cl:  #e8e4dc;
+    --shadow:   0 2px 16px rgba(26,46,74,0.10);
+  }
+
+  body {
+    background: var(--blanc);
+    font-family: 'Inter', sans-serif;
+    color: var(--bleu);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ────────────────────────────────────── */
+  header {
+    background: var(--bleu);
+    color: #fff;
+    text-align: center;
+    padding: 3rem 1.5rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--rouge) 33%, #fff 33% 66%, var(--rouge) 66%);
+  }
+  header .flag-stripe {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 1.4rem;
+  }
+  header .flag-stripe span {
+    width: 18px; height: 52px;
+    border-radius: 2px;
+  }
+  .s-blue  { background: #002395; }
+  .s-white { background: #fff; }
+  .s-red   { background: #ED2939; }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1.15;
+  }
+  header .subtitle {
+    margin-top: .6rem;
+    font-size: .85rem;
+    font-weight: 300;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--or);
+  }
+  header .groupe {
+    margin-top: 1.2rem;
+    font-size: .82rem;
+    color: rgba(255,255,255,.65);
+    letter-spacing: .06em;
+  }
+
+  /* ── HINT BAR ───────────────────────────────────── */
+  .hint {
+    background: var(--or);
+    color: var(--bleu);
+    text-align: center;
+    padding: .65rem 1rem;
+    font-size: .78rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN ───────────────────────────────────────── */
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  /* ── CARD ───────────────────────────────────────── */
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 1.5rem 1.8rem;
+    border-left: 4px solid transparent;
+    transition: border-color .25s;
+  }
+  .card.all  { border-left-color: var(--rouge); }
+  .card.solo { border-left-color: var(--or);    }
+
+  .speaker {
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--gris);
+    margin-bottom: .9rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .speaker::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gris-cl);
+  }
+
+  /* ── FRENCH PHRASE ──────────────────────────────── */
+  .fr {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--bleu);
+    cursor: pointer;
+    display: inline-block;
+    border-radius: 4px;
+    padding: .18em .35em;
+    margin: -.18em -.35em;
+    transition: background .18s, color .18s, transform .12s;
+    position: relative;
+    user-select: none;
+  }
+  .fr:hover {
+    background: rgba(192,57,43,.08);
+    color: var(--rouge);
+  }
+  .fr.playing {
+    background: var(--rouge);
+    color: #fff;
+    transform: scale(1.01);
+  }
+  .fr.playing::after {
+    content: ' 🔊';
+    font-size: .8em;
+  }
+  .fr strong {
+    font-weight: 700;
+  }
+
+  /* ── TRANSLATION ────────────────────────────────── */
+  .es {
+    margin-top: .75rem;
+    font-size: .88rem;
+    font-style: italic;
+    color: var(--gris);
+    line-height: 1.6;
+    border-top: 1px solid var(--gris-cl);
+    padding-top: .6rem;
+  }
+
+  /* ── OUTRO ──────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 2rem 1rem 2.5rem;
+    font-size: .78rem;
+    color: var(--gris);
+    letter-spacing: .06em;
+  }
+  footer span { color: var(--rouge); }
+
+  /* ── TOAST ──────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--bleu);
+    color: #fff;
+    padding: .6rem 1.2rem;
+    border-radius: 99px;
+    font-size: .8rem;
+    letter-spacing: .04em;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 500px) {
+    .card { padding: 1.2rem 1.2rem; }
+    header { padding: 2.2rem 1rem 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flag-stripe">
+    <span class="s-blue"></span>
+    <span class="s-white"></span>
+    <span class="s-red"></span>
+  </div>
+  <h1>La Ville Bouillonne</h1>
+  <div class="subtitle">Exposición oral · Presentación en francés</div>
+  <div class="groupe">Sandra &nbsp;·&nbsp; Valeria &nbsp;·&nbsp; Samuel &nbsp;·&nbsp; Mario &nbsp;·&nbsp; Álvaro &nbsp;·&nbsp; Manuel P.</div>
+</header>
+
+<div class="hint">🔊 Haz clic en cualquier frase en francés para escucharla</div>
+
+<main id="content"></main>
+
+<footer>Hecho con <span>♥</span> · Web Speech API · Síntesis de voz en francés</footer>
+<div id="toast"></div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────
+  const slides = [
+    {
+      speaker: "Habla Sandra",
+      type: "solo",
+      fr: "Bonjour ! Notre groupe est composé de : Sandra, Valeria, Samuel, Mario, Álvaro y Manuel P.",
+      es: "¡Hola! Nuestro grupo está compuesto por: Sandra, Valeria, Samuel, Mario, Álvaro y Manuel P."
+    },
+    {
+      speaker: "Habla Samuel",
+      type: "solo",
+      fr: "Notre ville s'appelle La Ville Bouillonne.",
+      es: "Nuestra ciudad se llama La Ville Bouillonne."
+    },
+    {
+      speaker: "Hablan Todos",
+      type: "all",
+      fr: "C'est parti !",
+      es: "¡Vamos allá!",
+      bold: true
+    },
+    {
+      speaker: "Habla Sandra",
+      type: "solo",
+      fr: "En entrant dans notre ville, nous trouvons : À droite se trouve le stade de football et, à notre gauche, l'hôpital « Virgen de los Reyes ».",
+      es: "Al entrar en nuestra ciudad nos encontramos: A la derecha está el estadio de fútbol y a nuestra izquierda tenemos el hospital «Virgen de los Reyes»."
+    },
+    {
+      speaker: "Habla Valeria",
+      type: "solo",
+      fr: "En face, il y a un rond-point. D'un côté se trouve l'école San Antonio, et à droite, un gratte-ciel.",
+      es: "Enfrente hay una rotonda. En un lado se encuentra el colegio San Antonio y, a la derecha, un rascacielos."
+    },
+    {
+      speaker: "Habla Samuel",
+      type: "solo",
+      fr: "Si nous continuons tout droit au rond-point, nous trouverons un McDonald's sur la droite et, plus loin, la banque de la ville.",
+      es: "Si seguimos por la rotonda hacia adelante, a la derecha nos encontramos un McDonald's y, siguiendo la carretera, el banco de la ciudad."
+    },
+    {
+      speaker: "Habla Mario",
+      type: "solo",
+      fr: "Au centre se trouve la route, avec quelques véhicules et des arbres de chaque côté.",
+      es: "En el centro está la carretera con algunos vehículos y árboles en ambos lados."
+    },
+    {
+      speaker: "Habla Álvaro",
+      type: "solo",
+      fr: "Pour finir, à l'extrémité de la ville, à gauche, il y a un supermarché ; juste à côté se trouvent l'église San José et la maison Popi.",
+      es: "Para terminar, al fondo de la ciudad, a la izquierda hay un supermercado; justo al lado se encuentran la iglesia San José y la casa Popi."
+    },
+    {
+      speaker: "Hablan Todos",
+      type: "all",
+      fr: "Il fait beau et ensoleillé dans notre ville.",
+      es: "El tiempo en nuestra ciudad es soleado.",
+      bold: true
+    },
+    {
+      speaker: "Hablan Todos",
+      type: "all",
+      fr: "Merci pour votre attention, au revoir !",
+      es: "¡Gracias por vuestra atención, adiós!",
+      bold: true
+    }
+  ];
+
+  // ── RENDER ────────────────────────────────────────
+  const main = document.getElementById('content');
+  slides.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = `card ${s.type}`;
+
+    const spk = document.createElement('div');
+    spk.className = 'speaker';
+    spk.textContent = s.speaker;
+
+    const fr = document.createElement('p');
+    fr.className = 'fr';
+    fr.setAttribute('data-index', i);
+    fr.innerHTML = s.bold ? `<strong>${s.fr}</strong>` : s.fr;
+    fr.setAttribute('title', 'Haz clic para escuchar en francés');
+
+    const es = document.createElement('p');
+    es.className = 'es';
+    es.textContent = s.es;
+
+    card.appendChild(spk);
+    card.appendChild(fr);
+    card.appendChild(es);
+    main.appendChild(card);
+  });
+
+  // ── SPEECH ───────────────────────────────────────
+  const synth = window.speechSynthesis;
+  let currentEl = null;
+
+  function showToast(msg, dur = 2200) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+  }
+
+  function getFrenchVoice() {
+    const voices = synth.getVoices();
+    // Prefer fr-FR voices
+    return (
+      voices.find(v => v.lang === 'fr-FR' && v.localService) ||
+      voices.find(v => v.lang === 'fr-FR') ||
+      voices.find(v => v.lang.startsWith('fr')) ||
+      null
+    );
+  }
+
+  function speak(text, el) {
+    if (synth.speaking) {
+      synth.cancel();
+      if (currentEl) { currentEl.classList.remove('playing'); currentEl = null; }
+    }
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'fr-FR';
+    utter.rate = 0.92;
+    utter.pitch = 1.05;
+
+    const voice = getFrenchVoice();
+    if (voice) utter.voice = voice;
+
+    utter.onstart = () => {
+      el.classList.add('playing');
+      currentEl = el;
+    };
+    utter.onend = utter.onerror = () => {
+      el.classList.remove('playing');
+      currentEl = null;
+    };
+
+    synth.speak(utter);
+  }
+
+  // Voices load asynchronously on some browsers
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = () => {};
+  }
+
+  // ── CLICK HANDLER ────────────────────────────────
+  document.querySelectorAll('.fr').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.getAttribute('data-index'));
+      const text = slides[idx].fr;
+
+      if (!synth) {
+        showToast('Tu navegador no admite síntesis de voz 😕');
+        return;
+      }
+      speak(text, el);
+    });
+  });
+
+  // Check support on load
+  window.addEventListener('load', () => {
+    if (!('speechSynthesis' in window)) {
+      document.querySelector('.hint').textContent =
+        '⚠️ Tu navegador no admite síntesis de voz. Prueba con Chrome o Edge.';
+    }
+  });
+</script>
+</body>
+</html>
