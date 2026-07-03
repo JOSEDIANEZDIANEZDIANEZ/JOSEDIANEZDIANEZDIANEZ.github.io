@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cámara Remota - Casa</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --border:#2a2f3a;
+    --accent:#4f8cff;
+    --accent-hover:#3d75e0;
+    --danger:#ff4f4f;
+    --danger-hover:#e03d3d;
+    --text:#e8eaed;
+    --muted:#9aa2b1;
+    --ok:#3ddc84;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px 60px;
+  }
+  h1{font-size:1.4rem;margin-bottom:4px;text-align:center;}
+  p.subtitle{color:var(--muted);margin-top:0;text-align:center;font-size:.9rem;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px;
+    width:100%;
+    max-width:480px;
+    margin-top:18px;
+  }
+
+  .role-select{
+    display:flex;
+    gap:12px;
+    width:100%;
+    max-width:480px;
+    margin-top:12px;
+  }
+  .role-btn{
+    flex:1;
+    padding:18px 10px;
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    font-size:1rem;
+    cursor:pointer;
+    text-align:center;
+    transition:.15s;
+  }
+  .role-btn:hover{border-color:var(--accent);}
+  .role-btn span{display:block;font-size:1.8rem;margin-bottom:6px;}
+
+  label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px;}
+  input[type=text]{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#0d0f14;
+    color:var(--text);
+    font-size:1rem;
+    margin-bottom:12px;
+  }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+    border-radius:10px;
+    padding:12px 18px;
+    font-size:.95rem;
+    font-weight:600;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-danger:hover{background:var(--danger-hover);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+
+  .id-box{
+    background:#0d0f14;
+    border:1px dashed var(--accent);
+    border-radius:10px;
+    padding:14px;
+    text-align:center;
+    margin:14px 0;
+  }
+  .id-box .id{
+    font-size:1.6rem;
+    font-weight:700;
+    letter-spacing:1px;
+    color:var(--accent);
+    word-break:break-all;
+  }
+
+  video{
+    width:100%;
+    border-radius:12px;
+    background:#000;
+    margin-top:14px;
+    display:block;
+  }
+
+  .status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:.85rem;
+    color:var(--muted);
+    margin-top:10px;
+  }
+  .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--muted);
+    flex-shrink:0;
+  }
+  .dot.ok{background:var(--ok);}
+  .dot.rec{background:var(--danger);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .controls{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .controls button{flex:1;min-width:120px;}
+
+  .downloads{margin-top:16px;}
+  .downloads a{
+    display:block;
+    background:#0d0f14;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+    color:var(--accent);
+    text-decoration:none;
+    margin-bottom:8px;
+    font-size:.85rem;
+  }
+  .downloads a:hover{border-color:var(--accent);}
+
+  .back{margin-top:20px;background:transparent;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.85rem;}
+  .hidden{display:none !important;}
+  .timer{font-variant-numeric:tabular-nums;color:var(--danger);font-weight:700;}
+</style>
+</head>
+<body>
+
+<h1>📡 Cámara Remota de Casa</h1>
+<p class="subtitle">Conecta el móvil y el PC en la misma red WiFi</p>
+
+<!-- Selector de rol -->
+<div class="role-select" id="roleSelect">
+  <div class="role-btn" onclick="selectRole('camera')">
+    <span>📱</span>
+    Soy la cámara<br><small style="color:var(--muted)">(móvil)</small>
+  </div>
+  <div class="role-btn" onclick="selectRole('monitor')">
+    <span>🖥️</span>
+    Soy el monitor<br><small style="color:var(--muted)">(PC)</small>
+  </div>
+</div>
+
+<!-- Modo cámara -->
+<div class="card hidden" id="cameraCard">
+  <h2 style="margin-top:0;font-size:1.1rem;">Modo cámara</h2>
+  <div class="id-box">
+    <div style="color:var(--muted);font-size:.8rem;margin-bottom:4px;">Tu código (dáselo al PC)</div>
+    <div class="id" id="myId">generando…</div>
+  </div>
+  <div class="status"><div class="dot" id="camDot"></div><span id="camStatus">Iniciando cámara…</span></div>
+  <video id="localVideo" autoplay playsinline muted></video>
+  <button class="back" onclick="location.reload()">← Volver</button>
+</div>
+
+<!-- Modo monitor -->
+<div class="card hidden" id="monitorCard">
+  <h2 style="margin-top:0;font-size:1.1rem;">Modo monitor</h2>
+  <label for="remoteIdInput">Código de la cámara (móvil)</label>
+  <input type="text" id="remoteIdInput" placeholder="Pega aquí el código del móvil">
+  <button class="btn-primary" style="width:100%" onclick="connectToCamera()">Conectar</button>
+
+  <div class="status"><div class="dot" id="monDot"></div><span id="monStatus">Esperando conexión…</span></div>
+
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <div class="controls">
+    <button class="btn-danger" id="recordBtn" onclick="toggleRecording()" disabled>⏺ Grabar</button>
+  </div>
+  <div class="status hidden" id="recTimerWrap">
+    <div class="dot rec"></div>
+    <span>Grabando: <span class="timer" id="recTimer">00:00</span></span>
+  </div>
+
+  <div class="downloads" id="downloads"></div>
+  <button class="back" onclick="location.reload()">← Volver</button>
+</div>
+
+<script>
+let peer, localStream, remoteStream, mediaRecorder, recordedChunks = [];
+let recTimerInterval, recSeconds = 0;
+
+function selectRole(role){
+  document.getElementById('roleSelect').classList.add('hidden');
+  if(role === 'camera'){
+    document.getElementById('cameraCard').classList.remove('hidden');
+    startCameraMode();
+  } else {
+    document.getElementById('monitorCard').classList.remove('hidden');
+    startMonitorMode();
+  }
+}
+
+/* ---------- MODO CÁMARA (móvil) ---------- */
+function startCameraMode(){
+  peer = new Peer(); // usa el broker público gratuito de PeerJS
+
+  peer.on('open', id => {
+    document.getElementById('myId').textContent = id;
+  });
+
+  peer.on('error', err => {
+    document.getElementById('camStatus').textContent = 'Error: ' + err.type;
+  });
+
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: 'environment' } }, // cámara trasera si existe
+    audio: true
+  }).then(stream => {
+    localStream = stream;
+    document.getElementById('localVideo').srcObject = stream;
+    document.getElementById('camStatus').textContent = 'Cámara lista. Esperando al monitor…';
+    document.getElementById('camDot').classList.add('ok');
+
+    peer.on('call', call => {
+      call.answer(localStream);
+      document.getElementById('camStatus').textContent = '🔴 Monitor conectado y viendo en directo';
+    });
+  }).catch(err => {
+    document.getElementById('camStatus').textContent = 'No se pudo acceder a la cámara: ' + err.message;
+  });
+}
+
+/* ---------- MODO MONITOR (PC) ---------- */
+function startMonitorMode(){
+  peer = new Peer();
+  peer.on('error', err => {
+    document.getElementById('monStatus').textContent = 'Error: ' + err.type;
+  });
+}
+
+function connectToCamera(){
+  const remoteId = document.getElementById('remoteIdInput').value.trim();
+  if(!remoteId){ alert('Introduce el código del móvil'); return; }
+
+  document.getElementById('monStatus').textContent = 'Conectando…';
+
+  // Stream vacío: el monitor no envía vídeo, solo recibe
+  const emptyStream = new MediaStream();
+  const call = peer.call(remoteId, emptyStream);
+
+  call.on('stream', stream => {
+    remoteStream = stream;
+    document.getElementById('remoteVideo').srcObject = stream;
+    document.getElementById('monStatus').textContent = '🔴 En directo';
+    document.getElementById('monDot').classList.add('ok');
+    document.getElementById('recordBtn').disabled = false;
+  });
+
+  call.on('close', () => {
+    document.getElementById('monStatus').textContent = 'Conexión cerrada';
+    document.getElementById('monDot').classList.remove('ok');
+  });
+
+  call.on('error', err => {
+    document.getElementById('monStatus').textContent = 'Error de conexión: ' + err;
+  });
+}
+
+/* ---------- GRABACIÓN ---------- */
+function toggleRecording(){
+  if(!mediaRecorder || mediaRecorder.state === 'inactive'){
+    startRecording();
+  } else {
+    stopRecording();
+  }
+}
+
+function startRecording(){
+  if(!remoteStream) return;
+  recordedChunks = [];
+
+  let mimeType = 'video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+  if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+  mediaRecorder = new MediaRecorder(remoteStream, { mimeType });
+
+  mediaRecorder.ondataavailable = e => {
+    if(e.data.size > 0) recordedChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const now = new Date();
+    const name = `grabacion_${now.toISOString().replace(/[:.]/g,'-')}.webm`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.textContent = `⬇ Descargar ${name}`;
+    document.getElementById('downloads').prepend(link);
+  };
+
+  mediaRecorder.start();
+  recSeconds = 0;
+  document.getElementById('recTimerWrap').classList.remove('hidden');
+  recTimerInterval = setInterval(() => {
+    recSeconds++;
+    const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
+    const s = String(recSeconds%60).padStart(2,'0');
+    document.getElementById('recTimer').textContent = `${m}:${s}`;
+  }, 1000);
+
+  const btn = document.getElementById('recordBtn');
+  btn.textContent = '⏹ Detener grabación';
+}
+
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state !== 'inactive'){
+    mediaRecorder.stop();
+  }
+  clearInterval(recTimerInterval);
+  document.getElementById('recTimerWrap').classList.add('hidden');
+  document.getElementById('recordBtn').textContent = '⏺ Grabar';
+}
+</script>
+</body>
+</html>
