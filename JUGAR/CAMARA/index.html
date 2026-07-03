@@ -228,8 +228,17 @@ function selectRole(role){
 }
 
 /* ---------- MODO CÁMARA (móvil) ---------- */
+const ICE_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  ]
+};
+
 function startCameraMode(){
-  peer = new Peer(); // usa el broker público gratuito de PeerJS
+  peer = new Peer(undefined, { config: ICE_CONFIG });
 
   peer.on('open', id => {
     document.getElementById('myId').textContent = id;
@@ -239,19 +248,34 @@ function startCameraMode(){
     document.getElementById('camStatus').textContent = 'Error: ' + err.type;
   });
 
+  // Registramos el listener de llamada ENTRANTE ya mismo, antes de que
+  // la cámara esté lista, para no perder la llamada si el monitor conecta rápido.
+  peer.on('call', call => {
+    document.getElementById('camStatus').textContent = 'Llamada entrante, enviando vídeo…';
+    const answerWithStream = () => {
+      call.answer(localStream);
+      document.getElementById('camStatus').textContent = '🔴 Monitor conectado y viendo en directo';
+      call.peerConnection.oniceconnectionstatechange = () => {
+        console.log('ICE (cámara):', call.peerConnection.iceConnectionState);
+      };
+    };
+    if (localStream) {
+      answerWithStream();
+    } else {
+      const wait = setInterval(() => {
+        if (localStream) { clearInterval(wait); answerWithStream(); }
+      }, 200);
+    }
+  });
+
   navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: 'environment' } }, // cámara trasera si existe
+    video: { facingMode: { ideal: 'environment' } },
     audio: true
   }).then(stream => {
     localStream = stream;
     document.getElementById('localVideo').srcObject = stream;
     document.getElementById('camStatus').textContent = 'Cámara lista. Esperando al monitor…';
     document.getElementById('camDot').classList.add('ok');
-
-    peer.on('call', call => {
-      call.answer(localStream);
-      document.getElementById('camStatus').textContent = '🔴 Monitor conectado y viendo en directo';
-    });
   }).catch(err => {
     document.getElementById('camStatus').textContent = 'No se pudo acceder a la cámara: ' + err.message;
   });
@@ -259,7 +283,7 @@ function startCameraMode(){
 
 /* ---------- MODO MONITOR (PC) ---------- */
 function startMonitorMode(){
-  peer = new Peer();
+  peer = new Peer(undefined, { config: ICE_CONFIG });
   peer.on('error', err => {
     document.getElementById('monStatus').textContent = 'Error: ' + err.type;
   });
@@ -269,18 +293,37 @@ function connectToCamera(){
   const remoteId = document.getElementById('remoteIdInput').value.trim();
   if(!remoteId){ alert('Introduce el código del móvil'); return; }
 
-  document.getElementById('monStatus').textContent = 'Conectando…';
+  document.getElementById('monStatus').textContent = 'Conectando… (buscando ruta de red)';
 
   // Stream vacío: el monitor no envía vídeo, solo recibe
   const emptyStream = new MediaStream();
   const call = peer.call(remoteId, emptyStream);
 
+  // Aviso si tras 12s no ha llegado el stream: probablemente bloqueo de red
+  const timeoutId = setTimeout(() => {
+    if (!remoteStream) {
+      document.getElementById('monStatus').textContent =
+        '⚠️ No hay respuesta tras 12s. Revisa: mismo WiFi (no datos móviles), ' +
+        'que el código esté bien pegado, y que el router no tenga "aislamiento de clientes/AP" activado.';
+    }
+  }, 12000);
+
   call.on('stream', stream => {
+    clearTimeout(timeoutId);
     remoteStream = stream;
     document.getElementById('remoteVideo').srcObject = stream;
     document.getElementById('monStatus').textContent = '🔴 En directo';
     document.getElementById('monDot').classList.add('ok');
     document.getElementById('recordBtn').disabled = false;
+
+    call.peerConnection.oniceconnectionstatechange = () => {
+      const state = call.peerConnection.iceConnectionState;
+      console.log('ICE (monitor):', state);
+      if (state === 'failed' || state === 'disconnected') {
+        document.getElementById('monStatus').textContent = '⚠️ Conexión perdida (' + state + ')';
+        document.getElementById('monDot').classList.remove('ok');
+      }
+    };
   });
 
   call.on('close', () => {
@@ -289,6 +332,7 @@ function connectToCamera(){
   });
 
   call.on('error', err => {
+    clearTimeout(timeoutId);
     document.getElementById('monStatus').textContent = 'Error de conexión: ' + err;
   });
 }
