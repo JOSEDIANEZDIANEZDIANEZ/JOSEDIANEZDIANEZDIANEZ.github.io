@@ -3,7 +3,7 @@
   "short_name": "Mi Web",
   "description": "Página web con juegos de cubo de Rubik",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
