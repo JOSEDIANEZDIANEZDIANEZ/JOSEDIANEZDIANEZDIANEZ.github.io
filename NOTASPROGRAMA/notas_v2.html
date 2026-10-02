@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Notas</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Notas">
+<link rel="icon" id="fav" href="data:,">
+<link rel="apple-touch-icon" id="touch" href="">
+<link rel="manifest" id="manifest" href="">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #8a8a8a;
+    --line: #dcdcdc;
+    --font: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%; margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font);
+    overflow: hidden;
+  }
+  .app {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+
+  /* Botón principal */
+  #go {
+    width: min(78vw, 62vh, 420px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0;
+    font-family: var(--font); font-weight: 200;
+    font-size: min(30vw, 24vh, 160px);
+    letter-spacing: .04em;
+    transition: transform .15s ease, border-color .2s ease;
+  }
+  #go:active { transform: scale(.97); }
+  #go:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+  #go.rec { border-color: #bdbdbd; }
+  #go svg { width: 70%; height: auto; overflow: visible; }
+  #go svg path {
+    fill: none; stroke: #111; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+  }
+  #status {
+    position: fixed; left: 0; right: 0;
+    bottom: calc(env(safe-area-inset-bottom) + 84px);
+    text-align: center; font-size: 13px; color: var(--muted);
+    min-height: 18px; padding: 0 24px;
+  }
+
+  /* Iconos inferiores */
+  .icon {
+    position: fixed; bottom: calc(env(safe-area-inset-bottom) + 16px);
+    width: 56px; height: 56px; border: 0; background: none; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--ink); opacity: .75;
+    transition: opacity .15s;
+  }
+  .icon:hover, .icon:active { opacity: 1; }
+  .icon:focus-visible { outline: 2px solid var(--ink); border-radius: 12px; }
+  .icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  #report-btn { left: calc(env(safe-area-inset-left) + 16px); }
+  #trash-btn { right: calc(env(safe-area-inset-right) + 16px); }
+
+  /* Panel informe */
+  #report {
+    position: fixed; inset: 0; background: #fff; z-index: 10;
+    display: none; flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+  }
+  #report.open { display: flex; }
+  .r-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-bottom: 1px solid #eee;
+  }
+  .r-head h1 { margin: 0; font-size: 17px; font-weight: 500; }
+  .r-close {
+    border: 0; background: none; font-size: 28px; line-height: 1; color: var(--ink);
+    width: 44px; height: 44px; cursor: pointer; font-weight: 200;
+  }
+  .r-body {
+    flex: 1; overflow-y: auto; padding: 8px 20px calc(env(safe-area-inset-bottom) + 24px);
+    max-width: 680px; width: 100%; margin: 0 auto;
+  }
+  .note { padding: 18px 0; border-bottom: 1px solid #f0f0f0; }
+  .note time { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .note p { margin: 0; font-size: 17px; line-height: 1.55; white-space: pre-wrap; }
+  .empty { text-align: center; color: var(--muted); margin-top: 30vh; font-size: 15px; }
+
+  /* Diálogo de confirmación */
+  #dialog {
+    position: fixed; inset: 0; z-index: 20; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(255,255,255,.85); backdrop-filter: blur(4px);
+    padding: 24px;
+  }
+  #dialog.open { display: flex; }
+  .box {
+    background: #fff; border: 1px solid var(--line); border-radius: 16px;
+    padding: 26px 24px 20px; max-width: 340px; width: 100%;
+    box-shadow: 0 8px 30px rgba(0,0,0,.06);
+  }
+  .box h2 { margin: 0 0 8px; font-size: 17px; font-weight: 500; }
+  .box p { margin: 0 0 22px; font-size: 15px; line-height: 1.45; color: #555; }
+  .actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .actions button {
+    font-family: var(--font); font-size: 15px; padding: 11px 18px; border-radius: 10px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
+  }
+  .actions .danger { background: var(--ink); color: #fff; border-color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="app">
+  <button id="go" aria-label="Grabar">GO</button>
+</div>
+<div id="status" aria-live="polite"></div>
+
+<button class="icon" id="report-btn" aria-label="Ver informe">
+  <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
+</button>
+<button class="icon" id="trash-btn" aria-label="Borrar informe">
+  <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>
+</button>
+
+<section id="report" aria-label="Informe">
+  <div class="r-head">
+    <h1>Informe</h1>
+    <button class="r-close" id="close-report" aria-label="Cerrar">×</button>
+  </div>
+  <div class="r-body" id="report-body"></div>
+</section>
+
+<div id="dialog" role="alertdialog" aria-modal="true">
+  <div class="box">
+    <h2>Borrar informe</h2>
+    <p>Vas a perder todo el informe. Esta acción no se puede deshacer.</p>
+    <div class="actions">
+      <button id="cancel">Cancelar</button>
+      <button id="accept" class="danger">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const KEY = 'notas_informe';
+  const $ = id => document.getElementById(id);
+  const go = $('go'), statusEl = $('status');
+
+  const WAVE = '<svg viewBox="0 0 120 60" aria-hidden="true"><path d="M2 30 C 12 30, 14 8, 24 8 S 36 52, 46 52 S 58 8, 68 8 S 80 52, 90 52 S 102 30, 118 30"><animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="M2 30 C 12 30, 14 8, 24 8 S 36 52, 46 52 S 58 8, 68 8 S 80 52, 90 52 S 102 30, 118 30;M2 30 C 12 30, 14 52, 24 52 S 36 8, 46 8 S 58 52, 68 52 S 80 8, 90 8 S 102 30, 118 30;M2 30 C 12 30, 14 8, 24 8 S 36 52, 46 52 S 58 8, 68 8 S 80 52, 90 52 S 102 30, 118 30"/></path></svg>';
+
+  /* Almacenamiento */
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+  const save = arr => { try { localStorage.setItem(KEY, JSON.stringify(arr)); } catch {} };
+
+  /* Reconocimiento de voz */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, listening = false, committed = '', session = '';
+
+  const setStatus = t => statusEl.textContent = t || '';
+
+  function newSession() {
+    session = '';
+    rec = new SR();
+    rec.lang = navigator.language && navigator.language.startsWith('es') ? navigator.language : 'es-ES';
+    rec.continuous = true;
+    rec.interimResults = true;
+    // En cada evento se reconstruye el texto completo de la sesión (evita duplicados en Android)
+    rec.onresult = e => {
+      let t = '';
+      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + ' ';
+      session = t;
+    };
+    rec.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        setStatus('Permite el acceso al micrófono para grabar.');
+        listening = false; committed = ''; session = ''; render();
+      }
+    };
+    // Si Chrome corta la sesión por silencio, se guarda lo dicho y se reanuda al instante
+    rec.onend = () => {
+      committed += session; session = '';
+      if (listening) { try { newSession(); rec.start(); } catch { listening = false; render(); } }
+    };
+  }
+
+  function start() {
+    if (!SR) { setStatus('Tu navegador no admite reconocimiento de voz. Usa Chrome.'); return; }
+    committed = '';
+    try {
+      newSession(); rec.start();
+      listening = true; render();
+      setStatus('Grabando… pulsa la onda para terminar');
+    } catch { setStatus('No se pudo iniciar el micrófono.'); }
+  }
+
+  function stop() {
+    listening = false;
+    render();
+    if (rec) { try { rec.stop(); } catch {} }
+    // onend vuelca el último fragmento a "committed"
+    setTimeout(() => {
+      const text = (committed + session).replace(/\s+/g, ' ').trim();
+      committed = ''; session = '';
+      if (text) {
+        const notes = load();
+        notes.push({ t: Date.now(), text });
+        save(notes);
+        setStatus('Nota añadida al informe');
+      } else setStatus('No se detectó voz');
+      setTimeout(() => !listening && setStatus(''), 2200);
+    }, 600);
+  }
+
+  function render() {
+    if (listening) { go.innerHTML = WAVE; go.classList.add('rec'); go.setAttribute('aria-label', 'Detener'); }
+    else { go.textContent = 'GO'; go.classList.remove('rec'); go.setAttribute('aria-label', 'Grabar'); }
+  }
+
+  go.addEventListener('click', () => listening ? stop() : start());
+
+  /* Informe */
+  const report = $('report'), body = $('report-body');
+  function openReport() {
+    const notes = load();
+    body.innerHTML = '';
+    if (!notes.length) {
+      body.innerHTML = '<div class="empty">Aún no hay notas.<br>Pulsa GO y empieza a hablar.</div>';
+    } else {
+      notes.forEach(n => {
+        const d = new Date(n.t);
+        const el = document.createElement('div'); el.className = 'note';
+        const tm = document.createElement('time');
+        tm.textContent = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ', ' +
+          d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const p = document.createElement('p'); p.textContent = n.text;
+        el.append(tm, p); body.append(el);
+      });
+    }
+    report.classList.add('open');
+  }
+  $('report-btn').addEventListener('click', openReport);
+  $('close-report').addEventListener('click', () => report.classList.remove('open'));
+
+  /* Papelera */
+  const dialog = $('dialog');
+  $('trash-btn').addEventListener('click', () => dialog.classList.add('open'));
+  $('cancel').addEventListener('click', () => dialog.classList.remove('open'));
+  $('accept').addEventListener('click', () => {
+    try { localStorage.removeItem(KEY); } catch {}
+    dialog.classList.remove('open');
+    report.classList.remove('open');
+    setStatus('Informe borrado');
+    setTimeout(() => setStatus(''), 2000);
+  });
+
+  /* Icono de la app: N negra en círculo blanco */
+  function makeIcon(size, maskable) {
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    const x = c.getContext('2d'), r = size / 2;
+    if (maskable) { x.fillStyle = '#fff'; x.fillRect(0, 0, size, size); }
+    const R = maskable ? r * 0.72 : r * 0.94;
+    x.beginPath(); x.arc(r, r, R, 0, Math.PI * 2);
+    x.fillStyle = '#fff'; x.fill();
+    x.lineWidth = size * 0.012; x.strokeStyle = '#d4d4d4'; x.stroke();
+    x.fillStyle = '#111'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = '500 ' + (R * 1.15) + 'px Helvetica, Arial, sans-serif';
+    x.fillText('N', r, r + R * 0.04);
+    return c.toDataURL('image/png');
+  }
+  try {
+    const i192 = makeIcon(192, false), i512 = makeIcon(512, false), m512 = makeIcon(512, true);
+    $('fav').href = i192; $('touch').href = i512;
+    const manifest = {
+      name: 'Notas', short_name: 'Notas', display: 'standalone',
+      start_url: location.href.split('#')[0], scope: location.href.split('#')[0].replace(/[^/]*$/, ''),
+      background_color: '#ffffff', theme_color: '#ffffff',
+      icons: [
+        { src: i192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: i512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: m512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+      ]
+    };
+    $('manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }));
+  } catch {}
+
+  render();
+})();
+</script>
+</body>
+</html>
