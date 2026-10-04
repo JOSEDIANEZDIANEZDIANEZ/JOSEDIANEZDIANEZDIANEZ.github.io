@@ -303,7 +303,6 @@
   let rec = null;
   let session = 0;
   let currentBtn = null;
-  const fails = {};
 
   function norm(s) {
     return s.toLowerCase()
@@ -312,94 +311,64 @@
       .replace(/vingts/g, 'vingt')
       .replace(/\s+/g, ' ').trim();
   }
-  // ---------- Comparación por sonido (muy tolerante, pensada para acento español) ----------
-  const VOWELS = 'aeiouAEO';            // A, E, O = vocales nasales (an, in/un, on)
-  const isV = c => VOWELS.indexOf(c) >= 0;
-
-  // Aproxima cómo SUENA una palabra francesa (ya normalizada, sin acentos)
-  function wordPhon(x) {
-    if (x === 'six') return 'sis';
-    if (x === 'dix') return 'dis';
-    if (x === 'sept') return 'set';
-    if (x === 'une') return 'E';
-    x = x.replace(/ph/g, 'f').replace(/ch/g, 's').replace(/qu/g, 'k')
-         .replace(/gn/g, 'n').replace(/c(?=[eiy])/g, 's').replace(/[cq]/g, 'k')
-         .replace(/g(?=[eiy])/g, 'j').replace(/j/g, 's')
-         .replace(/h/g, '').replace(/w/g, 'u').replace(/y/g, 'i');
-    // vocales nasales: "un" e "in" suenan casi igual, "an/en" y "on" también se parecen
-    x = x.replace(/(?:ain|aim|ein|eim|in|im|un|um)(?![aeiouy])/g, 'E')
-         .replace(/(?:an|am|en|em)(?![aeiouy])/g, 'A')
-         .replace(/(?:on|om)(?![aeiouy])/g, 'O')
-         .replace(/([AEO])[gtdsp]+$/, '$1');            // vingt, cent...
-    x = x.replace(/eau|au/g, 'o').replace(/ou/g, 'u').replace(/oi/g, 'oa')
-         .replace(/eu|oe/g, 'e').replace(/ai|ei/g, 'e')
-         .replace(/(.)\1+/g, '$1');
-    x = x.replace(/x$/, '');                            // deux, deuxième...
-    if (x.length > 3) x = x.replace(/e?s?$/, '');       // final mudo (e, s, es)
-    // consonantes que un hispanohablante mezcla o que el micro confunde
-    return x.replace(/[vp]/g, 'b').replace(/z/g, 's').replace(/d/g, 't').replace(/g/g, 'k');
-  }
-  function phon(s) { return s.split(' ').map(wordPhon).join(''); }
-
-  // Distancia entre dos sonidos: cambiar una vocal por otra cuesta poco,
-  // y añadir/quitar una vocal o una "r" también.
-  function ccost(c) { return isV(c) ? 0.6 : (c === 'r' ? 0.6 : 1); }
-  function wlev(a, b) {
-    const m = a.length, n = b.length;
-    let prev = [0];
-    for (let j = 1; j <= n; j++) prev[j] = prev[j - 1] + ccost(b[j - 1]);
-    for (let i = 1; i <= m; i++) {
-      const cur = [prev[0] + ccost(a[i - 1])];
-      for (let j = 1; j <= n; j++) {
-        const sub = a[i - 1] === b[j - 1] ? 0 : (isV(a[i - 1]) && isV(b[j - 1]) ? 0.4 : 1);
-        cur[j] = Math.min(prev[j] + ccost(a[i - 1]), cur[j - 1] + ccost(b[j - 1]), prev[j - 1] + sub);
+  // Distancia de edición (cuántas letras hay que cambiar para pasar de a a b)
+  function lev(a, b) {
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
+                          prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
       }
       prev = cur;
     }
-    return prev[n];
+    return prev[b.length];
   }
-  function dist(p, q) { return wlev(p, q) / Math.max(p.length, q.length, 1); }   // 0 = igual, 1 = nada que ver
 
-  // Sonido de los 101 números, para ver con cuál se parece más lo que se ha oído
-  const CANDS = [];
-  for (let k = 0; k <= 100; k++) CANDS.push(phon(norm(fr(k))));
+  // Aproximación de cómo SUENA una palabra en francés (letras mudas, sonidos parecidos...)
+  function wordPhon(x) {
+    x = x.replace(/ph/g, 'f').replace(/ch/g, 's').replace(/qu/g, 'k')
+         .replace(/c(?=[eiy])/g, 's').replace(/[cq]/g, 'k')
+         .replace(/g(?=[eiy])/g, 'j')
+         .replace(/eau|au/g, 'o').replace(/ou/g, 'u').replace(/oi/g, 'oa')
+         .replace(/ai|ei/g, 'e')
+         .replace(/h/g, '').replace(/w/g, 'v').replace(/y/g, 'i')
+         .replace(/(.)\1+/g, '$1');
+    if (x.length > 3) x = x.replace(/e?s?$/, '');   // final mudo
+    if (x.length > 3) x = x.replace(/[dtp]$/, '');
+    return x;
+  }
+  function phon(s) {
+    return s.split(' ').map(wordPhon).join('');
+  }
 
-  const LIMIT = 0.5;     // lo máximo que puede diferir para darlo por bueno
-  const MARGIN = 0.2;    // tolerancia frente al número que más se parece
-
-  // ¿Lo oído suena a este número? Vale si se parece bastante Y no se parece
-  // claramente más a otro número distinto.
-  function looksLike(heardNorm, n) {
-    const p = phon(heardNorm);
-    if (!p) return false;
-    const dt = dist(p, CANDS[n]);
-    if (dt > LIMIT) return false;
-    let best = dt;
-    for (let k = 0; k < CANDS.length; k++) {
-      const d = dist(p, CANDS[k]);
-      if (d < best) best = d;
-    }
-    // si coincide casi exactamente con OTRO número, no vale para este
-    return dt <= best + (best < 0.05 ? 0.05 : MARGIN);
+  // ¿Suena parecido? Tolerante, pensado para un niño de 10 años
+  function close(a, b) {
+    const pa = phon(a), pb = phon(b);
+    if (!pa || !pb) return false;
+    const len = Math.max(pa.length, pb.length);
+    let allowed = len <= 2 ? 0 : len <= 5 ? 1 : len <= 8 ? 2 : 3;
+    if (len <= 3 && pa[0] !== pb[0]) allowed = 0;   // evita confundir six / dix
+    return lev(pa, pb) <= allowed;
   }
 
   function matches(heard, n, word) {
-    const h = norm(heard);
+    const h = norm(heard), w = norm(word);
     if (!h) return false;
     const tokens = h.split(' ');
-    if (tokens.indexOf(String(n)) >= 0) return true;        // el móvil escribió la cifra ("1")
-    if (looksLike(h, n)) return true;                        // todo lo oído
-    // Si lo oído es, casi exacto, OTRO número (p. ej. "vingt et un" cuando toca "un"), no vale
-    const pw = phon(h);
-    for (let k = 0; k < CANDS.length; k++) {
-      if (k !== n && dist(pw, CANDS[k]) < 0.1) return false;
+    const digits = String(n);
+
+    // Cifras: "71", o repetidas: "3 3 3"
+    if (/^[\d ]+$/.test(h)) {
+      return tokens.every(t => t === digits);
     }
-    // Repetido varias veces o con palabras de más: probamos tramos seguidos
-    const m = norm(word).split(' ').length;
-    for (let size = Math.max(1, m - 1); size <= m + 1; size++) {
-      for (let i = 0; i + size <= tokens.length; i++) {
-        if (looksLike(tokens.slice(i, i + size).join(' '), n)) return true;
-      }
+    // Todo lo oído suena parecido
+    if (close(h, w)) return true;
+    // Repetido varias veces ("trois trois trois") o con palabras de más:
+    // vale si en cualquier tramo seguido suena parecido
+    const m = w.split(' ').length;
+    for (let i = 0; i + m <= tokens.length; i++) {
+      if (close(tokens.slice(i, i + m).join(' '), w)) return true;
     }
     return false;
   }
@@ -421,8 +390,7 @@
     if (ok) {
       soundOk();
       row.classList.add('good');
-      fails[n] = 0;
-      msg.textContent = '✅ ¡Muy bien! Lo has dicho bien.';
+      msg.textContent = '✅ ¡Muy bien! Lo has dicho perfecto.';
       if (!cb.checked) {
         cb.checked = true;
         cb.dispatchEvent(new Event('change'));
@@ -430,9 +398,7 @@
     } else {
       soundBad();
       row.classList.add('bad');
-      fails[n] = (fails[n] || 0) + 1;
-      msg.textContent = '❌ Casi... He oído "' + heard + '". Escucha otra vez e inténtalo.' +
-        (fails[n] >= 3 ? ' 💡 Si ya lo has intentado varias veces, papá puede marcar la estrella ⭐.' : '');
+      msg.textContent = '❌ Casi... He oído "' + heard + '". Escucha otra vez e inténtalo.';
     }
     setTimeout(() => row.classList.remove('good', 'bad'), 1000);
   }
