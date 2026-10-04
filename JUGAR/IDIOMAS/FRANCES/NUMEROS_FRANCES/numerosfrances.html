@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Los números en francés</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #5b8def;
+    --bg2: #b06cf0;
+    --card: #ffffff;
+    --ok: #2ecc71;
+    --ink: #2b2d42;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Fredoka', 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    color: var(--ink);
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    display: flex;
+    flex-direction: column;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 12px 14px 14px;
+  }
+
+  header { text-align: center; color: #fff; flex: 0 0 auto; }
+  h1 {
+    margin: 4px 0 2px;
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
+    text-shadow: 0 3px 0 rgba(0,0,0,.2);
+  }
+  .sub { margin: 0 0 8px; font-size: .95rem; opacity: .95; }
+
+  .progress-wrap {
+    background: rgba(255,255,255,.3);
+    border-radius: 999px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffd93d, #ff9f1c);
+    border-radius: 999px;
+    transition: width .5s ease;
+  }
+  .progress-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem; color: #333;
+  }
+  .msg { min-height: 1.2em; font-size: .85rem; margin: 2px 0 8px; }
+
+  #list {
+    flex: 1 1 auto;
+    overflow-y: scroll;
+    background: rgba(255,255,255,.18);
+    border-radius: 22px;
+    padding: 10px;
+    scrollbar-width: auto;
+    scrollbar-color: #ffd93d rgba(255,255,255,.3);
+  }
+  #list::-webkit-scrollbar { width: 16px; }
+  #list::-webkit-scrollbar-track { background: rgba(255,255,255,.3); border-radius: 10px; }
+  #list::-webkit-scrollbar-thumb { background: #ffd93d; border-radius: 10px; border: 3px solid rgba(255,255,255,.3); }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border-radius: 18px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border-left: 8px solid var(--c);
+    box-shadow: 0 4px 0 rgba(0,0,0,.15);
+    transition: background .3s, transform .15s;
+  }
+  .row.done { background: #e9fbe9; border-left-color: var(--ok); }
+
+  .num {
+    flex: 0 0 62px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--c);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.7rem;
+    display: flex; align-items: center; justify-content: center;
+    text-shadow: 0 2px 0 rgba(0,0,0,.2);
+  }
+
+  .fr {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: inherit;
+    font-size: clamp(1.05rem, 4.6vw, 1.45rem);
+    font-weight: 600;
+    text-align: left;
+    color: var(--ink);
+    background: #f4f1ff;
+    border: 3px dashed var(--c);
+    border-radius: 14px;
+    padding: 9px 12px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: transform .12s, background .2s;
+  }
+  .fr .ico { font-size: 1.2rem; flex: 0 0 auto; }
+  .fr .txt { overflow-wrap: anywhere; line-height: 1.15; }
+  .fr:hover { background: #ebe5ff; }
+  .fr:active { transform: scale(.96); }
+  .fr.speaking { background: #fff3b0; animation: wiggle .5s ease infinite alternate; }
+  @keyframes wiggle { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
+
+  /* casilla grande y divertida */
+  .chk { flex: 0 0 auto; position: relative; width: 42px; height: 42px; cursor: pointer; }
+  .chk input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 2; }
+  .chk span {
+    position: absolute; inset: 0;
+    border: 4px solid #c9c9d6;
+    border-radius: 12px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: transparent;
+    transition: all .2s;
+  }
+  .chk input:checked + span {
+    background: var(--ok); border-color: #1fa85a; color: #fff;
+    transform: scale(1.08) rotate(-6deg);
+  }
+  .chk input:focus-visible + span { outline: 3px solid #333; }
+
+  .toolbar { flex: 0 0 auto; display: flex; justify-content: center; margin-top: 10px; }
+  .toolbar button {
+    font-family: inherit; font-weight: 600; font-size: .85rem;
+    background: rgba(255,255,255,.25); color: #fff;
+    border: 2px solid rgba(255,255,255,.6);
+    border-radius: 999px; padding: 6px 16px; cursor: pointer;
+  }
+
+  /* pantalla de victoria */
+  #win {
+    position: fixed; inset: 0;
+    background: rgba(30, 20, 70, .85);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px;
+  }
+  #win.show { display: flex; }
+  .win-box {
+    background: #fff; border-radius: 28px; padding: 28px 22px;
+    text-align: center; max-width: 380px;
+    animation: pop .6s cubic-bezier(.2,1.6,.4,1);
+  }
+  .win-box .big { font-size: 4rem; }
+  .win-box h2 { margin: 6px 0; font-size: 1.8rem; color: #6c3ce0; }
+  .win-box p { margin: 6px 0 16px; font-size: 1.1rem; }
+  .win-box button {
+    font-family: inherit; font-weight: 700; font-size: 1.1rem;
+    background: #ff9f1c; color: #fff; border: none;
+    border-radius: 999px; padding: 10px 26px; cursor: pointer;
+    box-shadow: 0 4px 0 #c97a00;
+  }
+  @keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .confetti {
+    position: fixed; top: -20px; width: 12px; height: 18px;
+    z-index: 60; pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🇫🇷 Los números en francés</h1>
+  <p class="sub">Toca el número en francés para escucharlo. ¡Tu padre marcará la casilla cuando lo domines!</p>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="bar"></div>
+    <div class="progress-text" id="ptxt">0 / 101</div>
+  </div>
+  <div class="msg" id="msg"></div>
+</header>
+
+<div id="list" aria-label="Lista de números"></div>
+
+<div class="toolbar">
+  <button id="reset">🔄 Empezar de nuevo</button>
+</div>
+
+<div id="win">
+  <div class="win-box">
+    <div class="big">🏆🎉</div>
+    <h2>¡Félicitations !</h2>
+    <p>¡Has aprendido todos los números del 0 al 100 en francés!</p>
+    <button id="closeWin">¡Genial!</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Números en francés ----------
+  const U = ['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf',
+             'dix','onze','douze','treize','quatorze','quinze','seize',
+             'dix-sept','dix-huit','dix-neuf'];
+  const T = { 2:'vingt', 3:'trente', 4:'quarante', 5:'cinquante', 6:'soixante' };
+
+  function fr(n) {
+    if (n < 20) return U[n];
+    if (n === 100) return 'cent';
+    const d = Math.floor(n / 10), u = n % 10;
+    if (d >= 2 && d <= 6) {
+      if (u === 0) return T[d];
+      if (u === 1) return T[d] + ' et un';
+      return T[d] + '-' + U[u];
+    }
+    if (d === 7) return u === 1 ? 'soixante et onze' : 'soixante-' + U[10 + u];
+    if (d === 8) return u === 0 ? 'quatre-vingts' : 'quatre-vingt-' + U[u];
+    return 'quatre-vingt-' + U[10 + u]; // 90-99
+  }
+
+  // ---------- Estado guardado ----------
+  const KEY = 'numerosfrances_v1';
+  let done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { done = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+
+  // ---------- Voz ----------
+  const synth = window.speechSynthesis;
+  let frVoice = null;
+  const msg = document.getElementById('msg');
+
+  function pickVoice() {
+    if (!synth) return;
+    const voices = synth.getVoices();
+    frVoice = voices.find(v => v.lang === 'fr-FR')
+           || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('fr'))
+           || null;
+  }
+  if (synth) {
+    pickVoice();
+    synth.onvoiceschanged = pickVoice;
+  } else {
+    msg.textContent = '⚠️ Este navegador no puede leer en voz alta.';
+  }
+
+  let currentBtn = null;
+  function speak(text, btn) {
+    if (!synth) return;
+    synth.cancel();
+    if (currentBtn) currentBtn.classList.remove('speaking');
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR';
+    if (frVoice) u.voice = frVoice;
+    u.rate = 0.8;
+    u.pitch = 1.05;
+    btn.classList.add('speaking');
+    currentBtn = btn;
+    const end = () => btn.classList.remove('speaking');
+    u.onend = end; u.onerror = end;
+    synth.speak(u);
+  }
+
+  // ---------- Construir lista ----------
+  const colors = ['#ef476f','#ff9f1c','#06a77d','#118ab2','#8e5de8','#e0569c'];
+  const list = document.getElementById('list');
+  const rows = [];
+
+  for (let n = 0; n <= 100; n++) {
+    const word = fr(n);
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.setProperty('--c', colors[n % colors.length]);
+
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = n;
+
+    const btn = document.createElement('button');
+    btn.className = 'fr';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Escuchar ' + n + ' en francés');
+    btn.innerHTML = '<span class="ico">🔊</span><span class="txt"></span>';
+    btn.querySelector('.txt').textContent = word;
+    btn.addEventListener('click', () => speak(word, btn));
+
+    const lab = document.createElement('label');
+    lab.className = 'chk';
+    lab.title = 'Ya lo sabe';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!done[n];
+    const box = document.createElement('span');
+    box.textContent = '★';
+    lab.append(cb, box);
+    cb.addEventListener('change', () => {
+      if (cb.checked) done[n] = 1; else delete done[n];
+      row.classList.toggle('done', cb.checked);
+      save();
+      update(true);
+    });
+
+    row.classList.toggle('done', cb.checked);
+    row.append(num, btn, lab);
+    list.appendChild(row);
+    rows.push({ cb, row });
+  }
+
+  // ---------- Progreso ----------
+  const bar = document.getElementById('bar');
+  const ptxt = document.getElementById('ptxt');
+  const win = document.getElementById('win');
+
+  function update(celebrate) {
+    const count = Object.keys(done).length;
+    bar.style.width = (count / 101 * 100) + '%';
+    ptxt.textContent = count + ' / 101';
+    if (count === 101 && celebrate) {
+      win.classList.add('show');
+      confetti();
+    }
+  }
+
+  function confetti() {
+    const cols = ['#ef476f','#ffd93d','#06d6a0','#118ab2','#8e5de8','#ff9f1c'];
+    for (let i = 0; i < 90; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = cols[i % cols.length];
+      c.style.animationDuration = (2 + Math.random() * 3) + 's';
+      c.style.animationDelay = (Math.random() * 1.2) + 's';
+      c.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 6500);
+    }
+  }
+
+  document.getElementById('closeWin').addEventListener('click', () => win.classList.remove('show'));
+
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!confirm('¿Seguro que quieres borrar todas las casillas marcadas?')) return;
+    done = {};
+    save();
+    rows.forEach(r => { r.cb.checked = false; r.row.classList.remove('done'); });
+    update(false);
+    list.scrollTop = 0;
+  });
+
+  update(false);
+})();
+</script>
+</body>
+</html>
