@@ -311,66 +311,10 @@
       .replace(/vingts/g, 'vingt')
       .replace(/\s+/g, ' ').trim();
   }
-  // Distancia de edición (cuántas letras hay que cambiar para pasar de a a b)
-  function lev(a, b) {
-    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-    for (let i = 1; i <= a.length; i++) {
-      const cur = [i];
-      for (let j = 1; j <= b.length; j++) {
-        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
-                          prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-      }
-      prev = cur;
-    }
-    return prev[b.length];
-  }
-
-  // Aproximación de cómo SUENA una palabra en francés (letras mudas, sonidos parecidos...)
-  function wordPhon(x) {
-    x = x.replace(/ph/g, 'f').replace(/ch/g, 's').replace(/qu/g, 'k')
-         .replace(/c(?=[eiy])/g, 's').replace(/[cq]/g, 'k')
-         .replace(/g(?=[eiy])/g, 'j')
-         .replace(/eau|au/g, 'o').replace(/ou/g, 'u').replace(/oi/g, 'oa')
-         .replace(/ai|ei/g, 'e')
-         .replace(/h/g, '').replace(/w/g, 'v').replace(/y/g, 'i')
-         .replace(/(.)\1+/g, '$1');
-    if (x.length > 3) x = x.replace(/e?s?$/, '');   // final mudo
-    if (x.length > 3) x = x.replace(/[dtp]$/, '');
-    return x;
-  }
-  function phon(s) {
-    return s.split(' ').map(wordPhon).join('');
-  }
-
-  // ¿Suena parecido? Tolerante, pensado para un niño de 10 años
-  function close(a, b) {
-    const pa = phon(a), pb = phon(b);
-    if (!pa || !pb) return false;
-    const len = Math.max(pa.length, pb.length);
-    let allowed = len <= 2 ? 0 : len <= 5 ? 1 : len <= 8 ? 2 : 3;
-    if (len <= 3 && pa[0] !== pb[0]) allowed = 0;   // evita confundir six / dix
-    return lev(pa, pb) <= allowed;
-  }
-
   function matches(heard, n, word) {
     const h = norm(heard), w = norm(word);
-    if (!h) return false;
-    const tokens = h.split(' ');
-    const digits = String(n);
-
-    // Cifras: "71", o repetidas: "3 3 3"
-    if (/^[\d ]+$/.test(h)) {
-      return tokens.every(t => t === digits);
-    }
-    // Todo lo oído suena parecido
-    if (close(h, w)) return true;
-    // Repetido varias veces ("trois trois trois") o con palabras de más:
-    // vale si en cualquier tramo seguido suena parecido
-    const m = w.split(' ').length;
-    for (let i = 0; i + m <= tokens.length; i++) {
-      if (close(tokens.slice(i, i + m).join(' '), w)) return true;
-    }
-    return false;
+    const hs = h.replace(/ /g, ''), ws = w.replace(/ /g, '');
+    return hs === ws || hs === String(n);   // palabras o cifras ("71")
   }
 
   function resetBtn(btn) {
@@ -415,7 +359,7 @@
       r.lang = 'fr-FR';
       r.interimResults = false;
       r.continuous = false;
-      r.maxAlternatives = 8;
+      r.maxAlternatives = 5;
       let answered = false;
 
       btn.classList.add('listening');
