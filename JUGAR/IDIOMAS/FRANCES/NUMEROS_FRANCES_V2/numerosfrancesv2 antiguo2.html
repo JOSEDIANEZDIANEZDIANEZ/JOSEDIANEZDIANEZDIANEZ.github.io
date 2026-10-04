@@ -406,104 +406,47 @@
   function listen(my, n, word, btn, cb, row) {
     if (!SR) {
       msg.textContent = '⚠️ Este navegador no entiende la voz. Prueba con Chrome, Edge o Safari.';
-      resetBtn(btn);
       return;
     }
-
-    const TOTAL_MS = 12000;     // tiempo total que tiene el niño para decirlo
-    const GRACE_MS = 2200;      // si dice algo que no encaja, esperamos por si lo repite
-    const deadline = Date.now() + TOTAL_MS;
-    let decided = false;
-    let lastHeard = '';
-    let badTimer = null;
-    let mainTimer = null;
-
-    function finish() {
-      decided = true;
-      clearTimeout(badTimer);
-      clearTimeout(mainTimer);
-      badTimer = null;
-      if (rec) { try { rec.abort(); } catch (e) {} rec = null; }
-      resetBtn(btn);
-    }
-    function giveVerdictBad() {
-      if (my !== session || decided) return;
-      const heard = lastHeard;
-      finish();
-      verdict(false, heard, n, btn, cb, row);
-    }
-
-    function attempt() {
-      if (my !== session || decided) return;
+    setTimeout(() => {            // pequeña pausa para no oír el eco de la voz
+      if (my !== session) return;
       const r = new SR();
       rec = r;
       r.lang = 'fr-FR';
-      r.interimResults = true;     // evalúa mientras habla, sin esperar al final
-      r.continuous = true;         // no se corta a la primera pausa
+      r.interimResults = false;
+      r.continuous = false;
       r.maxAlternatives = 8;
+      let answered = false;
 
       btn.classList.add('listening');
       btn.querySelector('.ico').textContent = '🎤';
-      msg.textContent = '⏳ Preparando el micrófono...';
-
-      r.onaudiostart = () => {
-        if (my === session && !decided) msg.textContent = '🎤 ¡Ahora tú! Dilo en francés...';
-      };
+      msg.textContent = '🎤 ¡Ahora tú! Dilo en francés...';
 
       r.onresult = e => {
-        if (my !== session || decided) return;
-        const alts = [];
-        for (let i = 0; i < e.results.length; i++) {
-          for (let j = 0; j < e.results[i].length; j++) alts.push(e.results[i][j].transcript);
-        }
-        const last = e.results[e.results.length - 1];
-        if (last && last[0]) lastHeard = last[0].transcript;
-
-        if (alts.some(a => matches(a, n, word))) {
-          finish();
-          verdict(true, lastHeard, n, btn, cb, row);
-          return;
-        }
-        // No encaja (todavía): damos unos segundos por si lo repite bien
-        clearTimeout(badTimer);
-        badTimer = setTimeout(giveVerdictBad, GRACE_MS);
+        if (my !== session) return;
+        answered = true;
+        const alts = Array.from(e.results[0]).map(a => a.transcript);
+        verdict(alts.some(a => matches(a, n, word)), alts[0], n, btn, cb, row);
       };
-
       r.onerror = e => {
-        if (my !== session || decided) return;
+        if (my !== session) return;
+        answered = true;
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-          finish();
           msg.textContent = '🚫 Permite el micrófono para poder practicar.';
-        } else if (e.error === 'audio-capture') {
-          finish();
-          msg.textContent = '🎙️ No encuentro el micrófono.';
-        } else if (e.error === 'network') {
-          finish();
-          msg.textContent = '📶 Hace falta conexión a internet para escucharte.';
+        } else if (e.error === 'no-speech') {
+          msg.textContent = '🤔 No te he oído. Toca otra vez e inténtalo.';
+        } else if (e.error !== 'aborted') {
+          msg.textContent = '⚠️ No he podido escucharte (' + e.error + ').';
         }
-        // 'no-speech' y 'aborted': no hacemos nada, se reintenta solo en onend
       };
-
       r.onend = () => {
-        if (my !== session || decided) return;
+        if (my !== session) return;
+        if (!answered) msg.textContent = '🤔 No te he oído. Toca otra vez e inténtalo.';
+        resetBtn(btn);
         rec = null;
-        if (badTimer) return;                      // ya hay un veredicto pendiente
-        if (Date.now() < deadline - 1500) {        // no ha oído nada: reintenta solo
-          setTimeout(attempt, 150);
-        }
       };
-
-      try { r.start(); } catch (err) { setTimeout(attempt, 300); }
-    }
-
-    mainTimer = setTimeout(() => {
-      if (my !== session || decided) return;
-      if (lastHeard) { giveVerdictBad(); return; }
-      finish();
-      msg.textContent = '🤔 No te he oído. Toca otra vez e inténtalo.';
-    }, TOTAL_MS);
-
-    setTimeout(attempt, 250);      // pequeña pausa para no oír el eco de la voz
+      try { r.start(); } catch (err) { resetBtn(btn); }
+    }, 350);
   }
 
   function practice(n, word, btn, cb, row) {
