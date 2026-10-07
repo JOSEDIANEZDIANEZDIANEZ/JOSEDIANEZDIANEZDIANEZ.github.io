@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vocabulary Lab · Aprende inglés</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #5b8def;
+    --bg2: #b06cf0;
+    --card: #ffffff;
+    --ok: #2ecc71;
+    --ink: #2b2d42;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Fredoka', 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    color: var(--ink);
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    display: flex;
+    flex-direction: column;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 12px 14px 14px;
+  }
+
+  header { text-align: center; color: #fff; flex: 0 0 auto; }
+  h1 {
+    margin: 4px 0 2px;
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
+    text-shadow: 0 3px 0 rgba(0,0,0,.2);
+  }
+  .sub { margin: 0 0 8px; font-size: .95rem; opacity: .95; }
+
+  .progress-wrap {
+    background: rgba(255,255,255,.3);
+    border-radius: 999px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffd93d, #ff9f1c);
+    border-radius: 999px;
+    transition: width .5s ease;
+  }
+  .progress-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem; color: #333;
+  }
+  .msg { font-weight: 600; font-size: 1rem; min-height: 1.5em; margin: 2px 0 8px; }
+
+  #list {
+    flex: 1 1 auto;
+    overflow-y: scroll;
+    background: rgba(255,255,255,.18);
+    border-radius: 22px;
+    padding: 0 10px 10px;
+    scrollbar-width: auto;
+    scrollbar-color: #ffd93d rgba(255,255,255,.3);
+  }
+  #list::-webkit-scrollbar { width: 16px; }
+  #list::-webkit-scrollbar-track { background: rgba(255,255,255,.3); border-radius: 10px; }
+  #list::-webkit-scrollbar-thumb { background: #ffd93d; border-radius: 10px; border: 3px solid rgba(255,255,255,.3); }
+
+  /* título de cada bloque (se queda arriba al hacer scroll) */
+  .cat {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 -10px 10px;
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #ffd93d, #ff9f1c);
+    color: #4a2c00;
+    border-radius: 0 0 18px 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,.15);
+  }
+  .cat:not(:first-child) { margin-top: 6px; border-radius: 18px; }
+  .cat .emo { font-size: 1.5rem; }
+  .cat .t { flex: 1 1 auto; min-width: 0; line-height: 1.1; }
+  .cat .t b { display: block; font-size: 1.1rem; }
+  .cat .t small { font-size: .8rem; font-weight: 600; opacity: .8; }
+  .cat .n {
+    flex: 0 0 auto; background: rgba(255,255,255,.65);
+    border-radius: 999px; padding: 3px 10px; font-weight: 700; font-size: .85rem;
+  }
+  .cat.full .n { background: var(--ok); color: #fff; }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr) 42px;   /* español | inglés | estrella */
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border-radius: 18px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border-left: 8px solid var(--c);
+    box-shadow: 0 4px 0 rgba(0,0,0,.15);
+    transition: background .3s, transform .15s;
+  }
+  .row.done { background: #e9fbe9; border-left-color: var(--ok); }
+
+  /* palabra en español */
+  .es {
+    appearance: none; -webkit-appearance: none; border: 0; width: 100%;
+    font-family: inherit; cursor: pointer;
+    transition: transform .12s, filter .2s;
+    min-height: 52px;
+    border-radius: 14px;
+    background: var(--c);
+    color: #fff;
+    font-weight: 700;
+    font-size: clamp(.74rem, 3.3vw, 1.05rem);
+    line-height: 1.15;
+    padding: 6px 6px;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    text-shadow: 0 2px 0 rgba(0,0,0,.2);
+  }
+
+  /* palabra en inglés (se pulsa para escucharla) */
+  .en {
+    min-width: 0;
+    font-family: inherit;
+    font-size: clamp(.88rem, 3.9vw, 1.25rem);
+    font-weight: 600;
+    text-align: left;
+    color: var(--ink);
+    background: #f4f1ff;
+    border: 3px dashed var(--c);
+    border-radius: 14px;
+    padding: 8px 8px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: transform .12s, background .2s;
+  }
+  .en .ico { font-size: 1.05rem; flex: 0 0 auto; }
+  .en .txt { overflow-wrap: anywhere; line-height: 1.15; }
+  .es:active { transform: scale(.95); }
+  .es:hover { filter: brightness(1.08); }
+  /* palabra en inglés oculta hasta que se toca la palabra en español */
+  .en.oculta { background: #efecf8; color: #a29cc0; border-style: dotted; }
+  .en.oculta .txt { letter-spacing: .25em; }
+  .en.oculta:hover { background: #efecf8; }
+  .en.reveal { animation: reveal .5s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes reveal { from { transform: scale(.7) rotate(-4deg); opacity: .3; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  .en.long { font-size: clamp(.74rem, 3.2vw, 1.02rem); }   /* palabras largas: temperature, sunglasses... */
+  .en:hover { background: #ebe5ff; }
+  .en:active { transform: scale(.96); }
+  .en.speaking { background: #fff3b0; animation: wiggle .5s ease infinite alternate; }
+  @keyframes wiggle { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
+
+  /* escuchando al niño */
+  .en.listening { background: #ffe0e6; border-style: solid; animation: pulse 1s ease infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  .row.good { animation: goodflash .9s ease; }
+  @keyframes goodflash { 0%,100% { transform: scale(1); } 30% { transform: scale(1.04); background: #b8f5c4; } }
+  .row.bad { animation: shake .5s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%,60% { transform: translateX(-8px); background: #ffd0d0; }
+    40%,80% { transform: translateX(8px); background: #ffd0d0; }
+  }
+
+  /* casilla grande y divertida */
+  .chk { position: relative; width: 42px; height: 42px; cursor: pointer; }
+  .chk input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 2; }
+  .chk span {
+    position: absolute; inset: 0;
+    border: 4px solid #c9c9d6;
+    border-radius: 12px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: transparent;
+    transition: all .2s;
+  }
+  .chk input:checked + span {
+    background: var(--ok); border-color: #1fa85a; color: #fff;
+    transform: scale(1.08) rotate(-6deg);
+  }
+  .chk input:focus-visible + span { outline: 3px solid #333; }
+
+  .toolbar { flex: 0 0 auto; display: flex; justify-content: center; margin-top: 10px; }
+  .toolbar button {
+    font-family: inherit; font-weight: 600; font-size: .85rem;
+    background: rgba(255,255,255,.25); color: #fff;
+    border: 2px solid rgba(255,255,255,.6);
+    border-radius: 999px; padding: 6px 16px; cursor: pointer;
+  }
+
+  /* pantalla de victoria */
+  #win {
+    position: fixed; inset: 0;
+    background: rgba(30, 20, 70, .85);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px;
+  }
+  #win.show { display: flex; }
+  .win-box {
+    background: #fff; border-radius: 28px; padding: 28px 22px;
+    text-align: center; max-width: 380px;
+    animation: pop .6s cubic-bezier(.2,1.6,.4,1);
+  }
+  .win-box .big { font-size: 4rem; }
+  .win-box h2 { margin: 6px 0; font-size: 1.8rem; color: #6c3ce0; }
+  .win-box p { margin: 6px 0 16px; font-size: 1.1rem; }
+  .win-box button {
+    font-family: inherit; font-weight: 700; font-size: 1.1rem;
+    background: #ff9f1c; color: #fff; border: none;
+    border-radius: 999px; padding: 10px 26px; cursor: pointer;
+    box-shadow: 0 4px 0 #c97a00;
+  }
+  @keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .confetti {
+    position: fixed; top: -20px; width: 12px; height: 18px;
+    z-index: 60; pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  /* móviles muy estrechos (320-350 px) */
+  @media (max-width: 350px) {
+    body { padding: 10px 8px; }
+    #list { padding: 0 6px 8px; }
+    .cat { margin: 0 -6px 8px; padding: 8px 10px; }
+    .row { gap: 6px; padding: 6px; border-left-width: 6px; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr) 36px; }
+    .chk { width: 36px; height: 36px; }
+    .en .ico { display: none; }
+    .es { font-size: .7rem; padding: 4px; }
+    .en { font-size: .8rem; padding: 6px; }
+    .en.long { font-size: .7rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🇬🇧 Vocabulary Lab</h1>
+  <p class="sub">Toca la palabra en español para ver cómo se dice en inglés (si la vuelves a tocar, se esconde). Toca la inglesa, escúchala y ¡repítela tú! Si la dices bien, se marca la estrella ⭐</p>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="bar"></div>
+    <div class="progress-text" id="ptxt">0 / 0</div>
+  </div>
+  <div class="msg" id="msg"></div>
+</header>
+
+<div id="list" aria-label="Lista de palabras"></div>
+
+<div class="toolbar">
+  <button id="reset">🔄 Empezar de nuevo</button>
+</div>
+
+<div id="win">
+  <div class="win-box">
+    <div class="big">🏆🎉</div>
+    <h2>Congratulations!</h2>
+    <p>¡Has aprendido todas las palabras de inglés de la lista!</p>
+    <button id="closeWin">¡Genial!</button>
+  </div>
+</div>
+
+<!-- ============ Lógica flexible para niño de 10 años (v1.1) ============ -->
+<script>
+/* =====================================================================
+   LÓGICA FLEXIBLE PARA NIÑO DE 10 AÑOS   ·   versión 1.1
+   Archivo: logica-flexible-nino-10.js
+
+   Qué es
+   ------
+   Un conjunto de reglas para dar por buena una pronunciación APROXIMADA
+   de un niño (hispanohablante, de unos 10 años), usando el reconocimiento
+   de voz del navegador (Web Speech API). No busca una pronunciación
+   perfecta: busca que "suene parecido".
+
+   Las dos piezas
+   --------------
+   1) LogicaFlexibleNino10.crear({ candidatos })
+        -> comparador: coincide(oido, id)  /  mejor(oido)
+      Compara por SONIDO (no por letras), con estas reglas:
+        - Cambiar una vocal por otra cuesta poco; añadir/quitar vocal o "r" también.
+        - Vocales nasales un/in, an/en, on se tratan como parecidas.
+        - Consonantes finales mudas, b/v, d/t, g/k, s/z... no cuentan como fallo.
+        - Se acepta si se parece lo bastante al objetivo Y no se parece
+          claramente más a OTRO candidato (así "vingt et un" no vale por "un").
+        - Si se repite ("trois trois trois") o hay palabras de más, vale
+          cualquier tramo que suene parecido.
+        - Si el móvil escribe la cifra ("1"), vale (alias numérico).
+        - Candidatos de una sola vocal (como "un") aceptan cualquier sonido
+          corto que no se parezca a otro candidato, porque el móvil casi
+          nunca los transcribe bien.
+
+   2) LogicaFlexibleNino10.escuchar({ ... })
+        -> bucle de escucha del micrófono que no se rinde a la primera:
+        - Modo continuo con resultados parciales (evalúa mientras habla).
+        - Si no oye nada, reabre el micrófono solo hasta agotar el tiempo.
+        - Si lo oído no encaja, espera unos segundos por si lo repite bien.
+        - Avisa de cuándo está "preparando" y cuándo está "escuchando".
+
+   Uso mínimo
+   ----------
+     <script src="logica-flexible-nino-10.js"><\/script>
+     <script>
+       const L = LogicaFlexibleNino10;
+       const comp = L.crear({
+         candidatos: [
+           { id: 1, texto: 'un' },            // id numérico => alias "1" automático
+           { id: 2, texto: 'deux' },
+           { id: 3, texto: 'trois' }
+           // { id: 'manzana', texto: 'pomme', alias: ['apple'] }
+         ]
+       });
+       comp.coincide('trua', 3);              // true
+       comp.coincide('trois trois', 3);       // true
+       comp.coincide('deux', 3);              // false
+
+       const sesion = L.escuchar({
+         lang: 'fr-FR',
+         comprobar: alternativas => alternativas.some(a => comp.coincide(a, 3)),
+         alEstado:  e => console.log(e),      // 'preparando' | 'escuchando'
+         alAcertar: oido => console.log('¡bien!', oido),
+         alFallar:  oido => console.log('casi...', oido),
+         alSinVoz:  () => console.log('no te he oído'),
+         alError:   c => console.log('error', c)  // 'permiso' | 'micro' | 'red' | 'no-soportado'
+       });
+       // sesion.parar();  // para cancelar
+     <\/script>
+
+   Ajustes (en crear): limite (0.5 en francés, 0.4 en inglés) y margen (0.2).
+     - Si acepta demasiado: baja limite (p. ej. 0.4) o margen (p. ej. 0.1).
+     - Si rechaza demasiado: súbelos.
+
+   Idioma
+   ------
+   Incluye la fonética aproximada del FRANCÉS (por defecto) y del INGLÉS:
+       crear({ idioma: 'en', candidatos: [...] })      // inglés
+       crear({ idioma: 'fr', candidatos: [...] })      // francés (por defecto)
+   En escuchar() hay que pasar también el idioma del micrófono: lang: 'en-GB' o 'fr-FR'.
+   Para otro idioma, pasa tu propia función en crear({ fonetica: palabra =>
+   'sonido aproximado' }) y, si hace falta, crear({ normalizar: texto => texto }).
+
+   Historial
+   ---------
+   1.0  Francés (numerosfrances.html).
+   1.1  Añade inglés (vocabularioingles.html) y alias con normalización propia.
+   ===================================================================== */
+(function (root) {
+  'use strict';
+
+  var VERSION = '1.1';
+  var VOCALES = 'aeiouAEO';                 // A, E, O = vocales nasales (an, in/un, on)
+
+  function def(v, d) { return v === undefined ? d : v; }
+  function esVocal(c) { return VOCALES.indexOf(c) >= 0; }
+
+  // ---------- Normalización ----------
+  function normalizar(s) {
+    return String(s).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[-'’.,!?]/g, ' ')
+      .replace(/vingts/g, 'vingt')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // ---------- Fonética aproximada del FRANCÉS (palabra ya normalizada) ----------
+  function foneticaPalabraFrancesa(x) {
+    if (x === 'six') return 'sis';
+    if (x === 'dix') return 'dis';
+    if (x === 'sept') return 'set';
+    if (x === 'une') return 'E';
+    x = x.replace(/ph/g, 'f').replace(/ch/g, 's').replace(/qu/g, 'k')
+         .replace(/gn/g, 'n').replace(/c(?=[eiy])/g, 's').replace(/[cq]/g, 'k')
+         .replace(/g(?=[eiy])/g, 'j').replace(/j/g, 's')
+         .replace(/h/g, '').replace(/w/g, 'u').replace(/y/g, 'i');
+    // vocales nasales: "un" e "in" suenan casi igual; "an/en" y "on" también se parecen
+    x = x.replace(/(?:ain|aim|ein|eim|in|im|un|um)(?![aeiouy])/g, 'E')
+         .replace(/(?:an|am|en|em)(?![aeiouy])/g, 'A')
+         .replace(/(?:on|om)(?![aeiouy])/g, 'O')
+         .replace(/([AEO])[gtdsp]+$/, '$1');            // vingt, cent...
+    x = x.replace(/eau|au/g, 'o').replace(/ou/g, 'u').replace(/oi/g, 'oa')
+         .replace(/eu|oe/g, 'e').replace(/ai|ei/g, 'e')
+         .replace(/(.)\1+/g, '$1');
+    x = x.replace(/x$/, '');                            // deux...
+    if (x.length > 3) x = x.replace(/e?s?$/, '');       // final mudo (e, s, es)
+    // consonantes que un hispanohablante mezcla o que el micro confunde
+    return x.replace(/[vp]/g, 'b').replace(/z/g, 's').replace(/d/g, 't').replace(/g/g, 'k');
+  }
+
+  // ---------- INGLÉS: normalización y fonética aproximada ----------
+  function normalizarIngles(s) {
+    return String(s).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/['’]/g, '')                 // butcher's -> butchers
+      .replace(/[^a-z0-9]+/g, ' ')          // T-shirt -> t shirt
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // Aproxima cómo SUENA una palabra inglesa (muy simplificado: lo importante es
+  // el "esqueleto" de consonantes; las vocales se comparan con mucha tolerancia).
+  function foneticaPalabraInglesa(x) {
+    x = x.replace(/[^a-z]/g, '');
+    if (!x) return '';
+    x = x.replace(/^kn/, 'n').replace(/^wr/, 'r').replace(/^ps/, 's').replace(/mb$/, 'm')
+         .replace(/tch/g, 'C').replace(/dge/g, 'j').replace(/ck/g, 'k').replace(/ph/g, 'f')
+         .replace(/sch/g, 'sk').replace(/ch/g, 'C').replace(/sh/g, 'C')   // ch y sh se confunden mucho
+         .replace(/th/g, 't').replace(/wh/g, 'w')
+         .replace(/gh(?=t)/g, '').replace(/gh$/g, '')
+         .replace(/ng/g, 'N').replace(/qu/g, 'kw').replace(/x/g, 'ks')
+         .replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k')
+         .replace(/g(?=[eiy])/g, 'j').replace(/n(?=k)/g, 'N')              // bank ~ bang
+         .replace(/h/g, '');                                               // los hispanohablantes la omiten
+    // vocales: equipos de letras -> una vocal
+    x = x.replace(/ee|ea|ie|ey|ei/g, 'i')
+         .replace(/oo|ou|ow|ew|ue|ui/g, 'u')
+         .replace(/ai|ay/g, 'e')
+         .replace(/oa|oe/g, 'o')
+         .replace(/au|aw/g, 'o')
+         .replace(/oi|oy/g, 'oi')
+         .replace(/^y/, 'i').replace(/y/g, 'i').replace(/w/g, 'u');
+    x = x.replace(/([aeiou])r(?![aeiou])/g, '$1');                        // inglés británico: "park" ~ "pak"
+    if (x.length > 2) x = x.replace(/([^aeiou])e$/, '$1');                // e final muda
+    x = x.replace(/(.)\1+/g, '$1');
+    return x.replace(/[vp]/g, 'b').replace(/z/g, 's').replace(/d/g, 't');   // (la g NO se mezcla con la k: fog / fork)
+  }
+
+  // ---------- Distancia entre sonidos ----------
+  // Cambiar una vocal por otra cuesta poco (0.4); añadir/quitar una vocal o "r" también (0.6).
+  function costeLetra(c) { return esVocal(c) ? 0.6 : (c === 'r' ? 0.6 : 1); }
+  function distanciaPonderada(a, b) {
+    var m = a.length, n = b.length, i, j;
+    var prev = [0];
+    for (j = 1; j <= n; j++) prev[j] = prev[j - 1] + costeLetra(b[j - 1]);
+    for (i = 1; i <= m; i++) {
+      var cur = [prev[0] + costeLetra(a[i - 1])];
+      for (j = 1; j <= n; j++) {
+        var sub = a[i - 1] === b[j - 1] ? 0 : (esVocal(a[i - 1]) && esVocal(b[j - 1]) ? 0.4 : 1);
+        cur[j] = Math.min(prev[j] + costeLetra(a[i - 1]),
+                          cur[j - 1] + costeLetra(b[j - 1]),
+                          prev[j - 1] + sub);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function distancia(p, q) {                           // 0 = igual, 1 = nada que ver
+    return distanciaPonderada(p, q) / Math.max(p.length, q.length, 1);
+  }
+
+  // =====================================================================
+  //  1) COMPARADOR
+  // =====================================================================
+  function crear(opciones) {
+    opciones = opciones || {};
+    var lista = opciones.candidatos || [];
+    var idioma = opciones.idioma || 'fr';
+    var LIMITE = def(opciones.limite, idioma === 'en' ? 0.4 : 0.5);   // máximo que puede diferir (el inglés tiene más vocales, por eso es algo más estricto)
+    var MARGEN = def(opciones.margen, 0.2);     // tolerancia frente al candidato que más se parece
+    var norm = opciones.normalizar || (idioma === 'en' ? normalizarIngles : normalizar);
+    var fonPalabra = opciones.fonetica || (idioma === 'en' ? foneticaPalabraInglesa : foneticaPalabraFrancesa);
+    function fon(s) { return s.split(' ').map(fonPalabra).join(''); }
+
+    var cands = lista.map(function (c) {
+      var texto = norm(c.texto);
+      var alias = (c.alias || []).map(norm);
+      if (typeof c.id === 'number') alias.push(String(c.id));
+      return { id: c.id, texto: texto, alias: alias, fon: fon(texto), palabras: texto.split(' ').length };
+    });
+
+    function buscar(id) {
+      for (var i = 0; i < cands.length; i++) if (cands[i].id === id) return cands[i];
+      return null;
+    }
+    function mejorDistanciaOtros(p, idExcluido) {
+      var best = Infinity;
+      for (var k = 0; k < cands.length; k++) {
+        if (cands[k].id === idExcluido) continue;
+        var d = distancia(p, cands[k].fon);
+        if (d < best) best = d;
+      }
+      return best;
+    }
+
+    // ¿Lo oído suena a este candidato? Vale si se parece bastante Y no se parece
+    // claramente más a otro candidato.
+    function seParece(oidoNorm, c) {
+      var p = fon(oidoNorm);
+      if (!p) return false;
+      var dt = distancia(p, c.fon);
+      if (dt > LIMITE) return false;
+      var best = Math.min(dt, mejorDistanciaOtros(p, c.id));
+      return dt <= best + (best < 0.05 ? 0.05 : MARGEN);
+    }
+
+    // Sonido corto (hasta 3 letras) que no se parece a ningún otro candidato
+    function sonidoCortoValido(token, c) {
+      var p = fon(token);
+      if (!p || p.length > 3) return false;
+      return mejorDistanciaOtros(p, c.id) >= 0.25;
+    }
+
+    function coincide(oido, id) {
+      var c = buscar(id);
+      if (!c) return false;
+      var h = norm(oido);
+      if (!h) return false;
+      var tokens = h.split(' ');
+      if (c.alias.some(function (a) { return tokens.indexOf(a) >= 0; })) return true;  // "1"
+      if (seParece(h, c)) return true;                                                  // todo lo oído
+      // Si lo oído es, casi exacto, OTRO candidato (p. ej. "vingt et un" cuando toca "un"), no vale
+      var pw = fon(h);
+      if (mejorDistanciaOtros(pw, c.id) < 0.1) return false;
+      // Candidatos de una sola vocal ("un"): vale cualquier sonido corto que no sea otro candidato
+      if (c.fon.length <= 1 && tokens.every(function (t) { return sonidoCortoValido(t, c); })) return true;
+      // Repetido varias veces o con palabras de más: probamos tramos seguidos
+      var m = c.palabras;
+      for (var size = Math.max(1, m - 1); size <= m + 1; size++) {
+        for (var i = 0; i + size <= tokens.length; i++) {
+          if (seParece(tokens.slice(i, i + size).join(' '), c)) return true;
+        }
+      }
+      return false;
+    }
+
+    // Candidato al que más se parece lo oído (o null si no se parece a ninguno)
+    function mejor(oido) {
+      var h = norm(oido);
+      if (!h) return null;
+      var p = fon(h), best = null, bd = Infinity;
+      for (var k = 0; k < cands.length; k++) {
+        var d = distancia(p, cands[k].fon);
+        if (d < bd) { bd = d; best = cands[k].id; }
+      }
+      return bd <= LIMITE ? best : null;
+    }
+
+    return { coincide: coincide, mejor: mejor, fonetica: fon, normalizar: norm };
+  }
+
+  // =====================================================================
+  //  2) ESCUCHA DEL MICRÓFONO (no se rinde a la primera)
+  // =====================================================================
+  function escuchar(op) {
+    op = op || {};
+    var SR = root.SpeechRecognition || root.webkitSpeechRecognition;
+    var llamar = function (f, a) { if (typeof f === 'function') f(a); };
+    if (!SR) { llamar(op.alError, 'no-soportado'); return { parar: function () {} }; }
+
+    var TOTAL = def(op.tiempoTotal, 12000);   // tiempo total que tiene el niño para decirlo
+    var GRACIA = def(op.gracia, 2200);        // si dice algo que no encaja, esperamos por si lo repite
+    var limite = Date.now() + TOTAL;
+    var decidido = false, ultimo = '', timerMalo = null, timerTotal = null, rec = null;
+
+    function terminar() {
+      decidido = true;
+      clearTimeout(timerMalo); clearTimeout(timerTotal); timerMalo = null;
+      if (rec) { try { rec.abort(); } catch (e) {} rec = null; }
+    }
+    function falloFinal() {
+      if (decidido) return;
+      var oido = ultimo;
+      terminar();
+      llamar(op.alFallar, oido);
+    }
+
+    function intento() {
+      if (decidido) return;
+      var r = new SR();
+      rec = r;
+      r.lang = op.lang || 'fr-FR';
+      r.interimResults = true;      // evalúa mientras habla, sin esperar al final
+      r.continuous = true;          // no se corta a la primera pausa
+      r.maxAlternatives = def(op.alternativas, 8);
+
+      llamar(op.alEstado, 'preparando');
+      r.onaudiostart = function () { if (!decidido) llamar(op.alEstado, 'escuchando'); };
+
+      r.onresult = function (e) {
+        if (decidido) return;
+        var alts = [], i, j;
+        for (i = 0; i < e.results.length; i++) {
+          for (j = 0; j < e.results[i].length; j++) alts.push(e.results[i][j].transcript);
+        }
+        var ult = e.results[e.results.length - 1];
+        if (ult && ult[0]) ultimo = ult[0].transcript;
+
+        if (op.comprobar && op.comprobar(alts)) {
+          terminar();
+          llamar(op.alAcertar, ultimo);
+          return;
+        }
+        clearTimeout(timerMalo);                 // no encaja (todavía): damos unos segundos
+        timerMalo = setTimeout(falloFinal, GRACIA);
+      };
+
+      r.onerror = function (e) {
+        if (decidido) return;
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { terminar(); llamar(op.alError, 'permiso'); }
+        else if (e.error === 'audio-capture') { terminar(); llamar(op.alError, 'micro'); }
+        else if (e.error === 'network') { terminar(); llamar(op.alError, 'red'); }
+        // 'no-speech' y 'aborted': no hacemos nada, se reintenta solo en onend
+      };
+
+      r.onend = function () {
+        if (decidido) return;
+        rec = null;
+        if (timerMalo) return;                   // ya hay un veredicto pendiente
+        if (Date.now() < limite - 1500) setTimeout(intento, 150);   // no ha oído nada: reintenta
+      };
+
+      try { r.start(); } catch (err) { setTimeout(intento, 300); }
+    }
+
+    timerTotal = setTimeout(function () {
+      if (decidido) return;
+      if (ultimo) { falloFinal(); return; }
+      terminar();
+      llamar(op.alSinVoz);
+    }, TOTAL);
+
+    setTimeout(intento, def(op.retardoInicio, 250));   // pausa para no oír el eco de la voz sintética
+
+    return { parar: function () { terminar(); } };
+  }
+
+  var API = {
+    version: VERSION,
+    crear: crear,
+    escuchar: escuchar,
+    normalizar: normalizar,
+    foneticaFrancesa: function (texto) { return normalizar(texto).split(' ').map(foneticaPalabraFrancesa).join(''); },
+    foneticaInglesa: function (texto) { return normalizarIngles(texto).split(' ').map(foneticaPalabraInglesa).join(''); },
+    distancia: distancia
+  };
+
+  root.LogicaFlexibleNino10 = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  const L = window.LogicaFlexibleNino10;
+
+  // ---------- Vocabulario (del PDF "Vocabulary Lab · Introduction") ----------
+  const DATA = [
+ {
+  "en": "Places around town",
+  "es": "Lugares de la ciudad",
+  "emoji": "🏙️",
+  "items": [
+   [
+    "amusement park",
+    "parque de atracciones"
+   ],
+   [
+    "bakery",
+    "panadería; pastelería"
+   ],
+   [
+    "bank",
+    "banco"
+   ],
+   [
+    "bookshop",
+    "librería"
+   ],
+   [
+    "butcher's",
+    "carnicería",
+    [
+     "butchers",
+     "butcher"
+    ]
+   ],
+   [
+    "café",
+    "cafetería, café"
+   ],
+   [
+    "chemist's",
+    "farmacia",
+    [
+     "chemists",
+     "chemist"
+    ]
+   ],
+   [
+    "cinema",
+    "cine"
+   ],
+   [
+    "department store",
+    "grandes almacenes"
+   ],
+   [
+    "hospital",
+    "hospital"
+   ],
+   [
+    "hotel",
+    "hotel"
+   ],
+   [
+    "library",
+    "biblioteca"
+   ],
+   [
+    "museum",
+    "museo"
+   ],
+   [
+    "park",
+    "parque"
+   ],
+   [
+    "port",
+    "puerto"
+   ],
+   [
+    "post office",
+    "oficina de correos"
+   ],
+   [
+    "restaurant",
+    "restaurante"
+   ],
+   [
+    "sports centre",
+    "polideportivo",
+    [
+     "sports center"
+    ]
+   ],
+   [
+    "theatre",
+    "teatro",
+    [
+     "theater"
+    ]
+   ]
+  ]
+ },
+ {
+  "en": "The home",
+  "es": "La casa",
+  "emoji": "🏠",
+  "items": [
+   [
+    "armchair",
+    "sillón"
+   ],
+   [
+    "bathroom",
+    "(cuarto de) baño"
+   ],
+   [
+    "bedroom",
+    "dormitorio, habitación, cuarto"
+   ],
+   [
+    "chair",
+    "silla"
+   ],
+   [
+    "cooker",
+    "cocina (fogones y horno)"
+   ],
+   [
+    "curtain",
+    "cortina"
+   ],
+   [
+    "desk",
+    "escritorio, mesa de trabajo"
+   ],
+   [
+    "dining room",
+    "comedor"
+   ],
+   [
+    "fridge",
+    "nevera, frigorífico"
+   ],
+   [
+    "kitchen",
+    "cocina"
+   ],
+   [
+    "living room",
+    "cuarto de estar, salón"
+   ],
+   [
+    "rubbish bin",
+    "cubo de la basura"
+   ],
+   [
+    "rug",
+    "alfombra"
+   ],
+   [
+    "shower",
+    "ducha"
+   ],
+   [
+    "sink",
+    "fregadero, pila; lavabo"
+   ],
+   [
+    "sofa",
+    "sofá"
+   ],
+   [
+    "table",
+    "mesa"
+   ],
+   [
+    "toilet",
+    "baño, aseo, servicio; váter"
+   ],
+   [
+    "wardrobe",
+    "(armario) ropero"
+   ]
+  ]
+ },
+ {
+  "en": "Weather",
+  "es": "El tiempo",
+  "emoji": "⛅",
+  "items": [
+   [
+    "cloud",
+    "nube"
+   ],
+   [
+    "cloudy",
+    "nublado/a"
+   ],
+   [
+    "cold",
+    "frío/a"
+   ],
+   [
+    "cool",
+    "fresco/a"
+   ],
+   [
+    "dry",
+    "seco/a, árido/a"
+   ],
+   [
+    "fog",
+    "niebla"
+   ],
+   [
+    "foggy",
+    "neblinoso/a, brumoso/a"
+   ],
+   [
+    "freezing",
+    "glacial"
+   ],
+   [
+    "hot",
+    "caluroso/a, cálido/a"
+   ],
+   [
+    "ice",
+    "hielo"
+   ],
+   [
+    "icy",
+    "glacial; helado/a"
+   ],
+   [
+    "lightning",
+    "rayo/s, relámpago/s"
+   ],
+   [
+    "rain",
+    "lluvia"
+   ],
+   [
+    "rainy",
+    "lluvioso/a"
+   ],
+   [
+    "snow",
+    "nieve"
+   ],
+   [
+    "snowy",
+    "nevoso/a, de mucha nieve"
+   ],
+   [
+    "storm",
+    "tormenta"
+   ],
+   [
+    "stormy",
+    "tormentoso/a"
+   ],
+   [
+    "sun",
+    "sol"
+   ],
+   [
+    "sunny",
+    "soleado/a"
+   ],
+   [
+    "temperature",
+    "temperatura"
+   ],
+   [
+    "thunder",
+    "trueno/s"
+   ],
+   [
+    "warm",
+    "cálido/a, templado/a"
+   ],
+   [
+    "wet",
+    "lluvioso/a; húmedo/a"
+   ],
+   [
+    "wind",
+    "viento"
+   ],
+   [
+    "windy",
+    "ventoso/a, de mucho viento"
+   ]
+  ]
+ },
+ {
+  "en": "Clothes and accessories",
+  "es": "Ropa y accesorios",
+  "emoji": "👕",
+  "items": [
+   [
+    "belt",
+    "cinturón"
+   ],
+   [
+    "boots",
+    "botas"
+   ],
+   [
+    "bracelet",
+    "pulsera, brazalete"
+   ],
+   [
+    "cap",
+    "gorra"
+   ],
+   [
+    "coat",
+    "abrigo"
+   ],
+   [
+    "dress",
+    "vestido"
+   ],
+   [
+    "earrings",
+    "pendientes"
+   ],
+   [
+    "glasses",
+    "gafas"
+   ],
+   [
+    "gloves",
+    "guantes"
+   ],
+   [
+    "hairband",
+    "cinta de pelo"
+   ],
+   [
+    "handbag",
+    "bolso (de mano)"
+   ],
+   [
+    "hat",
+    "gorro; sombrero"
+   ],
+   [
+    "jacket",
+    "chaqueta"
+   ],
+   [
+    "jeans",
+    "(pantalones) vaqueros"
+   ],
+   [
+    "leggings",
+    "mallas"
+   ],
+   [
+    "make-up",
+    "maquillaje",
+    [
+     "makeup"
+    ]
+   ],
+   [
+    "necklace",
+    "collar"
+   ],
+   [
+    "purse",
+    "monedero"
+   ],
+   [
+    "ring",
+    "anillo"
+   ],
+   [
+    "sandals",
+    "sandalias"
+   ],
+   [
+    "scarf",
+    "bufanda; pañuelo"
+   ],
+   [
+    "shirt",
+    "camisa"
+   ],
+   [
+    "shoes",
+    "zapatos"
+   ],
+   [
+    "shorts",
+    "pantalones cortos"
+   ],
+   [
+    "skirt",
+    "falda"
+   ],
+   [
+    "socks",
+    "calcetines"
+   ],
+   [
+    "suit",
+    "traje"
+   ],
+   [
+    "sunglasses",
+    "gafas de sol"
+   ],
+   [
+    "sweater",
+    "jersey, suéter"
+   ],
+   [
+    "swimsuit",
+    "bañador"
+   ],
+   [
+    "tracksuit",
+    "chándal"
+   ],
+   [
+    "trainers",
+    "zapatillas de deporte"
+   ],
+   [
+    "trousers",
+    "pantalones"
+   ],
+   [
+    "T-shirt",
+    "camiseta",
+    [
+     "tee shirt",
+     "tshirt"
+    ]
+   ],
+   [
+    "umbrella",
+    "paraguas"
+   ],
+   [
+    "wallet",
+    "cartera"
+   ],
+   [
+    "watch",
+    "reloj (de pulsera)"
+   ]
+  ]
+ },
+ {
+  "en": "Food and tableware",
+  "es": "Comida y vajilla",
+  "emoji": "🍔",
+  "items": [
+   [
+    "beans",
+    "judías"
+   ],
+   [
+    "beef",
+    "(carne de) vaca"
+   ],
+   [
+    "bowl",
+    "tazón, cuenco, bol"
+   ],
+   [
+    "bread",
+    "pan"
+   ],
+   [
+    "cake",
+    "tarta, pastel"
+   ],
+   [
+    "cereal",
+    "cereal/es",
+    [
+     "cereals"
+    ]
+   ],
+   [
+    "cheese",
+    "queso"
+   ],
+   [
+    "chicken",
+    "pollo"
+   ],
+   [
+    "chips",
+    "patatas fritas"
+   ],
+   [
+    "coffee",
+    "café"
+   ],
+   [
+    "cup",
+    "taza"
+   ],
+   [
+    "egg",
+    "huevo"
+   ],
+   [
+    "fish",
+    "pescado"
+   ],
+   [
+    "fizzy drink",
+    "bebida / refresco con gas"
+   ],
+   [
+    "fork",
+    "tenedor"
+   ],
+   [
+    "glass",
+    "vaso"
+   ],
+   [
+    "ham",
+    "jamón"
+   ],
+   [
+    "hamburger",
+    "hamburguesa"
+   ],
+   [
+    "hot dog",
+    "perrito caliente",
+    [
+     "hotdog"
+    ]
+   ],
+   [
+    "ice cream",
+    "helado",
+    [
+     "icecream"
+    ]
+   ],
+   [
+    "juice",
+    "zumo"
+   ],
+   [
+    "knife",
+    "cuchillo"
+   ],
+   [
+    "lamb",
+    "(carne de) cordero"
+   ],
+   [
+    "lemon",
+    "limón"
+   ],
+   [
+    "melon",
+    "melón"
+   ],
+   [
+    "mushroom",
+    "champiñón"
+   ],
+   [
+    "noodles",
+    "fideos; tallarines"
+   ],
+   [
+    "oil",
+    "aceite"
+   ],
+   [
+    "olive",
+    "aceituna, oliva"
+   ],
+   [
+    "omelette",
+    "tortilla francesa"
+   ],
+   [
+    "onion",
+    "cebolla"
+   ],
+   [
+    "peas",
+    "guisantes"
+   ],
+   [
+    "pie",
+    "pastel, tarta"
+   ],
+   [
+    "plate",
+    "plato"
+   ],
+   [
+    "pork",
+    "(carne de) cerdo"
+   ],
+   [
+    "potato",
+    "patata"
+   ],
+   [
+    "rice",
+    "arroz"
+   ],
+   [
+    "salad",
+    "ensalada"
+   ],
+   [
+    "salt",
+    "sal"
+   ],
+   [
+    "sauce",
+    "salsa"
+   ],
+   [
+    "sausage",
+    "salchicha"
+   ],
+   [
+    "seafood",
+    "marisco; pescado"
+   ],
+   [
+    "serviette",
+    "servilleta"
+   ],
+   [
+    "shrimp",
+    "camarón"
+   ],
+   [
+    "soup",
+    "sopa"
+   ],
+   [
+    "spoon",
+    "cuchara"
+   ],
+   [
+    "steak",
+    "filete"
+   ],
+   [
+    "sugar",
+    "azúcar"
+   ],
+   [
+    "tomato",
+    "tomate"
+   ]
+  ]
+ }
+];
+
+  const items = [];
+  DATA.forEach((cat, ci) => cat.items.forEach(it => {
+    items.push({ id: 'w' + items.length, en: it[0], es: it[1], alias: it[2] || [], cat: ci });
+  }));
+  const TOTAL = items.length;
+
+  // Comparador con la lógica flexible, en modo inglés
+  const comp = L.crear({
+    idioma: 'en',
+    candidatos: items.map(i => ({ id: i.id, texto: i.en, alias: i.alias }))
+  });
+
+  // ---------- Estado guardado ----------
+  const KEY = 'vocabularioingles_v1';
+  let done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { done = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+
+  // ---------- Voz (inglés británico, como en el libro) ----------
+  const synth = window.speechSynthesis;
+  let enVoice = null;
+  const msg = document.getElementById('msg');
+
+  function pickVoice() {
+    if (!synth) return;
+    const voices = synth.getVoices();
+    enVoice = voices.find(v => v.lang === 'en-GB')
+           || voices.find(v => v.lang && v.lang.replace('_', '-').toLowerCase() === 'en-gb')
+           || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'))
+           || null;
+  }
+  if (synth) {
+    pickVoice();
+    synth.onvoiceschanged = pickVoice;
+  } else {
+    msg.textContent = '⚠️ Este navegador no puede leer en voz alta.';
+  }
+
+  // ---------- Sonidos (generados por el propio navegador) ----------
+  let actx = null;
+  function audio() {
+    if (!actx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) actx = new AC();
+    }
+    if (actx && actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function tone(freq, start, dur, type, vol, endFreq) {
+    const ctx = audio();
+    if (!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    const t = ctx.currentTime + start;
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function soundOk() {            // arpegio alegre ascendente
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.11, 0.28, 'triangle', 0.3));
+  }
+  function soundBad() {           // zumbido descendente
+    tone(220, 0, 0.35, 'sawtooth', 0.22, 110);
+    tone(165, 0.3, 0.45, 'sawtooth', 0.22, 80);
+  }
+
+  // ---------- Práctica: escuchar -> repetir -> corregir ----------
+  let sesion = null;              // sesión de micrófono en curso
+  let token = 0;                  // identifica la práctica actual
+  let currentBtn = null;
+  const fails = {};
+
+  function resetBtn(btn) {
+    btn.classList.remove('speaking', 'listening');
+    btn.querySelector('.ico').textContent = '🔊';
+  }
+  function stopAll() {
+    token++;
+    if (synth) synth.cancel();
+    if (sesion) { sesion.parar(); sesion = null; }
+    if (currentBtn) { resetBtn(currentBtn); currentBtn = null; }
+  }
+
+  function verdict(ok, heard, it, cb, row) {
+    row.classList.remove('good', 'bad');
+    void row.offsetWidth;
+    if (ok) {
+      soundOk();
+      row.classList.add('good');
+      fails[it.id] = 0;
+      msg.textContent = '✅ ¡Muy bien! Lo has dicho bien.';
+      if (!cb.checked) {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change'));
+      }
+    } else {
+      soundBad();
+      row.classList.add('bad');
+      fails[it.id] = (fails[it.id] || 0) + 1;
+      msg.textContent = '❌ Casi... He oído "' + heard + '". Escucha otra vez e inténtalo.' +
+        (fails[it.id] >= 3 ? ' 💡 Si ya lo has intentado varias veces, papá puede marcar la estrella ⭐.' : '');
+    }
+    setTimeout(() => row.classList.remove('good', 'bad'), 1000);
+  }
+
+  function listen(my, it, btn, cb, row) {
+    sesion = L.escuchar({
+      lang: 'en-GB',
+      comprobar: alts => alts.some(a => comp.coincide(a, it.id)),
+      alEstado: e => {
+        if (my !== token) return;
+        btn.classList.add('listening');
+        btn.querySelector('.ico').textContent = '🎤';
+        msg.textContent = e === 'escuchando' ? '🎤 ¡Ahora tú! Dilo en inglés...' : '⏳ Preparando el micrófono...';
+      },
+      alAcertar: oido => { if (my !== token) return; resetBtn(btn); sesion = null; verdict(true, oido, it, cb, row); },
+      alFallar: oido => { if (my !== token) return; resetBtn(btn); sesion = null; verdict(false, oido, it, cb, row); },
+      alSinVoz: () => { if (my !== token) return; resetBtn(btn); sesion = null; msg.textContent = '🤔 No te he oído. Toca otra vez e inténtalo.'; },
+      alError: c => {
+        if (my !== token) return;
+        resetBtn(btn); sesion = null;
+        msg.textContent = c === 'permiso' ? '🚫 Permite el micrófono para poder practicar.'
+          : c === 'micro' ? '🎙️ No encuentro el micrófono.'
+          : c === 'red' ? '📶 Hace falta conexión a internet para escucharte.'
+          : '⚠️ Este navegador no entiende la voz. Prueba con Chrome, Edge o Safari.';
+      }
+    });
+  }
+
+  function practice(it, btn, cb, row) {
+    audio();                       // desbloquea el sonido con el toque
+    stopAll();
+    const my = token;
+    currentBtn = btn;
+    btn.classList.add('speaking');
+    msg.textContent = '🔊 Listen...';
+
+    const afterSpeaking = () => {
+      if (my !== token) return;
+      btn.classList.remove('speaking');
+      listen(my, it, btn, cb, row);
+    };
+
+    if (!synth) { afterSpeaking(); return; }
+    const u = new SpeechSynthesisUtterance(it.en);
+    u.lang = 'en-GB';
+    if (enVoice) u.voice = enVoice;
+    u.rate = 0.8;
+    u.pitch = 1.05;
+    u.onend = afterSpeaking;
+    u.onerror = afterSpeaking;
+    synth.speak(u);
+  }
+
+  // ---------- Construir lista ----------
+  const colors = ['#ef476f','#ff9f1c','#06a77d','#118ab2','#8e5de8','#e0569c'];
+  const list = document.getElementById('list');
+  const rows = [];
+  const catEls = [];
+
+  DATA.forEach((cat, ci) => {
+    const h = document.createElement('div');
+    h.className = 'cat';
+    h.innerHTML = '<span class="emo"></span><span class="t"><b></b><small></small></span><span class="n"></span>';
+    h.querySelector('.emo').textContent = cat.emoji;
+    h.querySelector('b').textContent = cat.en;
+    h.querySelector('small').textContent = cat.es;
+    list.appendChild(h);
+    catEls.push(h);
+  });
+  // (los títulos se colocan junto a sus palabras)
+  catEls.forEach(el => el.remove());
+
+  let lastCat = -1, k = 0;
+  items.forEach(it => {
+    if (it.cat !== lastCat) { list.appendChild(catEls[it.cat]); lastCat = it.cat; k = 0; }
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.setProperty('--c', colors[k++ % colors.length]);
+
+    const es = document.createElement('button');
+    es.type = 'button';
+    es.className = 'es';
+    es.textContent = it.es;
+    es.setAttribute('aria-label', 'Ver en inglés: ' + it.es);
+
+    const btn = document.createElement('button');
+    btn.className = 'en' + (it.en.split(' ').some(w => w.length >= 10) ? ' long' : '');
+    btn.type = 'button';
+    btn.innerHTML = '<span class="ico">🔊</span><span class="txt"></span>';
+    const txt = btn.querySelector('.txt');
+    const ico = btn.querySelector('.ico');
+
+    // La palabra en inglés está oculta hasta que se toca la palabra en español
+    // (si ya estaba marcada con la estrella, se muestra directamente).
+    let shown = false;
+    function setShown(v, animate) {
+      shown = v;
+      btn.classList.toggle('oculta', !v);
+      ico.textContent = v ? '🔊' : '❓';
+      txt.textContent = v ? it.en : '?????';
+      btn.setAttribute('aria-label', v ? 'Escuchar ' + it.en + ' en inglés' : 'Palabra en inglés oculta');
+      es.setAttribute('aria-pressed', v ? 'true' : 'false');
+      es.setAttribute('aria-label', (v ? 'Esconder' : 'Ver') + ' en inglés: ' + it.es);
+      if (v && animate) {
+        btn.classList.remove('reveal'); void btn.offsetWidth; btn.classList.add('reveal');
+      }
+    }
+
+    const lab = document.createElement('label');
+    lab.className = 'chk';
+    lab.title = 'Ya lo sabe';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!done[it.id];
+    const box = document.createElement('span');
+    box.textContent = '★';
+    lab.append(cb, box);
+
+    es.addEventListener('click', () => {
+      if (!shown) {
+        setShown(true, true);
+        msg.textContent = '👀 Ahora tócala para escucharla y repítela.';
+      } else {
+        // segunda pulsación: se vuelve a esconder (y si se estaba practicando, se para)
+        if (currentBtn === btn) { stopAll(); }
+        setShown(false, false);
+        msg.textContent = '🙈 Escondida. ¿Te acuerdas de cómo se dice? Tócala para comprobarlo.';
+      }
+    });
+    btn.addEventListener('click', () => {
+      if (!shown) { msg.textContent = '👆 Toca primero la palabra en español para ver cómo se dice.'; return; }
+      practice(it, btn, cb, row);
+    });
+    cb.addEventListener('change', () => {
+      if (cb.checked) { done[it.id] = 1; if (!shown) setShown(true, true); } else delete done[it.id];
+      row.classList.toggle('done', cb.checked);
+      save();
+      update(true);
+    });
+
+    row.classList.toggle('done', cb.checked);
+    setShown(cb.checked, false);
+    row.append(es, btn, lab);
+    list.appendChild(row);
+    rows.push({ cb, row, setShown });
+  });
+
+  // ---------- Progreso ----------
+  const bar = document.getElementById('bar');
+  const ptxt = document.getElementById('ptxt');
+  const win = document.getElementById('win');
+
+  function update(celebrate) {
+    const count = Object.keys(done).length;
+    bar.style.width = (count / TOTAL * 100) + '%';
+    ptxt.textContent = count + ' / ' + TOTAL;
+    DATA.forEach((cat, ci) => {
+      const ids = items.filter(i => i.cat === ci);
+      const n = ids.filter(i => done[i.id]).length;
+      catEls[ci].querySelector('.n').textContent = n + ' / ' + ids.length;
+      catEls[ci].classList.toggle('full', n === ids.length);
+    });
+    if (count === TOTAL && celebrate) {
+      win.classList.add('show');
+      confetti();
+    }
+  }
+
+  function confetti() {
+    const cols = ['#ef476f','#ffd93d','#06d6a0','#118ab2','#8e5de8','#ff9f1c'];
+    for (let i = 0; i < 90; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = cols[i % cols.length];
+      c.style.animationDuration = (2 + Math.random() * 3) + 's';
+      c.style.animationDelay = (Math.random() * 1.2) + 's';
+      c.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 6500);
+    }
+  }
+
+  document.getElementById('closeWin').addEventListener('click', () => win.classList.remove('show'));
+
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!confirm('¿Seguro que quieres borrar todas las casillas marcadas?')) return;
+    stopAll();
+    done = {};
+    save();
+    rows.forEach(r => { r.cb.checked = false; r.row.classList.remove('done'); r.setShown(false, false); });
+    update(false);
+    list.scrollTop = 0;
+  });
+
+  update(false);
+})();
+</script>
+</body>
+</html>
