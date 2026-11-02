@@ -1,5 +1,7 @@
 // Banco de preguntas - Examen Técnico Auxiliar de TI (Diputación de León)
 // Formato: { q: enunciado, o: [opciones a,b,c,d], a: índice de la correcta (0=a, 1=b, 2=c, 3=d), e: explicación }
+// Título que se muestra en la cabecera (H1) de la página
+const TITULO = `📝 Técnico Auxiliar TI · Diputación de León`;
 const PREGUNTAS = [
   { q: `Señale cuál de las siguientes IP es correcta para un host de red`,
     o: [`192.168.1.256/24`, `10.255.255.255/8`, `172.16.0.0/16`, `172.21.1.1/16`], a: 3,

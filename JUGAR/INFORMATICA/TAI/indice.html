@@ -132,7 +132,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>📝 Técnico Auxiliar TI · Diputación de León</h1>
+    <h1 id="titulo"></h1>
     <div class="header-btns">
       <button class="theme-btn" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro">🌙 Modo oscuro</button>
       <button class="theme-btn" id="audioBtn" aria-pressed="false" aria-label="Activar o desactivar el modo audio">🔊 Modo audio</button>
@@ -150,7 +150,11 @@
       <li>Si fallas, volverá a salir más adelante.</li>
       <li>Termina cuando la baraja se agota.</li>
     </ul>
-    <p><button class="big-btn" id="startBtn">▶ Empezar</button></p>
+    <p>
+      <button class="big-btn" id="startBtn">▶ Empezar</button>
+      <button class="big-btn secondary hidden" id="resumeBtn">⏯ Seguir</button>
+    </p>
+    <p class="kbd-hint hidden" id="resumeInfo"></p>
   </section>
 
   <!-- Juego -->
@@ -283,6 +287,36 @@
   let totalHits = 0, totalMisses = 0;
 
   $("totalQ").textContent = PREGUNTAS.length;
+  $("titulo").textContent = TITULO;
+  document.title = TITULO.replace(/^[^\p{L}\p{N}]+/u, "");
+
+  /* ---------- Guardado de progreso (localStorage) ---------- */
+  const SAVE_KEY = "progreso_test_v1";
+  function loadSaved() {
+    try {
+      const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+      const n = PREGUNTAS.length;
+      if (!d || d.total !== n || !Array.isArray(d.queue) || !Array.isArray(d.stats) || d.stats.length !== n) return null;
+      if (!d.queue.length || d.queue.some((i) => !Number.isInteger(i) || i < 0 || i >= n)) return null;
+      return d;
+    } catch (e) { return null; }
+  }
+  function saveProgress() {
+    try {
+      const q = current && !answered ? [current.idx].concat(queue) : queue;
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        total: PREGUNTAS.length, queue: q, stats: stats,
+        hits: totalHits, misses: totalMisses, elapsed: Date.now() - startTime
+      }));
+    } catch (e) {}
+  }
+  function clearSaved() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+  function refreshResume() {
+    const d = loadSaved();
+    $("resumeBtn").classList.toggle("hidden", !d);
+    $("resumeInfo").classList.toggle("hidden", !d);
+    if (d) $("resumeInfo").textContent = "Partida guardada: " + (d.total - d.queue.length) + " / " + d.total + " superadas · " + fmtTime(d.elapsed) + " de tiempo acumulado.";
+  }
 
   function show(id) {
     ["screenStart", "screenGame", "screenEnd"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
@@ -291,10 +325,23 @@
 
   function startGame() {
     ctx();
+    if (loadSaved() && !confirm("Hay una partida guardada. Si empiezas de nuevo, se perderá. ¿Continuar?")) return;
     queue = shuffle(PREGUNTAS.map((_, i) => i));
     stats = PREGUNTAS.map(() => ({ fails: 0, attempts: 0, firstTry: false }));
     totalHits = 0; totalMisses = 0;
     startTime = Date.now();
+    show("screenGame");
+    nextQuestion();
+  }
+
+  function resumeGame() {
+    ctx();
+    const d = loadSaved();
+    if (!d) { refreshResume(); return; }
+    queue = d.queue.slice();
+    stats = d.stats;
+    totalHits = d.hits || 0; totalMisses = d.misses || 0;
+    startTime = Date.now() - (d.elapsed || 0);
     show("screenGame");
     nextQuestion();
   }
@@ -337,6 +384,7 @@
     $("feedback").className = "feedback hidden";
     $("nextBtn").classList.add("hidden");
     updateTopbar();
+    saveProgress();
     if (audioMode) readQuestion();
   }
 
@@ -394,6 +442,7 @@
     }
     current.pendingAfter = true;
     updateTopbar();
+    saveProgress();
     const nb = $("nextBtn");
     nb.textContent = queue.length === 0 ? "Ver resultados 🏆" : "Siguiente ➜";
     nb.classList.remove("hidden");
@@ -421,6 +470,7 @@
   function finish() {
     current = null;
     endTime = Date.now();
+    clearSaved();
     const r = summary();
     soundEnd();
     const items = [
@@ -640,9 +690,11 @@
 
   /* ---------- Eventos ---------- */
   $("startBtn").addEventListener("click", startGame);
+  $("resumeBtn").addEventListener("click", resumeGame);
+  refreshResume();
   $("nextBtn").addEventListener("click", proceed);
   $("reportBtn").addEventListener("click", downloadReport);
-  $("restartBtn").addEventListener("click", () => { audioHalt(); show("screenStart"); });
+  $("restartBtn").addEventListener("click", () => { audioHalt(); refreshResume(); show("screenStart"); });
   document.addEventListener("keydown", (e) => {
     if ($("screenGame").classList.contains("hidden")) return;
     if (!answered && e.key >= "1" && e.key <= "4") answer(Number(e.key) - 1);
