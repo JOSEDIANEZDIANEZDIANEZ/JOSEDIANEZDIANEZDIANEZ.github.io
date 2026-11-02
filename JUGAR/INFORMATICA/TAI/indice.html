@@ -412,6 +412,8 @@
       soundOk();
       fb.className = "feedback ok";
       fb.textContent = "✅ ¡Correcto! Esta pregunta sale de la baraja.";
+      // En modo audio avanza solo al terminar de decir "Correcto"; si no, tras una breve pausa
+      if (!audioMode) advanceTimer = setTimeout(() => { advanceTimer = null; proceed(); }, 900);
     } else {
       s.fails++;
       totalMisses++;
@@ -450,7 +452,9 @@
     if (audioMode) audioAfterAnswer(ok);
   }
 
+  let advanceTimer = null;
   function proceed() {
+    if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; }
     if (!answered) return;
     current = null;
     nextQuestion();
