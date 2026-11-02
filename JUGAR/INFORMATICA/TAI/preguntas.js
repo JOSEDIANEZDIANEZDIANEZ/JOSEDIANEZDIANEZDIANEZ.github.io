@@ -146,7 +146,7 @@ const PREGUNTAS = [
     e: `MP4 es un contenedor que agrupa vídeo y audio con distintos códecs (H.264, AAC...). PNG comprime sin pérdida, MP3 con pérdida, y H.264 es un códec, no un contenedor.` },
   { q: `Un conjunto RAID 5 formado por cuatro discos de 2 TB en total ofrece una capacidad útil de:`,
     o: [`6 TB`, `8 TB`, `4 TB`, `2 TB`], a: 0,
-    e: `En RAID 5 la capacidad útil es (n-1) x tamaño de disco, porque un disco equivalente se dedica a paridad. Con 4 discos de 2 TB: 3 x 2 TB = 6 TB.` },
+    e: `En RAID 5 la capacidad útil es (n-1) x tamaño de disco,donde n es el número de discos . Con 4 discos de 2 TB: 3 x 2 TB = 6 TB.` },
   { q: `En un plan de recuperación ante desastres, el objetivo de punto de recuperación (RPO) expresa:`,
     o: [`El tiempo máximo que el servicio puede permanecer interrumpido antes de quedar restablecido`, `El tiempo medio transcurrido entre dos fallos consecutivos del sistema`, `El volumen máximo de datos, medido en tiempo, que la organización acepta perder ante una incidencia`, `El tiempo medio necesario para reparar un componente averiado`], a: 2,
     e: `El RPO indica cuántos datos, medidos en tiempo, se acepta perder. El tiempo máximo de interrupción es el RTO, el tiempo entre fallos es el MTBF y el tiempo de reparación es el MTTR.` },
