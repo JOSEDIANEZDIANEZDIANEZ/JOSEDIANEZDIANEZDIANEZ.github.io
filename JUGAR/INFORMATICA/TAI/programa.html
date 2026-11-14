@@ -336,7 +336,7 @@
          "Elegir carpeta de preguntas" para seleccionar la carpeta con los .js.
      ===================================================================== */
   const ARCHIVOS = [];
-  const EXCLUIR = [];                  // p. ej. ["utilidades.js"]
+  const EXCLUIR = ["promt.js"];        // p. ej. ["utilidades.js"]
   const ARCHIVO_POR_DEFECTO = "preguntas.js";
   const TAM_NIVEL = 20;                // preguntas por nivel
 
@@ -677,25 +677,30 @@
         if (names.length) return names;
       }
     } catch (e) {}
-    // 2) GitHub Pages: API de GitHub
+    // 2) GitHub Pages: API de GitHub (sitio de usuario con subcarpetas o sitio de proyecto)
     try {
       const host = location.hostname;
       if (host.endsWith(".github.io")) {
         const owner = host.split(".")[0];
         let parts = decodeURIComponent(location.pathname).split("/").filter(Boolean);
         if (parts.length && /\.[a-z0-9]+$/i.test(parts[parts.length - 1])) parts.pop(); // quita index.html
-        let repo, sub;
-        if (parts.length) { repo = parts[0]; sub = parts.slice(1).join("/"); }
-        else { repo = owner + ".github.io"; sub = ""; }
-        const url = "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + sub.split("/").map(encodeURIComponent).join("/");
-        const res = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
-        if (res.ok) {
-          const list = await res.json();
-          const names = list
-            .filter((f) => f.type === "file" && /\.js$/i.test(f.name) && !EXCLUIR.includes(f.name))
-            .map((f) => f.name)
-            .sort((a, b) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" }));
-          if (names.length) return names;
+        // Candidatos: 1) repo "usuario.github.io" con la ruta completa como carpeta
+        //             2) repo = primer segmento de la URL (sitio de proyecto)
+        const cands = [{ repo: owner + ".github.io", sub: parts.join("/") }];
+        if (parts.length) cands.push({ repo: parts[0], sub: parts.slice(1).join("/") });
+        for (const c of cands) {
+          try {
+            const url = "https://api.github.com/repos/" + owner + "/" + c.repo + "/contents/" + c.sub.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+            const res = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
+            if (!res.ok) continue;
+            const list = await res.json();
+            if (!Array.isArray(list)) continue;
+            const names = list
+              .filter((f) => f.type === "file" && /\.js$/i.test(f.name) && !EXCLUIR.includes(f.name))
+              .map((f) => f.name)
+              .sort((a, b) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" }));
+            if (names.length) return names;
+          } catch (e) {}
         }
       }
     } catch (e) {}
@@ -714,7 +719,7 @@
       let code;
       if (LOCAL && localSource) code = await readLocal(name);
       else {
-        const res = await fetch(encodeURI(name), { cache: "no-cache" });
+        const res = await fetch(name.split("/").map(encodeURIComponent).join("/"), { cache: "no-cache" });
         if (!res.ok) throw new Error("HTTP " + res.status);
         code = await res.text();
       }
