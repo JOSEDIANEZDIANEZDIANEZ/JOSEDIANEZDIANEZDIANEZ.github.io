@@ -1,0 +1,1888 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cohetes: Construye y Reza</title>
+<style>
+  :root {
+    --bg: #0e111a;
+    --panel: #181d2a;
+    --fg: #e1e6f0;
+    --dim: #828ca0;
+    --accent: #50a0ff;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: "DejaVu Sans", Verdana, "Segoe UI", Helvetica, Arial, sans-serif; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas#c { display: block; background: var(--bg); touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+  #fs { position: fixed; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); right: calc(4px + env(safe-area-inset-right, 0px)); z-index: 5;
+        width: 34px; height: 34px; border-radius: 6px; border: 1px solid #2a3350; background: rgba(24,29,42,.8); color: var(--dim);
+        font-size: 18px; line-height: 1; cursor: pointer; opacity: .55; }
+  #fs:hover, #fs:focus-visible { opacity: 1; color: var(--fg); border-color: var(--accent); }
+  #nm { position: fixed; left: -300px; top: 0; width: 120px; font-size: 16px; opacity: 0; }
+  #rot { display: none; position: fixed; left: 0; right: 0; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); text-align: center; color: var(--dim); font-size: 13px; padding: 0 16px; }
+  @media (max-aspect-ratio: 1/1) { #rot { display: block; } }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c" width="1280" height="720" tabindex="0" aria-label="Juego Cohetes: construye, prueba y reza"></canvas></div>
+<button id="fs" type="button" title="Pantalla completa (Alt+Enter)" aria-label="Pantalla completa">⛶</button>
+<input id="nm" maxlength="14" autocomplete="off" autocapitalize="characters" aria-label="Nombre del cohete">
+<div id="rot">Gira el dispositivo en horizontal para jugar mejor.</div>
+<script>
+'use strict';
+/* ============================================================ utilidades / UI */
+const W = 1280, H = 720;
+const BG = [14, 17, 26], PANEL = [24, 29, 42], PANEL2 = [34, 41, 58], TEXT = [225, 230, 240], DIM = [130, 140, 160];
+const GOOD = [80, 210, 120], WARN = [240, 190, 60], BAD = [240, 70, 60], ACCENT = [80, 160, 255];
+const cv = document.getElementById('c');
+const g = cv.getContext('2d');
+const nameInput = document.getElementById('nm');
+const FONT = '"DejaVu Sans", Verdana, "Segoe UI", Helvetica, Arial, sans-serif';
+
+const cs = c => typeof c === 'string' ? c : (c.length === 4 ? `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${c[3] / 255})` : `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pymod = (a, b) => ((a % b) + b) % b;
+const now = () => performance.now();
+const sgn = v => v > 0 ? 1 : (v < 0 ? -1 : 0);
+const rad = d => d * Math.PI / 180;
+
+class RNG {
+  constructor(seed) { this.s = (seed == null ? (Math.random() * 4294967296) : seed) >>> 0; this.spare = null; }
+  random() { let t = this.s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+  uniform(a, b) { return a + (b - a) * this.random(); }
+  randint(a, b) { return a + Math.floor(this.random() * (b - a + 1)); }
+  randrange(n) { return Math.floor(this.random() * n); }
+  choice(arr) { return arr[Math.floor(this.random() * arr.length)]; }
+  choices(arr, w) { const tot = w.reduce((a, b) => a + b, 0); let r = this.random() * tot; for (let i = 0; i < arr.length; i++) { r -= w[i]; if (r < 0) return arr[i]; } return arr[arr.length - 1]; }
+  gauss(mu, sigma) { const u = 1 - this.random(), v = this.random(); return mu + sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+}
+
+/* ---- primitivas de dibujo (equivalentes a pygame.draw) */
+function rrPath(x, y, w, h, r) { g.beginPath(); if (r > 0 && g.roundRect) g.roundRect(x, y, Math.max(0, w), Math.max(0, h), r); else g.rect(x, y, w, h); }
+function fillRect(c, x, y, w, h, r = 0) { g.fillStyle = cs(c); if (r > 0) { rrPath(x, y, w, h, r); g.fill(); } else g.fillRect(x, y, w, h); }
+function strokeRect(c, x, y, w, h, lw = 1, r = 0) { g.strokeStyle = cs(c); g.lineWidth = lw; rrPath(x + lw / 2, y + lw / 2, w - lw, h - lw, Math.max(0, r - lw / 2)); g.stroke(); }
+function poly(c, pts) { g.fillStyle = cs(c); g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fill(); }
+function circle(c, x, y, r) { if (r <= 0) return; g.fillStyle = cs(c); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+function ellipse(c, x, y, w, h) { if (w <= 0 || h <= 0) return; g.fillStyle = cs(c); g.beginPath(); g.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2); g.fill(); }
+function line(c, x1, y1, x2, y2, w = 1) { g.strokeStyle = cs(c); g.lineWidth = w; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+function polyline(c, pts, w = 1) { g.strokeStyle = cs(c); g.lineWidth = w; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.stroke(); }
+const inRect = (p, r) => p[0] >= r[0] && p[0] < r[0] + r[2] && p[1] >= r[1] && p[1] < r[1] + r[3];
+
+const ANCH = { topleft: ['left', 'top'], midtop: ['center', 'top'], topright: ['right', 'top'], center: ['center', 'middle'], midbottom: ['center', 'bottom'] };
+const fontStr = (size, bold) => `${bold ? "bold " : ""}${(size * 0.93).toFixed(1)}px ${FONT}`;
+function txt(s, x, y, size = 16, color = TEXT, bold = false, anchor = 'topleft') {
+  const a = ANCH[anchor];
+  g.font = fontStr(size, bold); g.fillStyle = cs(color); g.textAlign = a[0]; g.textBaseline = a[1];
+  g.fillText(String(s), x, y + (a[1] === 'top' ? size * 0.08 : 0));
+}
+function textW(s, size, bold = false) { g.font = fontStr(size, bold); return g.measureText(s).width; }
+
+function panelR(r, color = PANEL, border = null, radius = 8) {
+  fillRect(color, r[0], r[1], r[2], r[3], radius);
+  if (border) strokeRect(border, r[0], r[1], r[2], r[3], 2, radius);
+}
+function bar(r, frac, color, back = [45, 50, 66]) {
+  frac = clamp(frac, 0, 1);
+  fillRect(back, r[0], r[1], r[2], r[3], 3);
+  if (frac > 0) fillRect(color, r[0], r[1], r[2] * frac, r[3], 3);
+}
+function overlayPanel(x, y, w, h) {
+  fillRect([10, 13, 20, 215], x, y, w, h, 10);
+  strokeRect(ACCENT, x, y, w, h, 2, 10);
+}
+
+/* ---- ratón / teclado */
+const mouse = { x: -1, y: -1, down: false };
+const held = new Set();
+const mpos = () => [mouse.x, mouse.y];
+
+class Button {
+  constructor(rect, label, color = PANEL2, hot = ACCENT, size = 16) { this.r = rect; this.label = label; this.color = color; this.hot = hot; this.size = size; this.enabled = true; }
+  draw() {
+    const over = this.enabled && inRect(mpos(), this.r);
+    let col = over ? this.hot : this.color;
+    if (!this.enabled) col = [45, 48, 58];
+    panelR(this.r, col, null, 6);
+    txt(this.label, this.r[0] + this.r[2] / 2, this.r[1] + this.r[3] / 2, this.size, this.enabled ? TEXT : DIM, true, 'center');
+  }
+  clicked(ev) { return this.enabled && ev.type === 'down' && inRect(ev.pos, this.r); }
+}
+
+/* ============================================================ datos */
+const ENGINES = [
+  { name: 'Colibrí S1', thrust: 600e3, mass: 700, isp_sl: 280, isp_vac: 305, risk: 0.00004, heat: 0.7, cost: 4 },
+  { name: 'Halcón M7', thrust: 1200e3, mass: 1500, isp_sl: 290, isp_vac: 325, risk: 0.00007, heat: 1.0, cost: 9 },
+  { name: 'Titán H9', thrust: 2600e3, mass: 3300, isp_sl: 300, isp_vac: 340, risk: 0.00012, heat: 1.4, cost: 22 },
+  { name: 'Vacío V-Ion', thrust: 250e3, mass: 350, isp_sl: 190, isp_vac: 385, risk: 0.00005, heat: 0.5, cost: 7 },
+  { name: 'Experimental X', thrust: 4200e3, mass: 4600, isp_sl: 320, isp_vac: 365, risk: 0.00030, heat: 2.0, cost: 40 },
+];
+const FUELS = [
+  { name: 'Queroseno/LOX', dens: 1030, isp: 1.00, risk: 1.0, press: 1.0, cost: 1.0 },
+  { name: 'Metano/LOX', dens: 830, isp: 1.08, risk: 1.1, press: 1.2, cost: 1.3 },
+  { name: 'Hidrógeno/LOX', dens: 290, isp: 1.28, risk: 1.4, press: 1.6, cost: 2.0 },
+  { name: 'Hipergólico', dens: 1200, isp: 0.93, risk: 0.7, press: 0.8, cost: 1.6 },
+];
+const SIZES = [
+  { name: 'Pequeño', vol: 20, width: 34, strength: 1.0 },
+  { name: 'Mediano', vol: 60, width: 50, strength: 1.5 },
+  { name: 'Grande', vol: 150, width: 70, strength: 2.2 },
+];
+const NOSES = ['Cónica', 'Ojival', 'Redondeada', 'Plana'];
+const PALETTE = [['Blanco', [240, 240, 245]], ['Rojo', [205, 50, 50]], ['Azul', [50, 100, 205]], ['Naranja', [240, 140, 40]], ['Verde', [60, 170, 90]],
+  ['Negro', [40, 40, 48]], ['Plata', [170, 175, 185]], ['Amarillo', [235, 210, 60]], ['Morado', [130, 70, 180]]];
+const TANK_DRY_PER_M3 = 58, PAYLOAD_SAT = 1800, PAYLOAD_CREW = 5200, ESCAPE_TOWER_MASS = 900, FINS_MASS = 400, SHIELD_MASS = 150;
+const MAX_STAGES = 3, MAX_TANKS = 8, MAX_ENGINES = 6;
+const EARTH_R = 6371e3, EARTH_MU = 3.986e14, FUEL_ECON = 1.25;
+const TARGET_ORBIT_ALT = 120e3, TARGET_APO = 500e3, LOW_ORBIT_PER = 100e3;
+const G0 = 9.80665;
+const CITIES = [
+  [-9000, 'Puerto Alba', 7], [3000, 'Villa Roca', 5], [14000, 'Monte Claro', 6], [30000, 'San Cohete', 8],
+  [52000, 'Bahía Sol', 7], [80000, 'Nueva Esperanza', 9], [120000, 'Ciudad Hierro', 10],
+];
+function hitCities(downrange, alt) {
+  if (alt > 120e3) return [];
+  const radius = 6000 + alt * 0.5;
+  const out = [];
+  CITIES.forEach((c, i) => { if (Math.abs(c[0] - downrange) <= radius) out.push(i); });
+  return out;
+}
+function defaultConfig() {
+  return {
+    name: 'ALBA-1', size: 1, nose: 1, color_body: 0, color_accent: 1, crewed: false, tower: false, fins: true, shield: true,
+    stages: [{ engine: 1, n_eng: 5, fuel: 0, tanks: 5 }, { engine: 1, n_eng: 2, fuel: 0, tanks: 2 }],
+  };
+}
+/* ============================================================ modelo del cohete + dibujo */
+function payloadMass(cfg) {
+  let m = cfg.crewed ? PAYLOAD_CREW : PAYLOAD_SAT;
+  if (cfg.crewed && cfg.tower) m += ESCAPE_TOWER_MASS;
+  return m;
+}
+function stageStats(cfg, i) {
+  const st = cfg.stages[i], eng = ENGINES[st.engine], fuel = FUELS[st.fuel], vol = SIZES[cfg.size].vol;
+  const prop = st.tanks * vol * fuel.dens;
+  let dry = st.tanks * vol * TANK_DRY_PER_M3 + st.n_eng * eng.mass;
+  if (i === 0) { if (cfg.fins) dry += FINS_MASS; if (cfg.shield) dry += SHIELD_MASS; }
+  const thrust = st.n_eng * eng.thrust;
+  const isp_vac = eng.isp_vac * fuel.isp, isp_sl = eng.isp_sl * fuel.isp;
+  return { prop, dry, thrust, isp_vac, isp_sl, mdot: thrust / (isp_vac * G0) };
+}
+function rocketSummary(cfg) {
+  const n = cfg.stages.length;
+  const stats = []; for (let i = 0; i < n; i++) stats.push(stageStats(cfg, i));
+  let above = payloadMass(cfg);
+  const dvs = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    const s = stats[i], m0 = above + s.dry + s.prop, m1 = above + s.dry;
+    dvs[i] = m1 > 0 ? s.isp_vac * G0 * Math.log(m0 / m1) : 0;
+    above = m0;
+  }
+  const total = above, twr = stats[0].thrust / (total * G0);
+  let cost = 0;
+  cfg.stages.forEach(st => { cost += ENGINES[st.engine].cost * st.n_eng; cost += st.tanks * SIZES[cfg.size].vol * 0.05 * FUELS[st.fuel].cost; });
+  cost += cfg.crewed ? 30 : 10;
+  cost += (cfg.tower && cfg.crewed) ? 5 : 0;
+  return { mass: total, dv: dvs, dv_total: dvs.reduce((a, b) => a + b, 0), twr, cost, stats };
+}
+const shade = (c, f) => c.map(v => Math.max(0, Math.min(255, Math.floor(v * f))));
+
+function rocketHeight(cfg, nStages, scale) {
+  let h = 0;
+  const th = 16 * scale * (1 + cfg.size * 0.25);
+  for (let i = 0; i < nStages; i++) h += cfg.stages[i].tanks * th + 12 * scale;
+  h += 30 * scale + (cfg.crewed ? 18 * scale : 0);
+  if (cfg.crewed && cfg.tower) h += 26 * scale;
+  return h;
+}
+
+/* Dibuja el cohete con la base en baseY (crece hacia arriba). fontSize: tamaño del nombre (negrita) o null. */
+function drawRocket(cfg, cx, baseY, scale = 1.0, nStages = null, flame = 0.0, fontSize = null, frame = 0) {
+  if (nStages == null) nStages = cfg.stages.length;
+  const body = PALETTE[cfg.color_body][1], acc = PALETTE[cfg.color_accent][1];
+  const w = SIZES[cfg.size].width * scale;
+  const th = 16 * scale * (1 + cfg.size * 0.25);
+  let y = baseY, first = null;
+  for (let i = 0; i < nStages; i++) {
+    const st = cfg.stages[i], n = st.n_eng;
+    const bw = Math.min(w / Math.max(n, 1) * 0.9, 16 * scale);
+    for (let k = 0; k < n; k++) {
+      const ex = cx - w / 2 + w * (k + 0.5) / n;
+      poly([90, 90, 98], [[ex - bw * 0.3, y], [ex + bw * 0.3, y], [ex + bw * 0.5, y + 12 * scale], [ex - bw * 0.5, y + 12 * scale]]);
+      if (i === 0 && flame > 0) {
+        const fl = flame * (30 + 14 * Math.sin(frame * 0.7 + k)) * scale;
+        poly([255, 190, 70], [[ex - bw * 0.5, y + 12 * scale], [ex + bw * 0.5, y + 12 * scale], [ex, y + 12 * scale + fl]]);
+        poly([255, 250, 200], [[ex - bw * 0.25, y + 12 * scale], [ex + bw * 0.25, y + 12 * scale], [ex, y + 12 * scale + fl * 0.55]]);
+      }
+    }
+    if (i === 0 && cfg.fins) {
+      poly(acc, [[cx - w / 2, y - 4 * scale], [cx - w / 2 - 14 * scale, y + 10 * scale], [cx - w / 2, y - 30 * scale]]);
+      poly(acc, [[cx + w / 2, y - 4 * scale], [cx + w / 2 + 14 * scale, y + 10 * scale], [cx + w / 2, y - 30 * scale]]);
+    }
+    const sh = st.tanks * th;
+    const rect = { x: cx - w / 2, y: y - sh, w: w, h: sh };
+    fillRect(body, rect.x, rect.y, w, sh);
+    fillRect(shade(body, 0.75), rect.x + w * 0.72, rect.y, w * 0.28, sh);
+    for (let t = 1; t < st.tanks; t++) line(shade(body, 0.6), rect.x, rect.y + rect.h - t * th, rect.x + w, rect.y + rect.h - t * th, 1);
+    fillRect(acc, rect.x, rect.y, w, Math.max(3, 4 * scale));
+    fillRect(acc, rect.x, rect.y + rect.h - Math.max(3, 4 * scale), w, Math.max(3, 4 * scale));
+    if (i === 0) first = rect;
+    y -= sh + 12 * scale;
+    fillRect([60, 60, 66], cx - w * 0.4, y + 12 * scale - 3 * scale, w * 0.8, 6 * scale);
+  }
+  y += 12 * scale - 4 * scale;
+  let top = y;
+  if (cfg.crewed) {
+    const ch = 18 * scale;
+    fillRect(shade(body, 0.9), cx - w * 0.4, top - ch, w * 0.8, ch);
+    circle([120, 190, 235], Math.floor(cx), Math.floor(top - ch * 0.5), Math.max(2, Math.floor(4 * scale)));
+    top -= ch;
+  }
+  const nh = 30 * scale, ws = w * (cfg.crewed ? 0.4 : 0.5), nose = cfg.nose;
+  let pts;
+  if (nose === 0) pts = [[cx - ws, top], [cx + ws, top], [cx, top - nh]];
+  else if (nose === 1) pts = [[cx - ws, top], [cx - ws * 0.7, top - nh * 0.5], [cx - ws * 0.25, top - nh * 0.85], [cx, top - nh], [cx + ws * 0.25, top - nh * 0.85], [cx + ws * 0.7, top - nh * 0.5], [cx + ws, top]];
+  else if (nose === 2) pts = [[cx - ws, top], [cx - ws * 0.9, top - nh * 0.5], [cx - ws * 0.5, top - nh * 0.9], [cx, top - nh], [cx + ws * 0.5, top - nh * 0.9], [cx + ws * 0.9, top - nh * 0.5], [cx + ws, top]];
+  else pts = [[cx - ws, top], [cx - ws * 0.8, top - nh * 0.5], [cx + ws * 0.8, top - nh * 0.5], [cx + ws, top]];
+  poly(acc, pts);
+  top -= nh * (nose === 3 ? 0.5 : 1);
+  if (cfg.crewed && cfg.tower) {
+    line([200, 200, 205], cx, top, cx, top - 22 * scale, Math.max(1, Math.floor(2 * scale)));
+    poly([230, 90, 40], [[cx - 3 * scale, top - 22 * scale], [cx + 3 * scale, top - 22 * scale], [cx, top - 30 * scale]]);
+    top -= 26 * scale;
+  }
+  if (cfg.shield) line([230, 230, 120], cx, top, cx, top - 8 * scale, 1);
+  if (fontSize && first && cfg.name) {
+    const col = body[0] + body[1] + body[2] > 380 ? shade(body, 0.35) : [245, 245, 245];
+    const tw = textW(cfg.name, fontSize, true);
+    let f = 1; if (tw > first.h - 6) f = (first.h - 6) / tw;
+    g.save(); g.translate(cx - w * 0.15, first.y + first.h / 2); g.rotate(-Math.PI / 2); g.scale(f, f);
+    txt(cfg.name, 0, 0, fontSize, col, true, 'center'); g.restore();
+  }
+  return baseY - top;
+}
+/* ============================================================ clima */
+const CONDITIONS = ['Despejado', 'Nublado', 'Lluvia', 'Tormenta eléctrica'];
+class Weather {
+  constructor(rng) {
+    this.rng = rng || new RNG();
+    this.hour = this.rng.uniform(0, 24);
+    this.cond = this.rng.choices([0, 1, 2, 3], [35, 25, 22, 18]);
+    this.wind = this.rng.uniform(0, 12) + this.cond * 3;
+    this.wind_dir = this.rng.choice([-1, 1]);
+    this.temp = 8 + 14 * Math.sin((this.hour - 9) / 24 * 2 * Math.PI) + this.rng.uniform(-3, 3);
+    this.flash = 0; this.bolt_x = 0.5; this.clock = 0;
+  }
+  get name() { return CONDITIONS[this.cond]; }
+  get rain() { return this.cond >= 2; }
+  get is_night() { return this.hour < 6 || this.hour > 20; }
+  daylight() {
+    const h = this.hour;
+    return (h > 5 && h < 21) ? clamp((Math.sin((h - 6) / 12 * Math.PI) + 0.25) / 1.0, 0, 1) : 0;
+  }
+  update(dt) {
+    this.clock += dt;
+    this.hour = pymod(this.hour + dt / 120, 24);
+    this.flash = Math.max(0, this.flash - dt * 2.5);
+    this.wind = Math.max(0, this.wind + this.rng.uniform(-0.6, 0.6) * dt);
+    if (this.rng.random() < dt / 60) this.cond = clamp(this.cond + this.rng.choice([-1, 0, 1]), 0, 3);
+    let bolt = false;
+    if (this.cond === 3 && this.rng.random() < dt / 3.5) { this.flash = 1; this.bolt_x = this.rng.random(); bolt = true; }
+    return bolt;
+  }
+  gust(alt) {
+    if (alt > 25000) return 0;
+    const k = 1 + 1.2 * Math.sin(alt / 4000);
+    return this.wind_dir * this.wind * k * (alt < 14000 ? 1 : (25000 - alt) / 11000);
+  }
+  sky_color(alt) {
+    const d = this.daylight();
+    const dawn = Math.max(0, 1 - Math.abs(this.hour - 6.5) / 1.3, 1 - Math.abs(this.hour - 19.5) / 1.3);
+    const day = [90, 150, 235], night = [6, 8, 22];
+    let col = [0, 1, 2].map(i => night[i] + (day[i] - night[i]) * d);
+    col[0] += 140 * dawn; col[1] += 60 * dawn;
+    const grey = this.cond === 0 ? 0 : (this.cond === 1 ? 0.35 : 0.6);
+    const base = (col[0] + col[1] + col[2]) / 3 * 0.8;
+    col = col.map(c => c * (1 - grey) + base * grey);
+    const space = clamp((alt - 15000) / 90000, 0, 1);
+    col = col.map(c => c * (1 - space) + 2 * space);
+    return col.map(c => Math.floor(clamp(c, 0, 255)));
+  }
+  star_alpha(alt) {
+    const space = clamp((alt - 15000) / 90000, 0, 1);
+    const night = 1 - this.daylight();
+    const cloud = this.cond < 2 ? 0 : 0.5;
+    return Math.max(space, night * (1 - cloud));
+  }
+}
+
+/* ============================================================ fallos */
+const FAULT_INFO = {
+  pressure: ['Pico de presión en tanques', 'Pulsa V (ventear)'],
+  vibration: ['Vibración / sobrecalentamiento del motor', 'Pulsa C (refrigerar) o baja el acelerador <50%'],
+  avionics: ['Fallo de aviónica / guiado', 'Pulsa R (reiniciar sistemas)'],
+  pogo: ['Oscilación POGO en el motor', 'Mantén el acelerador entre 35% y 65%'],
+};
+class Faults {
+  constructor(sim) { this.sim = sim; this.active = {}; this.reset_timer = 0; this.reset_cool = 0; this.leak = 0; this.warned = new Set(); }
+  nActive() { return Object.keys(this.active).length; }
+  thrust_factor() { let f = this.reset_timer > 0 ? 0 : 1; if (this.sim.integrity < 40) f *= 0.9; return f; }
+  pitch_noise() { const s = this.sim; return s.rng.gauss(0, s.weather.cond < 3 ? 0.25 : 0.6); }
+  pitch_noise_space() { const sev = this.active.avionics || 0; return this.sim.rng.uniform(-1, 1) * sev * 9; }
+  fuel_leak(dt) { if (this.leak > 0) { const s = this.sim; s.prop[s.cur] = Math.max(0, s.prop[s.cur] - s.stats[s.cur].prop * this.leak * dt); } }
+  add(kind, sev = 0) {
+    if (!(kind in this.active) && this.nActive() < 3) { this.active[kind] = sev; this.sim.say(`ALERTA: ${FAULT_INFO[kind][0]}. ${FAULT_INFO[kind][1]}`, 'bad'); }
+  }
+  lightning() {
+    const s = this.sim;
+    if (s.status !== 'flying' || s.alt > 15000) return;
+    if (s.rng.random() > 0.05) return;
+    s.weather.bolt_x = 0.5; s.weather.flash = 1;
+    if (s.cfg.shield) { s.say('¡Un rayo ha impactado, pero el pararrayos lo ha desviado!', 'good'); s.integrity -= 2; return; }
+    s.say('¡UN RAYO HA IMPACTADO EN EL COHETE!', 'bad');
+    if (s.rng.random() < 0.9) s.explode('Un rayo ha impactado en el cohete (sin pararrayos) y lo ha hecho estallar.');
+    else { s.integrity -= 20; this.add('avionics', 0.5); }
+  }
+  update(dt, ctl) {
+    const s = this.sim, w = s.weather;
+    if (s.cur >= s.n_stages) return;
+    const st = s.cfg.stages[s.cur], eng = ENGINES[st.engine], fuel = FUELS[st.fuel];
+    const burning = s.thrust_now()[0] > 0;
+    const thr = burning ? s.throttle : 0;
+    this.reset_timer = Math.max(0, this.reset_timer - dt);
+    this.reset_cool = Math.max(0, this.reset_cool - dt);
+    // temperatura del motor
+    let teq = 20 + 520 * eng.heat * Math.pow(thr, 1.3);
+    if ('vibration' in this.active) teq += 380 * (0.5 + this.active.vibration);
+    s.temp_eng += (teq - s.temp_eng) * dt / 25;
+    if (ctl.coolant && s.coolant > 0) {
+      s.temp_eng = Math.max(20, s.temp_eng - 45 * dt);
+      s.coolant -= 14 * dt;
+      if ('vibration' in this.active) this.active.vibration -= 0.2 * dt;
+    }
+    s.coolant = clamp(s.coolant + 0.4 * dt, 0, 100);
+    if (s.temp_eng > 1000) {
+      s.integrity -= (s.temp_eng - 1000) * 0.06 * dt;
+      if (!this.warned.has('temp')) { s.say('¡Motor a temperatura crítica!', 'bad'); this.warned.add('temp'); }
+    } else if (s.temp_eng < 900) this.warned.delete('temp');
+    if (s.temp_eng > 1350) { s.explode('El motor se ha fundido por sobrecalentamiento.'); return; }
+    // presión
+    let dp = 0.0035 * fuel.press * thr - (s.pressure - 1.0) * 0.015;
+    if ('pressure' in this.active) dp += 0.02 + 0.05 * this.active.pressure;
+    if (ctl.vent) {
+      dp -= 0.2;
+      s.prop[s.cur] = Math.max(0, s.prop[s.cur] - s.stats[s.cur].prop * 0.003 * dt * 30);
+      if ('pressure' in this.active) this.active.pressure -= 0.25 * dt;
+    }
+    s.pressure = Math.max(0.3, s.pressure + dp * dt);
+    if (s.pressure > 1.6 && !this.warned.has('pres')) { s.say('Presión de tanques peligrosa.', 'bad'); this.warned.add('pres'); }
+    else if (s.pressure < 1.4) this.warned.delete('pres');
+    if (s.pressure > 2.1) { s.explode('Rotura de un tanque por sobrepresión.'); return; }
+    // reinicio de sistemas
+    if (ctl.reset && this.reset_cool <= 0) {
+      this.reset_cool = 8; this.reset_timer = 2;
+      s.say('Reiniciando sistemas (motor apagado 2 s)...', 'warn');
+      if ('avionics' in this.active) this.active.avionics = 0;
+    }
+    if ('pogo' in this.active) {
+      if (s.throttle >= 0.35 && s.throttle <= 0.65) this.active.pogo -= 0.2 * dt;
+      s.integrity -= 1.5 * this.active.pogo * dt;
+      s.stress += 0.3;
+    }
+    for (const k of Object.keys(this.active)) {
+      if (k === 'vibration' && s.throttle < 0.5) this.active[k] -= 0.12 * dt;
+      if (this.active[k] < 1) this.active[k] += 0.075 * dt;
+      if (this.active[k] <= 0) { delete this.active[k]; s.say(`Resuelto: ${FAULT_INFO[k][0]}.`, 'good'); }
+      else if (this.active[k] >= 1.0) { delete this.active[k]; this.catastrophe(k); if (s.status === 'exploded') return; }
+    }
+    if (s.t > 3) {
+      let rate = 0.004 + eng.risk * st.n_eng * 60 * thr;
+      if (w.rain && s.alt < 15000) rate += 0.003;
+      if (w.cond === 3 && s.alt < 15000) rate += 0.006;
+      rate += 0.01 * Math.max(0, s.stress - 0.7);
+      if (w.temp < 2 && s.alt < 5000) rate += 0.003;
+      rate *= fuel.risk;
+      if (s.rng.random() < rate * dt) {
+        let kind = s.rng.choice(Object.keys(FAULT_INFO));
+        if (kind === 'vibration' && !burning) kind = 'avionics';
+        this.add(kind, 0.05);
+      }
+      const p = eng.risk * st.n_eng * thr * fuel.risk * ((w.cond === 3 && s.alt < 15000) ? 1.8 : 1.0) + 2e-5;
+      if (s.rng.random() < p * dt * 1.5) s.explode('Fallo catastrófico inesperado: el cohete ha explotado.');
+    }
+  }
+  catastrophe(kind) {
+    const s = this.sim;
+    if (s.rng.random() < 0.65) s.explode(`No se resolvió a tiempo: ${FAULT_INFO[kind][0].toLowerCase()}. El cohete ha explotado.`);
+    else {
+      s.integrity -= 25;
+      s.say('¡Por los pelos! El fallo ha causado daños graves, pero el cohete sigue entero.', 'warn');
+      if (s.rng.random() < 0.5 && this.leak === 0) { this.leak = 0.002; s.say('Se ha abierto una fuga de combustible.', 'bad'); }
+    }
+  }
+}
+
+/* ============================================================ simulación del ascenso */
+const DIAMETERS = [2.6, 3.8, 5.2];
+const DT = 1 / 30;
+function atmos(alt) { const a = Math.max(alt, 0); return [1.225 * Math.exp(-a / 7500), Math.exp(-a / 7200)]; }
+
+class Sim {
+  constructor(cfg, weather, seed) {
+    this.cfg = cfg; this.weather = weather; this.rng = new RNG(seed);
+    this.n_stages = cfg.stages.length;
+    this.stats = []; for (let i = 0; i < this.n_stages; i++) this.stats.push(stageStats(cfg, i));
+    this.summary = rocketSummary(cfg);
+    this.prop = this.stats.map(s => s.prop);
+    this.cur = 0; this.status = 'pad'; this.countdown = 6.0;
+    this.r = EARTH_R; this.theta = 0; this.vr = 0; this.vt = 0;
+    this.pitch = 0; this.pitch_cmd = 0; this.throttle = 0;
+    this.engine_cut = true; this.ignited = false;
+    this.cities_hit = []; this.orbit_ready = false; this.karman = false;
+    this.thr_saved = 1.0; this.orbit_ready_t = 0; this.had_fault = false; this.restoring = false;
+    this.sep_timer = null; this.low_warned = new Set(); this.autopilot = true;
+    this.t = 0; this.temp_eng = 20; this.temp_skin = 20; this.pressure = 1; this.coolant = 100;
+    this.integrity = 100; this.stress = 0; this.gforce = 1; this.q = 0; this.mach = 0; this.accel = 0;
+    this.log = []; this.events = [];
+    this.faults = new Faults(this);
+    this.end_reason = ''; this.crew_saved = null; this.orbit_hold = 0; this.max_alt = 0; this.result = null;
+    this.fail_hold = 0;
+    this.AUTO_CUT = 10.0; this.SEP_MARGIN = 15.0;
+    this.say('Cohete en plataforma. Revisa el clima y arranca la cuenta atrás.', 'info');
+  }
+  say(msg, level = 'info') { this.log.push([this.t, msg, level]); if (this.log.length > 60) this.log = this.log.slice(-60); }
+  get alt() { return this.r - EARTH_R; }
+  get speed() { return Math.hypot(this.vr, this.vt); }
+  mass() { let m = payloadMass(this.cfg); for (let i = this.cur; i < this.n_stages; i++) m += this.stats[i].dry + this.prop[i]; return m; }
+  fuel_frac() { if (this.cur >= this.n_stages) return 0; return this.prop[this.cur] / Math.max(this.stats[this.cur].prop, 1); }
+  total_fuel_frac() { const tot = this.stats.reduce((a, s) => a + s.prop, 0); return this.prop.reduce((a, b) => a + b, 0) / tot; }
+  orbit() {
+    const v2 = this.vr ** 2 + this.vt ** 2, eps = v2 / 2 - EARTH_MU / this.r, h = this.r * this.vt;
+    if (eps >= 0) return [Infinity, -EARTH_R];
+    const a = -EARTH_MU / (2 * eps), e = Math.sqrt(Math.max(0, 1 + 2 * eps * h * h / EARTH_MU ** 2));
+    return [a * (1 + e) - EARTH_R, a * (1 - e) - EARTH_R];
+  }
+  thrust_now() {
+    if (this.cur >= this.n_stages || this.engine_cut || this.prop[this.cur] <= 0) return [0, 0];
+    const s = this.stats[this.cur], p = atmos(this.alt)[1];
+    const isp = s.isp_vac - (s.isp_vac - s.isp_sl) * p;
+    const mdot = s.thrust / (s.isp_sl * G0) * this.throttle * this.faults.thrust_factor();
+    return [mdot * isp * G0, mdot / FUEL_ECON];
+  }
+  start_countdown() { if (this.status === 'pad') { this.status = 'countdown'; this.say('Cuenta atrás iniciada.', 'info'); } }
+  separate() {
+    if (this.status !== 'flying' || this.cur >= this.n_stages - 1) return;
+    if (this.rng.random() < 0.04) { this.say('¡Separación atascada! Vuelve a intentarlo.', 'bad'); return; }
+    this.events.push(['sep', this.cur]);
+    this.cur += 1;
+    this.temp_eng = Math.max(20, this.temp_eng * 0.5);
+    this.pressure = 1; this.sep_timer = null; this.engine_cut = true;
+    this.say(`Etapa separada. ¡ENCIENDE los motores de la etapa ${this.cur + 1} (E)!`, 'warn');
+  }
+  toggle_engine() {
+    if (this.status !== 'flying') return;
+    if (this.cur >= this.n_stages || this.prop[this.cur] <= 0) { this.say('No queda combustible en esta etapa.', 'warn'); return; }
+    this.engine_cut = !this.engine_cut;
+    if (this.engine_cut) this.say('Motores APAGADOS.', 'warn');
+    else {
+      this.ignited = true;
+      if (this.throttle < 0.05) this.throttle = 1.0;
+      this.events.push(['ignite']);
+      this.say('Motores ENCENDIDOS.', 'good');
+    }
+  }
+  abort() {
+    if (this.status === 'pad' || this.status === 'countdown' || (this.status === 'flying' && !this.ignited)) {
+      this.status = 'aborted'; this.end_reason = 'Lanzamiento abortado en plataforma. Nadie ha resultado herido.'; return;
+    }
+    if (this.status === 'flying') this.explode('¡ABORTO! El sistema de autodestrucción ha destruido el cohete.', false);
+  }
+  explode(why, accidental = true) {
+    if (this.status === 'exploded' || this.status === 'crashed' || this.status === 'orbit') return;
+    this.status = 'exploded'; this.end_reason = why; this.events.push(['explosion']); this.throttle = 0;
+    if (accidental) {
+      this.cities_hit = hitCities(this.theta * EARTH_R, this.alt);
+      if (this.cities_hit.length) this.say(`¡Los restos caen sobre la ciudad! Arrasadas: ${this.cities_hit.map(i => CITIES[i][1]).join(', ')}.`, 'bad');
+    }
+    if (this.cfg.crewed) {
+      if (this.cfg.tower && this.rng.random() < 0.85) { this.crew_saved = true; this.say('La torre de escape ha sacado la cápsula. Tripulación a salvo.', 'good'); }
+      else { this.crew_saved = false; this.say('Se ha perdido la tripulación.', 'bad'); }
+    }
+    this.say(why, 'bad');
+  }
+  update(ctl) {
+    const dt = DT;
+    if (this.status !== 'exploded' && this.weather.update(dt)) this.faults.lightning();
+    if (this.status === 'countdown') {
+      this.countdown -= dt;
+      if (this.countdown <= 0) { this.status = 'flying'; this.throttle = 0; this.say('T-0. Motores apagados: pulsa E (o ENCENDER MOTORES) para la ignición.', 'warn'); }
+      return;
+    }
+    if (this.status !== 'flying') return;
+    if (this.ignited) this.t += dt;
+    this.control(ctl, dt);
+    this.physics(dt);
+    if (this.ignited) this.faults.update(dt, ctl);
+    this.check_end(dt);
+  }
+  control(ctl, dt) {
+    this.throttle = clamp(this.throttle + (ctl.thr || 0) * 0.6 * dt, 0, 1);
+    if (this.faults.nActive()) this.had_fault = true;
+    else if (this.ignited && !this.engine_cut) {
+      if (this.had_fault) {
+        this.had_fault = false;
+        if (this.throttle < this.thr_saved - 0.05) { this.restoring = true; this.say('Fallo resuelto: recupero el acelerador automáticamente.', 'good'); }
+      }
+      if (ctl.thr) this.restoring = false;
+      if (this.restoring) {
+        this.throttle = Math.min(this.thr_saved, this.throttle + 0.4 * dt);
+        if (this.throttle >= this.thr_saved) this.restoring = false;
+      } else this.thr_saved = !this.faults.nActive() ? Math.max(this.throttle, 0.3) : this.thr_saved;
+    }
+    if (ctl.pitch) {
+      if (this.autopilot) { this.autopilot = false; this.pitch_cmd = this.pitch; this.say('Piloto automático desactivado (control manual).', 'warn'); }
+      this.pitch_cmd += ctl.pitch * 12 * dt;
+    }
+    if (this.autopilot) this.pitch_cmd = this.guide_pitch();
+    this.pitch_cmd = clamp(this.pitch_cmd, -20, 110);
+    const mass_f = 1 + this.mass() / 1.2e6, rate = 9 / mass_f;
+    const d = this.pitch_cmd - this.pitch;
+    this.pitch += Math.max(-rate * dt, Math.min(rate * dt, d));
+    const p = atmos(this.alt)[1], stab = this.cfg.fins ? 0.45 : 1.0;
+    const disturb = (this.weather.gust(this.alt) * 0.03 + this.faults.pitch_noise()) * stab * Math.min(1, p * 2);
+    this.pitch += (disturb + this.faults.pitch_noise_space()) * dt;
+    this.pitch = clamp(this.pitch, -30, 120);
+  }
+  guide_pitch() {
+    const a = this.alt;
+    if (a >= 70e3 && this.r > 0) {
+      let best = null;
+      for (let ang = 0; ang <= 110; ang += 6) {
+        const vr2 = this.vr + 20 * Math.cos(rad(ang)), vt2 = this.vt + 20 * Math.sin(rad(ang));
+        const eps = (vr2 ** 2 + vt2 ** 2) / 2 - EARTH_MU / this.r;
+        let p;
+        if (eps >= 0) p = 1e9;
+        else {
+          const h = this.r * vt2, sa = -EARTH_MU / (2 * eps), e = Math.sqrt(Math.max(0, 1 + 2 * eps * h * h / EARTH_MU ** 2));
+          p = sa * (1 - e) - EARTH_R;
+        }
+        if (best === null || p > best[0]) best = [p, ang];
+      }
+      let ang = best[1];
+      if (a < 120e3 && this.vr < (120e3 - a) * 0.02) ang = Math.min(ang, 70);
+      return ang;
+    }
+    const prog = Sim.PROGRAM;
+    if (a <= prog[0][0]) return 0;
+    for (let i = 0; i < prog.length - 1; i++) {
+      const [a0, p0] = prog[i], [a1, p1] = prog[i + 1];
+      if (a <= a1) return p0 + (p1 - p0) * (a - a0) / (a1 - a0);
+    }
+    return prog[prog.length - 1][1];
+  }
+  physics(dt) {
+    const [thrust, mdot] = this.thrust_now();
+    if (mdot > 0) {
+      this.prop[this.cur] = Math.max(0, this.prop[this.cur] - mdot * dt);
+      this.faults.fuel_leak(dt);
+      if (this.prop[this.cur] <= 0) this.say('Etapa sin combustible.' + (this.cur < this.n_stages - 1 ? ' ¡Separa la etapa!' : ''), 'warn');
+    }
+    const m = this.mass(), [rho] = atmos(this.alt), v = this.speed;
+    const cd = 0.35 + (this.cfg.fins ? 0.08 : 0) + ((this.weather.rain && this.alt < 12000) ? 0.03 : 0);
+    const area = Math.PI * (DIAMETERS[this.cfg.size] / 2) ** 2;
+    const drag = 0.5 * rho * v * v * cd * area;
+    this.q = 0.5 * rho * v * v;
+    this.mach = v / (this.alt < 11000 ? 340 : 295);
+    const ph = rad(this.pitch), fr = thrust * Math.cos(ph), ft = thrust * Math.sin(ph);
+    const dr = v > 0.1 ? drag * this.vr / v : 0, dtn = v > 0.1 ? drag * this.vt / v : 0;
+    let ar = this.vt ** 2 / this.r - EARTH_MU / this.r ** 2 + (fr - dr) / m;
+    let at = -this.vr * this.vt / this.r + (ft - dtn) / m;
+    this.accel = Math.hypot((fr - dr) / m, (ft - dtn) / m);
+    this.gforce = this.accel / G0;
+    const on_pad = this.r <= EARTH_R + 0.5 && this.vr <= 0.01;
+    if (on_pad && ar < 0) { ar = 0; this.vr = 0; at = 0; this.vt = 0; this.gforce = 1; }
+    this.vr += ar * dt; this.vt += at * dt; this.r += this.vr * dt; this.theta += this.vt / this.r * dt;
+    if (this.r < EARTH_R) {
+      if (this.speed > 25 && this.t > 5) {
+        this.status = 'crashed'; this.end_reason = 'El cohete ha caído a tierra.'; this.events.push(['explosion']); this.say(this.end_reason, 'bad');
+      }
+      this.r = EARTH_R; this.vr = Math.max(0, this.vr);
+    }
+    this.max_alt = Math.max(this.max_alt, this.alt);
+    const aero = 7.4e-8 * Math.sqrt(rho) * v ** 3;
+    this.temp_skin += (20 + aero - this.temp_skin) * dt / 18;
+    let aoa = v > 50 ? Math.abs(rad(this.pitch) - Math.atan2(this.vt, Math.max(this.vr, 0.1))) : 0;
+    aoa = Math.min(aoa, 1.2);
+    let tanks = 0; for (let i = this.cur; i < this.cfg.stages.length; i++) tanks += this.cfg.stages[i].tanks;
+    const limit = 42000 * SIZES[this.cfg.size].strength / (1 + 0.035 * tanks);
+    this.stress = this.q * (1 + 5 * Math.sin(aoa)) / limit;
+    if (this.status === 'flying' && this.t > 2) {
+      if (this.stress > 1.0) this.integrity -= (this.stress - 1.0) * 40 * dt;
+      if (this.temp_skin > 750) this.integrity -= (this.temp_skin - 750) * 0.02 * dt;
+    }
+  }
+  check_separation(dt) {
+    if (this.cur >= this.n_stages - 1) return;
+    const frac = this.fuel_frac();
+    if (frac < 0.10 && !this.low_warned.has(this.cur) && this.prop[this.cur] > 0) {
+      this.low_warned.add(this.cur);
+      this.say('Combustible de la etapa casi agotado: prepárate para SEPARAR (ESPACIO).', 'warn');
+    }
+    if (this.prop[this.cur] <= 0) {
+      if (this.sep_timer === null) {
+        this.sep_timer = this.SEP_MARGIN;
+        this.say(`¡ETAPA VACÍA! Sepárala con ESPACIO en ${this.SEP_MARGIN.toFixed(0)} s o el cohete explotará.`, 'bad');
+      }
+      this.sep_timer -= dt;
+      if (this.sep_timer <= 0) this.explode('No separaste la etapa vacía a tiempo: el peso muerto ha destrozado el cohete.');
+    }
+  }
+  check_end(dt) {
+    this.check_separation(dt);
+    if (this.status !== 'flying') return;
+    if (this.integrity <= 0) { this.integrity = 0; this.explode('La estructura ha cedido: el cohete se ha desintegrado.'); return; }
+    const out_of_fuel = this.cur >= this.n_stages - 1 && this.prop[this.cur] <= 0;
+    const no_power = out_of_fuel || this.engine_cut;
+    const [apo, per] = this.orbit();
+    if (this.alt > 100e3 && !this.karman) { this.karman = true; this.say('Has cruzado la línea de Kármán: capa atmosférica atravesada.', 'good'); }
+    if (this.alt > 20000 && this.t > 5) {
+      const thrust0 = this.thrust_now()[0] <= 0;
+      if (per >= TARGET_ORBIT_ALT && apo >= TARGET_APO) {
+        if (thrust0) { this.finish('orbita_alta'); return; }
+        if (!this.orbit_ready) { this.orbit_ready = true; this.orbit_ready_t = this.AUTO_CUT; this.say('¡ÓRBITA ALCANZADA! Apaga los motores (E).', 'good'); }
+        this.orbit_ready_t -= dt;
+        if (this.orbit_ready_t <= 0 && !this.engine_cut) { this.toggle_engine(); this.say('Motores apagados automáticamente: órbita lograda.', 'good'); }
+      } else if (per >= LOW_ORBIT_PER && (no_power || this.throttle === 0)) {
+        this.orbit_ready = false; this.orbit_hold += dt;
+        if (this.orbit_hold > 25.0) { this.finish('orbita_baja'); return; }
+      } else { this.orbit_ready = false; this.orbit_hold = 0; }
+    }
+    if (no_power && this.alt > 120e3 && apo === Infinity) {
+      this.end_reason = 'Trayectoria de escape: el cohete se pierde en el espacio.'; this.status = 'crashed'; this.say(this.end_reason, 'bad');
+    } else if (out_of_fuel && this.alt > 100e3 && per < LOW_ORBIT_PER) {
+      this.fail_hold += dt;
+      if (this.fail_hold > 20.0) { this.end_reason = 'Sin combustible y sin órbita estable: la reentrada es inevitable. Misión fallida.'; this.status = 'crashed'; this.say(this.end_reason, 'bad'); }
+    }
+  }
+  finish(res) {
+    this.result = res; this.status = 'orbit';
+    this.end_reason = res === 'orbita_alta' ? '¡ÓRBITA ALTA ALCANZADA! Misión cumplida.' : 'Órbita baja alcanzada, pero no llegaste a la órbita alta.';
+    this.say(this.end_reason, 'good');
+  }
+  score() {
+    let s;
+    if (this.result === 'orbita_alta') s = 1000; else if (this.result === 'orbita_baja') s = 450; else return Math.floor(this.max_alt / 1000);
+    s += Math.floor(this.integrity * 3) + Math.floor(this.total_fuel_frac() * 200);
+    s += Math.max(0, Math.floor((80 - this.summary.cost) * 4));
+    if (this.cfg.crewed) s = Math.floor(s * 1.5);
+    return s;
+  }
+}
+Sim.PROGRAM = [[1.2e3, 0], [4e3, 0], [10e3, 8], [20e3, 24], [35e3, 44], [50e3, 44], [70e3, 69], [100e3, 80], [150e3, 92], [250e3, 100]];
+/* ============================================================ fase 1: constructor */
+class Builder {
+  constructor(cfg) {
+    this.cfg = cfg; this.sel = 0; this.scroll = 0; this.editing = false; this.lastSel = -1;
+    this.ROW_H = 30; this.LIST = [20, 70, 520, 560];
+    this.btn_launch = new Button([20, 650, 330, 50], 'LLEVAR A LA PLATAFORMA (Enter)', [40, 120, 70], [60, 170, 100], 17);
+    this.btn_reset = new Button([365, 650, 175, 50], 'Reiniciar diseño', PANEL2);
+    this.tick = 0; this.rows = [];
+  }
+  buildRows() {
+    const c = this.cfg, rows = [];
+    const choice = (label, get, set, n, fmt) => rows.push({ label, value: fmt(get()), change: d => set(pymod(get() + d, n)) });
+    const number = (label, get, set, lo, hi) => rows.push({ label, value: String(get()), change: d => set(clamp(get() + d, lo, hi)) });
+    const toggle = (label, key, enabled = true) => rows.push({ label, value: c[key] ? 'SÍ' : 'NO', change: enabled ? (d => { c[key] = !c[key]; }) : (d => {}) });
+    rows.push({ label: 'Nombre del cohete', value: c.name + (this.editing && this.tick % 40 < 20 ? '_' : ''), change: d => {}, edit: true });
+    choice('Tamaño del cuerpo', () => c.size, v => { c.size = v; }, SIZES.length, v => SIZES[v].name);
+    choice('Forma de la ojiva', () => c.nose, v => { c.nose = v; }, NOSES.length, v => NOSES[v]);
+    choice('Color del cuerpo', () => c.color_body, v => { c.color_body = v; }, PALETTE.length, v => PALETTE[v][0]);
+    choice('Color de detalles', () => c.color_accent, v => { c.color_accent = v; }, PALETTE.length, v => PALETTE[v][0]);
+    toggle('Aletas estabilizadoras', 'fins');
+    toggle('Pararrayos / blindaje', 'shield');
+    toggle('Tripulado', 'crewed');
+    toggle('Torre de escape (solo tripulado)', 'tower', c.crewed);
+    number('Número de etapas', () => c.stages.length, v => {
+      while (c.stages.length < v) c.stages.push({ engine: 3, n_eng: 1, fuel: 0, tanks: 2 });
+      while (c.stages.length > v) c.stages.pop();
+    }, 1, MAX_STAGES);
+    c.stages.forEach((st, i) => {
+      rows.push({ header: `— ETAPA ${i + 1}` + (i === 0 ? ' (inferior)' : '') + ' —' });
+      choice('  Motor', () => st.engine, v => { st.engine = v; }, ENGINES.length, v => ENGINES[v].name);
+      number('  Nº de motores', () => st.n_eng, v => { st.n_eng = v; }, 1, MAX_ENGINES);
+      choice('  Combustible', () => st.fuel, v => { st.fuel = v; }, FUELS.length, v => FUELS[v].name);
+      number('  Tanques', () => st.tanks, v => { st.tanks = v; }, 1, MAX_TANKS);
+    });
+    return rows;
+  }
+  selectable() { const o = []; this.rows.forEach((r, i) => { if (!('header' in r)) o.push(i); }); return o; }
+  move(d) {
+    const sel = this.selectable();
+    if (!sel.includes(this.sel)) this.sel = sel[0];
+    const k = sel.indexOf(this.sel);
+    this.sel = sel[pymod(k + d, sel.length)];
+  }
+  startEdit() {
+    this.editing = true;
+    nameInput.value = this.cfg.name;
+    try { nameInput.focus(); nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length); } catch (e) {}
+  }
+  stopEdit() { this.editing = false; try { nameInput.blur(); cv.focus(); } catch (e) {} }
+  handle(ev) {
+    this.rows = this.buildRows();
+    if (this.editing) {
+      if (ev.type === 'keydown' && (ev.key === 'Enter' || ev.key === 'Escape')) this.stopEdit();
+      else if (ev.type === 'down' && !inRect(ev.pos, this.LIST)) this.stopEdit();
+      return null;
+    }
+    if (ev.type === 'keydown') {
+      if (ev.key === 'ArrowUp') this.move(-1);
+      else if (ev.key === 'ArrowDown') this.move(1);
+      else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') this.rows[this.sel].change(ev.key === 'ArrowLeft' ? -1 : 1);
+      else if (ev.key === 'Enter') { if (this.rows[this.sel].edit) this.startEdit(); else return 'launch'; }
+    }
+    if (ev.type === 'wheel') {
+      const vis = Math.floor(this.LIST[3] / this.ROW_H);
+      this.scroll = clamp(this.scroll + ev.dy, 0, Math.max(0, this.rows.length - vis));
+    }
+    if (ev.type === 'down') {
+      if (this.btn_launch.clicked(ev)) return 'launch';
+      if (this.btn_reset.clicked(ev)) { Object.assign(this.cfg, defaultConfig()); return null; }
+      if (inRect(ev.pos, this.LIST)) {
+        const idx = Math.floor((ev.pos[1] - this.LIST[1]) / this.ROW_H) + this.scroll;
+        if (idx >= 0 && idx < this.rows.length && !('header' in this.rows[idx])) {
+          this.sel = idx; this.lastSel = idx;
+          const x = ev.pos[0] - this.LIST[0];
+          if (this.rows[idx].edit) this.startEdit();
+          else if (x > 250) this.rows[idx].change(x < 385 ? -1 : 1);
+        }
+      }
+    }
+    return null;
+  }
+  draw() {
+    this.tick++;
+    this.rows = this.buildRows();
+    if (this.sel >= this.rows.length || ('header' in this.rows[this.sel])) this.move(1);
+    fillRect(BG, 0, 0, W, H);
+    txt('FASE 1 · CONSTRUCCIÓN DEL COHETE', 20, 20, 26, ACCENT, true);
+    txt('↑↓ elegir · ←→ cambiar (o clic) · Enter en el nombre para escribir', 20, 50, 13, DIM);
+    panelR([this.LIST[0] - 5, this.LIST[1] - 5, this.LIST[2] + 10, this.LIST[3] + 10]);
+    const vis = Math.floor(this.LIST[3] / this.ROW_H);
+    if (this.sel !== this.lastSel) {
+      if (this.sel < this.scroll) this.scroll = this.sel;
+      if (this.sel >= this.scroll + vis) this.scroll = this.sel - vis + 1;
+      this.lastSel = this.sel;
+    }
+    this.scroll = clamp(this.scroll, 0, Math.max(0, this.rows.length - vis));
+    for (let k = 0; k < vis; k++) {
+      const i = this.scroll + k;
+      if (i >= this.rows.length) break;
+      const r = this.rows[i], y = this.LIST[1] + k * this.ROW_H;
+      if ('header' in r) { txt(r.header, this.LIST[0] + 8, y + 6, 15, WARN, true); continue; }
+      const row = [this.LIST[0], y, this.LIST[2], this.ROW_H - 2];
+      if (i === this.sel) panelR(row, PANEL2, ACCENT, 5);
+      txt(r.label, row[0] + 10, row[1] + 5, 16, TEXT);
+      if (r.edit) txt(r.value, row[0] + 260, row[1] + 5, 16, ACCENT, true);
+      else {
+        txt('◄', row[0] + 262, row[1] + 5, 16, DIM);
+        txt(r.value, row[0] + 320, row[1] + 5, 16, ACCENT, true, 'midtop');
+        txt('►', row[0] + 486, row[1] + 5, 16, DIM);
+      }
+    }
+    this.btn_launch.draw(); this.btn_reset.draw();
+    this.drawPreview();
+  }
+  drawPreview() {
+    const area = [570, 70, 690, 630], ax = area[0], ay = area[1], aw = area[2], ah = area[3];
+    panelR(area);
+    const s = rocketSummary(this.cfg);
+    for (let gx = ax; gx < ax + aw; gx += 40) line([30, 36, 52], gx, ay, gx, ay + ah);
+    for (let gy = ay; gy < ay + ah; gy += 40) line([30, 36, 52], ax, gy, ax + aw, gy);
+    const h = rocketHeight(this.cfg, this.cfg.stages.length, 1.0);
+    const scale = Math.min(1.5, (ah - 110) / Math.max(h, 1));
+    drawRocket(this.cfg, ax + 170, ay + ah - 60, scale, null, 0, 14);
+    fillRect([60, 66, 82], ax + 20, ay + ah - 48, 300, 8);
+    const x = ax + 360;
+    txt('ESPECIFICACIONES', x, ay + 18, 18, ACCENT, true);
+    const lines = [['Masa total', `${Math.round(s.mass / 1000).toLocaleString('en-US')} t`], ['Empuje / peso inicial', s.twr.toFixed(2)],
+      ['Δv total (vacío)', `${Math.round(s.dv_total).toLocaleString('en-US')} m/s`], ['Coste estimado', `${Math.round(s.cost).toLocaleString('en-US')} M€`],
+      ['Carga', this.cfg.crewed ? 'Tripulación' : 'Satélite']];
+    lines.forEach(([a, b], k) => { txt(a, x, ay + 55 + k * 26, 15, DIM); txt(b, x + 320, ay + 55 + k * 26, 15, TEXT, true, 'topright'); });
+    let y = ay + 200;
+    s.dv.forEach((dv, i) => {
+      txt(`Δv etapa ${i + 1}`, x, y, 14, DIM);
+      bar([x + 100, y + 3, 120, 12], dv / 8000, ACCENT);
+      txt(`${Math.round(dv).toLocaleString('en-US')} m/s`, x + 320, y, 14, TEXT, false, 'topright');
+      y += 24;
+    });
+    const tips = [];
+    if (s.twr < 1.05) tips.push(['⚠ Empuje insuficiente: el cohete apenas despegará.', BAD]);
+    else if (s.twr < 1.2) tips.push(['Empuje justo: añade motores o quita peso.', WARN]);
+    if (s.dv_total < 9000) tips.push(['Δv bajo: para órbita alta necesitas ~9500–11000 m/s.', WARN]);
+    else if (s.dv_total > 9300) tips.push(['Δv suficiente para alcanzar órbita. ¡Buena base!', GOOD]);
+    if (this.cfg.crewed) tips.push(['Tripulado: más peso, más puntos… y más responsabilidad.', DIM]);
+    const yy = ay + 290;
+    txt('ANÁLISIS', x, yy, 18, ACCENT, true);
+    tips.forEach(([t, c], k) => txt(t, x, yy + 34 + k * 24, 14, c));
+  }
+}
+/* ============================================================ escena de vuelo */
+const SCENE_H = 530;
+class Scene {
+  constructor(cfg, seed = 0) {
+    this.cfg = cfg; this.rng = new RNG(seed);
+    this.stars = []; for (let i = 0; i < 140; i++) this.stars.push([this.rng.randrange(W), this.rng.randrange(SCENE_H), this.rng.choice([1, 1, 2])]);
+    this.clouds = []; for (let i = 0; i < 14; i++) this.clouds.push([this.rng.uniform(0, 1), this.rng.uniform(0, 1), this.rng.uniform(0.6, 1.6)]);
+    this.rain = []; for (let i = 0; i < 170; i++) this.rain.push([this.rng.randrange(W), this.rng.randrange(SCENE_H)]);
+    this.particles = []; this.debris = []; this.shake = 0; this.frame = 0;
+    const h = rocketHeight(cfg, cfg.stages.length, 1.0);
+    this.scale = Math.max(0.22, Math.min(0.55, 125 / Math.max(h, 1)));
+    this.fire_t = 0;
+  }
+  handleEvents(sim) {
+    for (const ev of sim.events) {
+      if (ev[0] === 'explosion') this.explode(sim);
+      else if (ev[0] === 'sep') this.dropStage(sim, ev[1]);
+    }
+    sim.events.length = 0;
+  }
+  explode(sim) {
+    this.shake = 1.0;
+    const sc = 0.12 / (1 + Math.max(sim.alt, 0) / 5000);
+    for (const ci of sim.cities_hit) {
+      const tx = W / 2 + (CITIES[ci][0] - sim.theta * EARTH_R) * sc;
+      for (let k = 0; k < 14; k++) this.particles.push([W / 2, 250, (tx - W / 2) + this.rng.uniform(-30, 30), this.rng.uniform(120, 260), 1.4, [255, 150, 40], 5]);
+    }
+    const palette = [[255, 220, 90], [255, 140, 40], [230, 70, 40], [90, 90, 95], [240, 240, 240]];
+    for (let k = 0; k < 180; k++) {
+      const a = this.rng.uniform(0, Math.PI * 2), v = this.rng.uniform(40, 420);
+      this.particles.push([W / 2, 250, Math.cos(a) * v, Math.sin(a) * v, this.rng.uniform(0.8, 2.6), this.rng.choice(palette), this.rng.uniform(2, 7)]);
+    }
+  }
+  dropStage(sim, idx) {
+    const sub = Object.assign({}, this.cfg, { stages: [this.cfg.stages[idx]], crewed: false, tower: false, fins: false, shield: false, name: '' });
+    const h = rocketHeight(sub, 1, this.scale) + 40;
+    this.debris.push({ x: W / 2, y: 330, vx: this.rng.uniform(-30, 30), vy: 40, ang: 0, spin: this.rng.uniform(-40, 40), sub, sh: Math.floor(h) + 40 });
+    for (let k = 0; k < 25; k++) this.particles.push([W / 2, 300, this.rng.uniform(-60, 60), this.rng.uniform(0, 100), 0.6, [255, 230, 150], 3]);
+  }
+  draw(sim, dt) {
+    this.frame++;
+    if (sim.status === 'exploded') this.fire_t += dt;
+    const w = sim.weather, alt = Math.max(sim.alt, 0), sky = w.sky_color(alt);
+    let ox = 0, oy = 0;
+    if (this.shake > 0) { this.shake = Math.max(0, this.shake - dt * 1.5); ox = this.rng.randint(-8, 8) * this.shake; oy = this.rng.randint(-8, 8) * this.shake; }
+    g.save(); g.beginPath(); g.rect(0, 0, W, SCENE_H); g.clip();
+    g.translate(ox, oy);
+    fillRect(sky, -20, -20, W + 40, SCENE_H + 40);
+    this.drawStars(w, alt);
+    const h_px = rocketHeight(this.cfg, this.cfg.stages.length - sim.cur, this.scale);
+    const ground_y = 250 + h_px / 2 + 8 + 105 * (1 - Math.exp(-alt / 1500)) + 30 * (1 - Math.exp(-alt / 150000));
+    this.drawGround(w, alt, ground_y, sim);
+    this.drawClouds(w, alt, sim);
+    if (sim.status !== 'exploded' && sim.status !== 'crashed') this.drawRocketSprite(sim, h_px);
+    this.drawFx(sim, dt);
+    if (w.rain && alt < 20000) this.drawRain(w);
+    if (w.flash > 0) {
+      fillRect([255, 255, 255, Math.floor(150 * w.flash)], -20, -20, W + 40, SCENE_H + 40);
+      if (w.flash > 0.5 && alt < 20000) this.drawBolt(w);
+    }
+    g.restore();
+  }
+  drawStars(w, alt) {
+    const a = w.star_alpha(alt);
+    if (a <= 0.05) return;
+    const c = Math.floor(220 * a);
+    for (const [x, y, s] of this.stars) circle([c, c, c], x, y, s);
+  }
+  drawGround(w, alt, gy, sim) {
+    const rpx = Math.max(1100, 4200 / (1 + alt / 12000)), cx = W / 2;
+    const low = Math.max(0, 1 - alt / 60000), day = w.daylight() * 0.8 + 0.2;
+    const land = [Math.floor((50 + 20 * low) * day), Math.floor((110 - 10 * (1 - low)) * day), Math.floor((55 + 90 * (1 - low)) * day)];
+    const sea = [Math.floor(30 * day), Math.floor(80 * day), Math.floor(170 * day)];
+    const col = [0, 1, 2].map(i => land[i] * low + sea[i] * (1 - low));
+    if (alt > 8000) circle([110, 170, 255, Math.floor(70 * day)], cx, Math.floor(gy + rpx), Math.floor(rpx + 14 + alt / 4000));
+    circle(col, cx, Math.floor(gy + rpx), Math.floor(rpx));
+    this.drawCities(w, alt, gy, rpx, sim);
+    if (alt < 4000) {
+      const pad_h = Math.max(0, 1 - alt / 800) * 18;
+      if (pad_h > 0) {
+        fillRect([90, 90, 96], cx - 45, gy - 4, 90, 8);
+        fillRect([70, 70, 76], cx - 60, gy - pad_h, 8, pad_h);
+        fillRect([70, 70, 76], cx + 52, gy - pad_h, 8, pad_h);
+      }
+      const off = pymod(sim.theta * EARTH_R, 120), dark = col.map(c => Math.floor(c * 0.8));
+      for (let k = -2; k < 12; k++) { const x = k * 120 - off; line(dark, x, gy + 6, x - 30, gy + 20, 2); }
+    }
+  }
+  drawCities(w, alt, gy, rpx, sim) {
+    if (alt > 250e3) return;
+    const sc = 0.12 / (1 + alt / 5000), bf = 1 / (1 + alt / 25000), cx = W / 2, dr = sim.theta * EARTH_R, night = 1 - w.daylight();
+    const fire_on = sim.status === 'exploded' && sim.cities_hit.length > 0;
+    CITIES.forEach(([d, name, n], i) => {
+      const px = cx + (d - dr) * sc;
+      if (px < -120 || px > W + 120) return;
+      const dx = px - cx, y = gy + rpx - Math.sqrt(Math.max(rpx * rpx - dx * dx, 1));
+      const burning = fire_on && sim.cities_hit.includes(i) && this.fire_t > 1.0;
+      const rl = new RNG(i * 31);
+      for (let k = 0; k < n; k++) {
+        const bx = px + (k - n / 2) * 8 * bf;
+        let bh = (7 + rl.randint(0, 18)) * bf;
+        const bw = Math.max(2, 6 * bf);
+        if (burning) {
+          bh *= 0.35;
+          fillRect([35, 30, 30], bx, y - bh, bw, bh);
+          const fh = (10 + 14 * Math.random()) * bf * 1.4;
+          poly([255, 140, 30], [[bx - bw, y - bh], [bx + bw * 2, y - bh], [bx + bw * 0.5, y - bh - fh]]);
+          poly([255, 230, 90], [[bx, y - bh], [bx + bw, y - bh], [bx + bw * 0.5, y - bh - fh * 0.55]]);
+          if (Math.random() < 0.15) this.particles.push([bx, y - bh - fh, (Math.random() * 2 - 1) * 10, -(20 + Math.random() * 30), 1.5, [70, 70, 74], 4]);
+        } else {
+          fillRect(night < 0.5 ? [95, 100, 120] : [30, 32, 44], bx, y - bh, bw, bh);
+          if (night > 0.4 && bh > 4) fillRect([255, 220, 120], bx + 1, y - bh + 2, Math.max(1, bw - 2), 2);
+        }
+      }
+      if (alt < 40000) txt(name + (burning ? '  ¡EN LLAMAS!' : ''), px, y + 6, 11, burning ? [255, 120, 60] : [230, 230, 235], false, 'midtop');
+    });
+  }
+  drawClouds(w, alt, sim) {
+    if (alt > 22000 || w.cond === 0) return;
+    const n = w.cond === 1 ? 8 : 14;
+    const shade_ = Math.max(20, Math.floor(215 * (w.daylight() * 0.8 + 0.2) - (w.cond >= 2 ? 60 : 0)));
+    const col = [shade_, shade_, Math.min(255, shade_ + 10)];
+    for (let i = 0; i < n; i++) {
+      const [fx, fy, s] = this.clouds[i], layer = 0.4 + fy;
+      const x = pymod(fx * W * 1.6 - sim.theta * EARTH_R * 0.08 * layer, W * 1.6) - W * 0.3;
+      const cloud_alt = 1500 + fy * 9000, y = 250 - (cloud_alt - alt) * 0.045;
+      if (y > -60 && y < SCENE_H + 40) for (const [dx, dy, r] of [[-30, 4, 24], [0, -8, 32], [34, 2, 26], [60, 8, 18]]) circle(col, Math.floor(x + dx * s), Math.floor(y + dy * s), Math.floor(r * s));
+    }
+  }
+  drawRocketSprite(sim, h_px) {
+    const n = this.cfg.stages.length - sim.cur;
+    const thrusting = sim.status === 'flying' && sim.thrust_now()[0] > 0;
+    const flame = thrusting ? sim.throttle : 0;
+    const sub = Object.assign({}, this.cfg, { stages: this.cfg.stages.slice(sim.cur) });
+    const ang = sim.status === 'flying' ? sim.pitch : 0;
+    g.save(); g.translate(W / 2, 250); g.rotate(rad(ang)); g.translate(-150, -230);
+    drawRocket(sub, 150, 230 + h_px / 2, this.scale, n, flame, 11, this.frame);
+    g.restore();
+  }
+  drawFx(sim, dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p[0] += p[2] * dt; p[1] += p[3] * dt; p[3] += 60 * dt; p[4] -= dt;
+      if (p[4] <= 0) { this.particles.splice(i, 1); continue; }
+      circle(p[5], Math.floor(p[0]), Math.floor(p[1]), Math.max(1, Math.floor(p[6] * Math.min(1, p[4]))));
+    }
+    for (let i = this.debris.length - 1; i >= 0; i--) {
+      const d = this.debris[i];
+      d.x += d.vx * dt; d.y += d.vy * dt; d.vy += 90 * dt; d.ang += d.spin * dt;
+      g.save(); g.translate(d.x, d.y); g.rotate(-rad(d.ang)); g.translate(-80, -d.sh / 2);
+      drawRocket(d.sub, 80, d.sh - 20, this.scale, 1); g.restore();
+      if (d.y > SCENE_H + 250) this.debris.splice(i, 1);
+    }
+  }
+  drawRain(w) {
+    const slant = w.wind_dir > 0 ? 6 : -6;
+    for (let i = 0; i < this.rain.length; i++) {
+      const [x, y] = this.rain[i];
+      const ny = (y + 14 + (i % 5)) % SCENE_H, nx = pymod(x + slant * 0.5, W);
+      this.rain[i] = [nx, ny];
+      line([150, 170, 210], nx, ny, nx + slant, ny + 12, 1);
+    }
+  }
+  drawBolt(w) {
+    let x = Math.floor(w.bolt_x * W), y = 0; const pts = [[x, y]];
+    while (y < 330) { y += this.rng.randint(25, 50); x += this.rng.randint(-30, 30); pts.push([x, y]); }
+    polyline([255, 255, 235], pts, 3);
+  }
+}
+
+/* ============================================================ panel de control del ascenso */
+const PX = 930, PY = 76, PW = 340, PH = 444;
+class ControlPanel {
+  constructor() {
+    this.slider = [PX + 24, PY + 52, 46, 270];
+    const bx = PX + 100, bw = PW - 116;
+    this.b_left = [bx, PY + 36, Math.floor(bw / 2) - 3, 38];
+    this.b_right = [bx + Math.floor(bw / 2) + 3, PY + 36, Math.floor(bw / 2) - 3, 38];
+    this.btn = {}; let y = PY + 84;
+    for (const n of ['cool', 'vent', 'reset', 'sep', 'auto', 'engine', 'warp']) { this.btn[n] = [bx, y, bw, 40]; y += 46; }
+    this.dragging = false;
+  }
+  handle(ev, sim, flight, snd) {
+    if (sim.status !== 'flying') return false;
+    if (ev.type === 'down') {
+      const sl = this.slider;
+      if (inRect(ev.pos, [sl[0] - 15, sl[1] - 10, sl[2] + 30, sl[3] + 20])) { this.dragging = true; this.setFromMouse(ev.pos[1], sim); return true; }
+      const p = ev.pos;
+      if (inRect(p, this.btn.reset)) { flight.reset_pulse = true; snd.play('click'); return true; }
+      if (inRect(p, this.btn.sep)) { sim.separate(); return true; }
+      if (inRect(p, this.btn.auto)) {
+        sim.autopilot = !sim.autopilot; if (!sim.autopilot) sim.pitch_cmd = sim.pitch;
+        sim.say('Piloto automático ' + (sim.autopilot ? 'ACTIVADO' : 'DESACTIVADO'), 'info'); snd.play('click'); return true;
+      }
+      if (inRect(p, this.btn.engine)) { sim.toggle_engine(); return true; }
+      if (inRect(p, this.btn.warp)) { flight.warp_i = (flight.warp_i + 1) % 4; snd.play('click'); return true; }
+    }
+    if (ev.type === 'move' && this.dragging) { this.setFromMouse(ev.pos[1], sim); return true; }
+    if (ev.type === 'up') this.dragging = false;
+    return false;
+  }
+  setFromMouse(y, sim) { const f = 1 - (y - this.slider[1]) / this.slider[3]; sim.throttle = clamp(Math.round(f * 20) / 20, 0, 1); }
+  ctl(sim) {
+    const c = {};
+    if (sim.status !== 'flying' || !mouse.down) return c;
+    const m = mpos();
+    if (inRect(m, this.btn.cool)) c.coolant = true;
+    if (inRect(m, this.btn.vent)) c.vent = true;
+    if (inRect(m, this.b_left)) c.pitch = -1;
+    if (inRect(m, this.b_right)) c.pitch = 1;
+    return c;
+  }
+  draw(sim, warp) {
+    if (sim.status !== 'flying') return;
+    overlayPanel(PX, PY, PW, PH);
+    txt('PANEL DE CONTROL', PX + PW / 2, PY + 8, 14, ACCENT, true, 'midtop');
+    const blink = Math.floor(now() / 350) % 2 === 0, act = sim.faults.active, r = this.slider;
+    txt('ACELERADOR', r[0] + r[2] / 2, PY + 30, 11, DIM, true, 'midtop');
+    fillRect([45, 50, 66], r[0], r[1], r[2], r[3], 8);
+    if ('pogo' in act) fillRect(blink ? [40, 150, 80] : [30, 110, 60], r[0], r[1] + Math.floor(r[3] * (1 - 0.65)), r[2], Math.floor(r[3] * 0.30), 4);
+    const fill_h = Math.floor(r[3] * sim.throttle);
+    fillRect(ACCENT, r[0] + 14, r[1] + r[3] - fill_h, r[2] - 28, fill_h, 4);
+    const hy = r[1] + r[3] - fill_h;
+    fillRect([235, 235, 240], r[0] - 6, hy - 9, r[2] + 12, 18, 5);
+    line([90, 90, 100], r[0] - 2, hy, r[0] + r[2] + 2, hy, 2);
+    txt(`${(sim.throttle * 100).toFixed(0)}%`, r[0] + r[2] / 2, r[1] + r[3] + 6, 16, TEXT, true, 'midtop');
+    txt('arrastra', r[0] + r[2] / 2, r[1] + r[3] + 26, 11, DIM, false, 'midtop');
+    const m = mpos();
+    const b = (rect, label, color = PANEL2, hot = ACCENT, alert = false, sub = '') => {
+      let col = inRect(m, rect) ? hot : color;
+      if (alert && blink) col = [200, 120, 20];
+      panelR(rect, col, null, 6);
+      txt(label, rect[0] + rect[2] / 2, rect[1] + rect[3] / 2 - (sub ? 7 : 0), 15, TEXT, true, 'center');
+      if (sub) txt(sub, rect[0] + rect[2] / 2, rect[1] + rect[3] / 2 + 9, 11, [210, 215, 225], false, 'center');
+    };
+    b(this.b_left, '◄ CABECEO', PANEL2, ACCENT, false, 'A / ←');
+    b(this.b_right, 'CABECEO ►', PANEL2, ACCENT, false, 'D / →');
+    b(this.btn.cool, 'REFRIGERAR', PANEL2, ACCENT, 'vibration' in act, `mantener · C · ${sim.coolant.toFixed(0)}%`);
+    b(this.btn.vent, 'VENTEAR PRESIÓN', PANEL2, ACCENT, 'pressure' in act, 'mantener · V');
+    const cd = sim.faults.reset_cool;
+    b(this.btn.reset, 'REINICIAR SISTEMAS', PANEL2, ACCENT, 'avionics' in act && cd <= 0, cd <= 0 ? 'R' : `espera ${cd.toFixed(0)}s`);
+    const empty = sim.fuel_frac() <= 0.001 && sim.cur < sim.n_stages - 1;
+    b(this.btn.sep, 'SEPARAR ETAPA', empty ? [40, 100, 70] : PANEL2, ACCENT, empty, 'ESPACIO');
+    b(this.btn.auto, 'PILOTO AUTO: ' + (sim.autopilot ? 'SÍ' : 'NO'), sim.autopilot ? [40, 100, 70] : PANEL2, ACCENT, false, 'G');
+    const has_fuel = sim.cur < sim.n_stages && sim.prop[sim.cur] > 0;
+    b(this.btn.engine, sim.engine_cut ? 'ENCENDER MOTORES' : 'APAGAR MOTORES', !sim.engine_cut ? [150, 50, 40] : [40, 120, 70], ACCENT, sim.engine_cut && has_fuel, 'E');
+    b(this.btn.warp, `TIEMPO ×${[1, 2, 4, 8][warp]}`, PANEL2, ACCENT, false, 'T');
+  }
+}
+/* ============================================================ fase 3: acoplamiento */
+const LOGC = { info: DIM, good: GOOD, warn: WARN, bad: BAD };
+class Rendezvous {
+  constructor(seed = 0) {
+    const r = new RNG(seed);
+    this.x = r.uniform(20, 40) * r.choice([-1, 1]);
+    this.y = -r.uniform(250, 350);
+    const d0 = Math.hypot(this.x, this.y), v0 = r.uniform(2.5, 3.5);
+    this.vx = -this.x / d0 * v0 + r.uniform(-0.15, 0.15);
+    this.vy = -this.y / d0 * v0;
+    this.h = 0; this.fuel = 100; this.t = 0; this.status = 'running'; this.title = ''; this.end_reason = '';
+    this.events = [];
+    this.log = [['Satélite detectado delante. Acércate despacio y alinea la nariz con el puerto.', 'info']];
+    this.stars = []; for (let i = 0; i < 120; i++) this.stars.push([r.randrange(W), r.randrange(530), r.choice([1, 1, 2])]);
+    this.trail = []; this.thrusting = 0; this.flash = 0; this.won_timer = 0; this._acc = 0; this.fuel_out = 0;
+  }
+  get rng_() { return Math.hypot(this.x, this.y); }
+  closing() { const d = this.rng_; return d > 0.01 ? -(this.x * this.vx + this.y * this.vy) / d : 0; }
+  rel_speed() { return Math.hypot(this.vx, this.vy); }
+  heading_error() { const los = Math.atan2(-this.x, -this.y) * 180 / Math.PI; return pymod(this.h - los + 180, 360) - 180; }
+  cone_angle() { return this.y < 0 ? Math.atan2(Math.abs(this.x), -this.y) * 180 / Math.PI : 90; }
+  safe_speed() { return Math.max(0.45, Math.min(12, this.rng_ / 60 + 0.3)); }
+  say(m, lvl = 'info') { this.log.push([m, lvl]); this.log = this.log.slice(-8); }
+  abort() { if (this.status === 'running') this.finish_fail('¡ABORTO! Autodestrucción de la nave.', 'ABORTADA'); }
+  finish_fail(why, title = 'MISIÓN FALLIDA') { this.status = 'lost'; this.title = title; this.end_reason = why; this.events.push('boom'); this.flash = 1; this.say(why, 'bad'); }
+  update(dt, keys, mc) {
+    if (this.status !== 'running') { this.flash = Math.max(0, this.flash - dt); this.won_timer += dt; return; }
+    const rot = (keys.rot || 0) + (mc.rot || 0), thr = (keys.thr || 0) + (mc.thr || 0);
+    this.thrusting = 0; this._acc += dt * 1.7;
+    let n = 0;
+    while (this._acc >= DT && n < 40) { this.step(rot, thr); this._acc -= DT; n++; if (this.status !== 'running') break; }
+  }
+  step(rot, thr) {
+    const N_ORB = 0.0003, RCS_ACC = 0.9, RCS_DV = 120, TURN = 35, CONTACT = 6;
+    this.t += DT;
+    this.h = pymod(this.h + clamp(rot, -1, 1) * TURN * DT, 360);
+    let ax = 0, ay = 0; thr = clamp(thr, -1, 1);
+    if (thr && this.fuel > 0) {
+      const a = RCS_ACC * thr;
+      ax = a * Math.sin(rad(this.h)); ay = a * Math.cos(rad(this.h));
+      this.fuel = Math.max(0, this.fuel - Math.abs(a) * DT / RCS_DV * 100);
+      this.thrusting = thr;
+    }
+    const n = N_ORB;
+    ax += 3 * n * n * this.x + 2 * n * this.vy; ay += -2 * n * this.vx;
+    this.vx += ax * DT; this.vy += ay * DT; this.x += this.vx * DT; this.y += this.vy * DT;
+    if (pymod(this.t, 0.3) < DT) { this.trail.push([this.x, this.y]); this.trail = this.trail.slice(-60); }
+    const d = this.rng_;
+    if (d <= CONTACT) {
+      const ok_v = this.rel_speed() < 1.2, ok_h = Math.abs(this.heading_error()) < 20, ok_c = this.cone_angle() < 30;
+      if (ok_v && ok_h && ok_c) {
+        this.status = 'won'; this.title = 'ACOPLAMIENTO COMPLETADO'; this.end_reason = 'Acoplamiento suave con el satélite.';
+        this.events.push('dock'); this.say('¡ACOPLAMIENTO COMPLETADO!', 'good');
+      } else {
+        let why = 'Colisión con el satélite: ';
+        why += !ok_v ? 'demasiada velocidad.' : (!ok_h ? 'nariz mal alineada.' : 'aproximación fuera del eje del puerto.');
+        this.finish_fail(why, 'COLISIÓN');
+      }
+    } else if (d > 6000) this.finish_fail('Has perdido de vista al satélite.', 'OBJETIVO PERDIDO');
+    else if (this.fuel <= 0 && this.rel_speed() > 0 && this.t > 5) {
+      if (this.closing() < 0.05 && d > 50) { this.fuel_out += DT; if (this.fuel_out > 20) this.finish_fail('Sin combustible RCS y alejándote del satélite.', 'SIN COMBUSTIBLE'); }
+    }
+  }
+  drawScene() {
+    g.save(); g.beginPath(); g.rect(0, 0, W, 530); g.clip();
+    fillRect([2, 3, 10], 0, 0, W, 530);
+    for (const [sx, sy, s] of this.stars) circle([200, 200, 210], sx, sy, s);
+    circle([25, 70, 150], 460, 530 + 3400, 3480);
+    circle([40, 100, 190], 460, 530 + 3400, 3400);
+    const cx = 460, cy = 255, d = Math.max(this.rng_, 0.1), s = Math.max(0.04, Math.min(14, 220 / d));
+    const tx = cx - this.y * s, ty = cy + this.x * s;
+    for (const [px, py] of this.trail) {
+      const qx = tx + py * s, qy = ty - px * s;
+      if (qx >= 0 && qx < 900 && qy >= 0 && qy < 530) circle([60, 90, 140], Math.floor(qx), Math.floor(qy), 2);
+    }
+    this.drawSat(tx, ty, Math.max(0.35, Math.min(2, s * 0.9)));
+    line([50, 120, 80], cx, cy, tx, ty, 1);
+    line(WARN, cx, cy, cx + -this.vy * 6, cy + this.vx * 6, 2);
+    this.drawShip(cx, cy);
+    if (this.flash > 0) circle([255, 200, 100], Math.floor(cx), Math.floor(cy), Math.floor(120 * (1.2 - this.flash)));
+    const dist = d >= 1000 ? `${(d / 1000).toFixed(2)} km` : `${d.toFixed(0)} m`;
+    txt('DISTANCIA AL SATÉLITE', 20, 16, 14, DIM, true);
+    txt(dist, 20, 34, 40, TEXT, true);
+    const c = this.closing();
+    if (c > 0.3) { const eta = d / c; txt(`Llegada en ~${eta.toFixed(0)} s a la velocidad actual (${c.toFixed(1)} m/s)`, 20, 82, 15, eta < 400 ? GOOD : WARN); }
+    else txt('Sin acercamiento: empuja hacia el satélite', 20, 82, 15, WARN);
+    txt('Línea verde: hacia el satélite · línea naranja: tu movimiento relativo', 14, 505, 12, DIM);
+    g.restore();
+  }
+  drawSat(x, y, k) {
+    fillRect([180, 185, 195], x - 18 * k, y - 14 * k, 36 * k, 28 * k);
+    fillRect([50, 90, 190], x - 70 * k, y - 8 * k, 48 * k, 16 * k);
+    fillRect([50, 90, 190], x + 22 * k, y - 8 * k, 48 * k, 16 * k);
+    fillRect([255, 210, 60], x - 24 * k, y - 5 * k, 6 * k, 10 * k);
+    txt('SATÉLITE', x, y - 26 * k - 6, 12, TEXT, true, 'midbottom');
+  }
+  drawShip(cx, cy) {
+    g.save(); g.translate(cx, cy); g.rotate(-rad(this.h)); g.translate(-45, -25);
+    fillRect([235, 235, 240], 10, 14, 50, 22);
+    poly([205, 50, 50], [[60, 14], [84, 25], [60, 36]]);
+    fillRect([90, 90, 98], 4, 18, 8, 14);
+    if (this.thrusting > 0) poly([255, 200, 90], [[4, 22], [-6, 25], [4, 28]]);
+    if (this.thrusting < 0) poly([255, 200, 90], [[84, 23], [90, 25], [84, 27]]);
+    g.restore();
+  }
+  drawHud() {
+    fillRect([10, 13, 20], 0, 530, W, 190); line(ACCENT, 0, 530, W, 530, 2);
+    txt('ACOPLAMIENTO · TELEMETRÍA', 14, 540, 13, ACCENT, true);
+    const d = this.rng_, c = this.closing(), vs = this.safe_speed(), he = this.heading_error(), ca = this.cone_angle(), lat = Math.abs(this.x);
+    const rows = [['Distancia al satélite', d >= 1000 ? `${(d / 1000).toFixed(2)} km` : `${Math.round(d).toLocaleString('en-US')} m`, TEXT],
+      ['Velocidad relativa', `${this.rel_speed().toFixed(1)} m/s`, this.rel_speed() < vs * 1.3 ? GOOD : WARN],
+      ['Velocidad de acercamiento', `${c.toFixed(1)} m/s`, (c >= 0 && c <= vs * 1.3) ? GOOD : (c > vs * 2 ? BAD : WARN)],
+      ['Velocidad máx. recomendada', `${vs.toFixed(1)} m/s`, DIM],
+      ['Error de rumbo (nariz → satélite)', `${he >= 0 ? '+' : '-'}${Math.abs(he).toFixed(0)}°`, Math.abs(he) < 20 ? GOOD : (Math.abs(he) < 40 ? WARN : BAD)],
+      ['Ángulo respecto al eje del puerto', `${ca.toFixed(0)}°`, ca < 30 ? GOOD : WARN],
+      ['Desviación lateral', `${Math.round(lat).toLocaleString('en-US')} m`, TEXT]];
+    rows.forEach(([a, b, col], k) => { txt(a, 14, 562 + k * 20, 14, DIM); txt(b, 350, 562 + k * 20, 14, col, true, 'topright'); });
+    txt('Combustible RCS', 400, 562, 14, DIM);
+    bar([400, 584, 220, 10], this.fuel / 100, this.fuel > 20 ? ACCENT : BAD);
+    txt(`${this.fuel.toFixed(0)}%`, 630, 578, 14, TEXT, true);
+    txt('Requisitos para acoplar (a < 6 m):', 400, 612, 14, ACCENT, true);
+    [['Velocidad relativa < 1.2 m/s', this.rel_speed() < 1.2], ['Error de rumbo < 20°', Math.abs(he) < 20], ['Dentro del cono del puerto (< 30°)', ca < 30]]
+      .forEach(([a, ok], k) => txt((ok ? '✔ ' : '✘ ') + a, 400, 634 + k * 20, 14, ok ? GOOD : DIM));
+    this.log.slice(-8).forEach(([m, lvl], k) => txt(m.slice(0, 62), 700, 562 + k * 18, 12, LOGC[lvl]));
+  }
+  rects() {
+    const bx = PX + 20, bw = PW - 40;
+    return { left: [bx, PY + 40, Math.floor(bw / 2) - 4, 54], right: [bx + Math.floor(bw / 2) + 4, PY + 40, Math.floor(bw / 2) - 4, 54], fwd: [bx, PY + 110, bw, 54], back: [bx, PY + 176, bw, 54] };
+  }
+  mouseCtl() {
+    const c = {};
+    if (this.status !== 'running' || !mouse.down) return c;
+    const m = mpos(), r = this.rects();
+    if (inRect(m, r.left)) c.rot = 1; if (inRect(m, r.right)) c.rot = -1;
+    if (inRect(m, r.fwd)) c.thr = 1; if (inRect(m, r.back)) c.thr = -1;
+    return c;
+  }
+  drawPanel() {
+    if (this.status !== 'running') return;
+    overlayPanel(PX, PY, PW, PH);
+    txt('CONTROL RCS', PX + PW / 2, PY + 10, 15, ACCENT, true, 'midtop');
+    const labels = { left: ['◄ GIRAR', 'A / ←'], right: ['GIRAR ►', 'D / →'], fwd: ['EMPUJAR ADELANTE', 'mantener · W / ↑'], back: ['FRENAR (empuje inverso)', 'mantener · S / ↓'] };
+    const m = mpos(), rs = this.rects();
+    for (const k in rs) {
+      const r = rs[k];
+      panelR(r, inRect(m, r) ? ACCENT : PANEL2, null, 6);
+      txt(labels[k][0], r[0] + r[2] / 2, r[1] + r[3] / 2 - 8, 16, TEXT, true, 'center');
+      txt(labels[k][1], r[0] + r[2] / 2, r[1] + r[3] / 2 + 12, 12, [210, 215, 225], false, 'center');
+    }
+    ['1. Gira la nave (nariz = rumbo del empuje).', '    Mantén la línea naranja sobre la verde.', '2. Empuja para acercarte, frena antes', '    de llegar: ¡el empuje es inercial!',
+      '3. Deja la velocidad < 1.2 m/s al', '    llegar, alineado con el puerto (►).'].forEach((t, k) => txt(t, PX + 20, PY + 250 + k * 22, 13, DIM));
+  }
+}
+Rendezvous.prototype.name = 'ACOPLAMIENTO';
+
+/* ============================================================ fase 4: reentrada */
+class Reentry {
+  constructor(seed = 0) {
+    this.rng = new RNG(seed);
+    this.r = EARTH_R + 115e3; this.theta = 0; this.vr = -500; this.vt = 6000; this.alpha = 30; this.t = 0; this.temp = 20; this.integrity = 100;
+    this.chute = 0; this.chute_t = 0; this.status = 'running'; this.title = ''; this.end_reason = ''; this.events = []; this.g = 0;
+    this.phase0 = this.rng.uniform(0, 6.28); this.dipped = false; this.max_temp = 20; this.landing_speed = 0;
+    this.log = [['Entrada en la atmósfera. Mantén el ángulo dentro de la banda verde.', 'info']];
+    this.flash = 0; this.warn_t = 0; this.ff = 1; this._acc = 0;
+    const rs = new RNG(5); this.stars = []; for (let i = 0; i < 90; i++) this.stars.push([rs.randrange(W), rs.randrange(380)]);
+  }
+  get alt() { return this.r - EARTH_R; }
+  get speed() { return Math.hypot(this.vr, this.vt); }
+  alpha_star() { const k = clamp((this.alt - 35000) / 75000, 0, 1); return 12 + 26 * k + 6 * Math.sin(0.3 * this.t + this.phase0); }
+  say(m, lvl = 'info') { this.log.push([m, lvl]); this.log = this.log.slice(-8); }
+  open_chute() {
+    if (this.status !== 'running' || this.chute !== 0) return;
+    if (this.alt > 40000) { this.say('Demasiado alto: el paracaídas no se puede abrir aún.', 'warn'); return; }
+    const q = 0.5 * rhoR(this.alt) * this.speed ** 2;
+    if (this.speed > 220 || q > 14000) { this.chute = -1; this.say('¡PARACAÍDAS RASGADO! Lo abriste demasiado pronto (demasiada velocidad).', 'bad'); this.events.push('tear'); }
+    else { this.chute = 1; this.chute_t = 0; this.say('Paracaídas desplegándose...', 'good'); this.events.push('chute'); }
+  }
+  abort() { if (this.status === 'running') this.fail('¡ABORTO! Autodestrucción de la nave.', 'ABORTADA'); }
+  fail(why, title = 'MISIÓN FALLIDA') { this.status = 'lost'; this.title = title; this.end_reason = why; this.events.push('boom'); this.flash = 1; this.say(why, 'bad'); }
+  update(dt, keys, mc) {
+    if (this.status !== 'running') { this.flash = Math.max(0, this.flash - dt); return; }
+    const pitch = (keys.pitch || 0) + (mc.pitch || 0);
+    const ff = (this.chute === 0 && this.alt > 8000 && this.alt < 38000) ? 3 : 1;
+    this.ff = ff; this._acc += dt * 1.7 * ff;
+    let n = 0;
+    while (this._acc >= DT && n < 120) { this.step(pitch); this._acc -= DT; n++; if (this.status !== 'running') break; }
+  }
+  step(pitch) {
+    const MASS = 8000, AREA = 20, K_HEAT = 1.15e-7, CL_K = 0.15, CHUTE_CDA = 270, CHUTE_MAX_G = 6, T_INF = 9;
+    this.t += DT;
+    this.alpha = clamp(this.alpha + clamp(pitch, -1, 1) * 18 * DT, 0, 90);
+    const alt = this.alt, rho = rhoR(alt), v = Math.max(this.speed, 0.1), sa = Math.sin(rad(this.alpha));
+    const cd = 0.6 + 0.9 * sa, cl = CL_K * Math.sin(2 * rad(this.alpha));
+    const cda = (this.chute === 0 || this.chute === -1) ? cd * AREA : 1.2 * AREA;
+    let drag = 0.5 * rho * v * v * cda;
+    const lift = this.chute <= 0 ? 0.5 * rho * v * v * cl * AREA : 0;
+    if (this.chute > 0) {
+      this.chute_t += DT;
+      const frac = Math.min(1, this.chute_t / T_INF);
+      this.chute = frac >= 1 ? 2 : 1;
+      const cp = 0.5 * rho * v * v * CHUTE_CDA * frac * frac;
+      drag += Math.min(cp, MASS * CHUTE_MAX_G * 9.8);
+    }
+    const ar = this.vt ** 2 / this.r - EARTH_MU / this.r ** 2 + (lift * this.vt / v - drag * this.vr / v) / MASS;
+    const at = -this.vr * this.vt / this.r + (-lift * this.vr / v - drag * this.vt / v) / MASS;
+    this.g = Math.hypot(ar - (this.vt ** 2 / this.r - EARTH_MU / this.r ** 2), at + this.vr * this.vt / this.r) / 9.8;
+    this.vr += ar * DT; this.vt += at * DT; this.r += this.vr * DT; this.theta += this.vt / this.r * DT;
+    const err = Math.abs(this.alpha - this.alpha_star()), flux = K_HEAT * Math.sqrt(rho) * v ** 3;
+    const teq = 20 + flux * (1 + (err / 6) ** 2);
+    this.temp += (teq - this.temp) * DT / 9;
+    this.max_temp = Math.max(this.max_temp, this.temp);
+    if (this.temp > 1200) {
+      this.integrity -= (this.temp - 1200) * 0.04 * DT; this.warn_t += DT;
+      if (this.warn_t > 3) { this.say('¡ESCUDO TÉRMICO SOBRECALENTADO! Corrige el ángulo.', 'bad'); this.events.push('alarm'); this.warn_t = 0; }
+    }
+    if (this.temp > 1700 || this.integrity <= 0) { this.fail('La nave se ha desintegrado por el calor de la reentrada (ángulo incorrecto).', 'SE HA QUEMADO'); return; }
+    if (this.g > 16) { this.fail('Fuerzas G excesivas: la nave se ha destruido.', 'G EXCESIVAS'); return; }
+    if (alt < 110e3) this.dipped = true;
+    if (this.dipped && alt > 135e3 && this.vr > 0) { this.fail('Rebote atmosférico: entraste con muy poco ángulo y la nave ha salido de nuevo al espacio.', 'REBOTE'); return; }
+    if (this.r <= EARTH_R) {
+      this.r = EARTH_R; this.landing_speed = this.speed;
+      if (this.chute === 2 && this.speed < 28) {
+        this.status = 'won'; this.title = 'ATERRIZAJE COMPLETADO'; this.end_reason = `Aterrizaje suave a ${this.speed.toFixed(0)} m/s. ¡Misión completa!`;
+        this.events.push('land'); this.say(this.end_reason, 'good');
+      } else if (this.chute === 1 || this.chute === 2) this.fail(`Abriste el paracaídas demasiado tarde: impacto a ${this.speed.toFixed(0)} m/s.`, 'IMPACTO');
+      else this.fail(`Te estrellaste a ${this.speed.toFixed(0)} m/s sin paracaídas.`, 'IMPACTO');
+    }
+  }
+  sky() { const k = clamp(1 - this.alt / 90000, 0, 1); return [Math.floor(4 + 100 * k), Math.floor(6 + 150 * k), Math.floor(16 + 220 * k)]; }
+  drawScene() {
+    g.save(); g.beginPath(); g.rect(0, 0, W, 530); g.clip();
+    fillRect(this.sky(), 0, 0, W, 530);
+    if (this.alt > 20000) for (const [x, y] of this.stars) circle([190, 190, 200], x, y, 1);
+    const cx = 460, cy = 170, gy = this.alt < 40000 ? cy + 45 + this.alt * 0.014 : 9999;
+    if (gy < 530) {
+      fillRect([50, 105, 55], 0, gy, W, 530 - gy);
+      const off = pymod(this.theta * 6.4e6, 90);
+      for (let i = 0; i < W; i += 90) poly([40, 90, 48], [[i - off, gy], [i + 45 - off, gy - 16], [i + 90 - off, gy]]);
+    }
+    const sp = Math.min(1, this.speed / 7000);
+    for (let i = 0; i < 14; i++) { const x = (i * 97 + this.t * 900 * sp) % 900, y = 20 + (i * 53) % 340; line([255, 255, 255], 900 - x, y, 900 - x + 30 * sp, y, 1); }
+    this.drawShip(cx, cy);
+    if (this.flash > 0) circle([255, 210, 120], cx, cy, Math.floor(160 * (1.2 - this.flash)));
+    g.restore();
+  }
+  drawShip(cx, cy) {
+    if (this.status === 'lost' && this.flash <= 0) return;
+    const heat = clamp((this.temp - 300) / 1300, 0, 1), ang = this.alt > 35000 ? -this.alpha : 80;
+    g.save(); g.translate(cx, cy); g.rotate(-rad(ang)); g.translate(-110, -80);
+    if (heat > 0.02) for (let k = 0; k < 6; k++) ellipse([255, 120 + 20 * k, 40, Math.floor(130 * heat * 0.5)], 95 - k * 12, 40 - k * 4, 100 + k * 18, 80 + k * 8);
+    fillRect([235, 235, 240], 60, 60, 70, 40);
+    poly([205, 50, 50], [[130, 60], [165, 80], [130, 100]]);
+    fillRect([70, 50, 40], 52, 58, 10, 44);
+    g.restore();
+    if (this.chute > 0) {
+      const frac = Math.min(1, this.chute_t / 9), w = 140 * frac;
+      ellipse([240, 120, 40], cx - w / 2, cy - 130 * frac - 20, w, 70 * frac);
+      line([200, 200, 200], cx - w / 2 + 6, cy - 100 * frac, cx, cy - 10, 1);
+      line([200, 200, 200], cx + w / 2 - 6, cy - 100 * frac, cx, cy - 10, 1);
+    }
+    if (this.chute === -1) line([240, 120, 40], cx, cy - 20, cx + 40, cy - 90, 3);
+  }
+  drawHud() {
+    fillRect([10, 13, 20], 0, 530, W, 190); line(ACCENT, 0, 530, W, 530, 2);
+    txt('REENTRADA · TELEMETRÍA' + (this.ff > 1 ? '   (caída acelerada ×3)' : ''), 14, 540, 13, ACCENT, true);
+    const rows = [['Altitud', `${(this.alt / 1000).toFixed(1)} km`, TEXT], ['Velocidad', `${Math.round(this.speed).toLocaleString('en-US')} m/s`, TEXT],
+      ['Velocidad vertical', `${Math.round(this.vr).toLocaleString('en-US')} m/s`, TEXT], ['Fuerza G', `${this.g.toFixed(1)} g`, this.g < 5 ? GOOD : (this.g < 10 ? WARN : BAD)],
+      ['Integridad', `${this.integrity.toFixed(0)}%`, this.integrity > 60 ? GOOD : BAD]];
+    rows.forEach(([a, b, c], k) => { txt(a, 14, 564 + k * 22, 14, DIM); txt(b, 300, 564 + k * 22, 14, c, true, 'topright'); });
+    txt('Temp. escudo térmico', 340, 564, 14, DIM);
+    const col = this.temp < 900 ? GOOD : (this.temp < 1200 ? WARN : BAD);
+    txt(`${Math.round(this.temp).toLocaleString('en-US')} °C`, 640, 564, 14, col, true, 'topright');
+    bar([340, 584, 300, 10], this.temp / 1700, col);
+    const a = this.alpha, ast = this.alpha_star();
+    txt(`Ángulo de ataque: ${a.toFixed(0)}°   ideal: ${ast.toFixed(0)}°`, 340, 606, 14, TEXT, true);
+    const gx = 340, gw = 300;
+    fillRect([45, 50, 66], gx, 630, gw, 14, 3);
+    const lo = ast - 4, hi = ast + 4;
+    fillRect([40, 150, 80], gx + gw * Math.max(0, lo) / 90, 630, gw * (Math.min(90, hi) - Math.max(0, lo)) / 90, 14);
+    fillRect(TEXT, gx + gw * a / 90 - 2, 625, 4, 24);
+    const err = Math.abs(a - ast);
+    txt(`Error: ${err.toFixed(0)}°  → calor ×${(1 + (err / 6) ** 2).toFixed(1)}`, 340, 654, 13, err < 4 ? GOOD : (err < 8 ? WARN : BAD));
+    const st = { 0: 'CERRADO', 1: 'ABRIÉNDOSE', 2: 'ABIERTO', '-1': 'RASGADO' }[this.chute];
+    txt('Paracaídas: ' + st, 700, 564, 15, this.chute > 0 ? GOOD : (this.chute < 0 ? BAD : TEXT), true);
+    txt('Zona segura: entre 7 y 2 km de altitud', 700, 586, 13, DIM);
+    txt('y por debajo de 220 m/s (ESPACIO)', 700, 604, 13, DIM);
+    this.log.slice(-5).forEach(([m, lvl], k) => txt(m.slice(0, 70), 700, 630 + k * 16, 12, LOGC[lvl]));
+  }
+  rects() { const bx = PX + 20, bw = PW - 40; return { up: [bx, PY + 40, bw, 62], down: [bx, PY + 112, bw, 62], chute: [bx, PY + 200, bw, 70] }; }
+  mouseCtl() {
+    const c = {};
+    if (this.status !== 'running' || !mouse.down) return c;
+    const m = mpos(), r = this.rects();
+    if (inRect(m, r.up)) c.pitch = 1; if (inRect(m, r.down)) c.pitch = -1;
+    return c;
+  }
+  click(pos) { if (inRect(pos, this.rects().chute)) { this.open_chute(); return true; } return false; }
+  drawPanel() {
+    if (this.status !== 'running') return;
+    overlayPanel(PX, PY, PW, PH);
+    txt('CONTROL DE REENTRADA', PX + PW / 2, PY + 10, 15, ACCENT, true, 'midtop');
+    const lab = { up: ['▲ AUMENTAR ÁNGULO', 'mantener · W / ↑'], down: ['▼ REDUCIR ÁNGULO', 'mantener · S / ↓'], chute: ['ABRIR PARACAÍDAS', 'ESPACIO · ni muy pronto ni muy tarde'] };
+    const m = mpos(), rs = this.rects();
+    for (const k in rs) {
+      const r = rs[k], ok = k !== 'chute' || this.chute === 0;
+      const blink = k === 'chute' && this.alt > 2000 && this.alt < 7000 && this.chute === 0 && Math.floor(now() / 300) % 2 === 0;
+      panelR(r, blink ? [200, 120, 20] : (inRect(m, r) && ok ? ACCENT : PANEL2), null, 6);
+      txt(lab[k][0], r[0] + r[2] / 2, r[1] + r[3] / 2 - 9, 17, TEXT, true, 'center');
+      txt(lab[k][1], r[0] + r[2] / 2, r[1] + r[3] / 2 + 13, 12, [210, 215, 225], false, 'center');
+    }
+    ['Mantén el ángulo en la banda verde:', 'el ideal cambia con la altitud y oscila,', 'así que corrige sin parar. Poco ángulo', '= rebote o calor; mucho error = fuego.', 'Entre 7 y 2 km abre el paracaídas.']
+      .forEach((t, k) => txt(t, PX + 20, PY + 290 + k * 22, 13, DIM));
+  }
+}
+Reentry.prototype.name = 'REENTRADA';
+function rhoR(alt) { return 1.225 * Math.exp(-Math.max(alt, 0) / 7500); }
+/* ============================================================ pantalla de vuelo */
+const TEL_Y = SCENE_H;
+const WARPS = [1, 2, 4, 8];
+const levelColor = (v, warn, bad) => v >= bad ? BAD : (v >= warn ? WARN : GOOD);
+const K = (...names) => names.some(n => held.has(n));
+const fmtn = (v, d = 0) => Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+function wrapCentered(s, x, y, size, maxw, color, lh = 24) {
+  let ln = '';
+  for (const wd of s.split(' ')) {
+    if (textW(ln + wd, size) > maxw) { txt(ln.trim(), x, y, size, color, false, 'midtop'); y += lh; ln = ''; }
+    ln += wd + ' ';
+  }
+  txt(ln.trim(), x, y, size, color, false, 'midtop');
+  return y;
+}
+
+class FlightScreen {
+  constructor(cfg, snd) {
+    this.cfg = cfg; this.snd = snd; this.panel = new ControlPanel();
+    this.weather = new Weather();
+    this.reset_pulse = false;
+    this.newSim();
+    this.btn_abort = new Button([W - 190, 12, 178, 54], 'ABORTAR  (X)', [170, 30, 30], [240, 60, 50], 20);
+    this.btn_start = new Button([50, 200, 250, 54], 'INICIAR CUENTA ATRÁS', [40, 120, 70], [60, 170, 100], 17);
+    this.btn_wait = new Button([305, 200, 245, 54], 'Esperar (cambia el clima)', PANEL2, ACCENT, 16);
+    this.btn_back = new Button([50, 264, 500, 44], 'Volver al constructor (Esc)', PANEL2, ACCENT, 16);
+    this.btn_res_build = new Button([W / 2 - 270, 440, 260, 50], 'Modificar cohete', PANEL2, ACCENT, 17);
+    this.btn_res_retry = new Button([W / 2 + 10, 440, 260, 50], 'Repetir prueba', [40, 120, 70], [60, 170, 100], 17);
+    this.warp_i = 0; this.acc = 0;
+  }
+  newSim() {
+    this.sim = new Sim(this.cfg, this.weather);
+    this.scene = new Scene(this.cfg);
+    this.end_timer = 0; this.warp_i = 0; this.phase = 'ascent'; this.mod = null; this.mod_end_t = 0; this.orbit_timer = 0; this.milestones = []; this.total = 0;
+  }
+  retry() { this.snd.stop_all(); this.weather = new Weather(); this.newSim(); }
+
+  handle(ev) {
+    if (this.phase !== 'ascent') return this.handleMod(ev);
+    const s = this.sim, pre = s.status === 'pad', flying = s.status === 'countdown' || s.status === 'flying';
+    if (this.panel.handle(ev, s, this, this.snd)) return null;
+    if (ev.type === 'keydown' && ev.key === 'm') this.snd.toggle_mute();
+    const done = this.ascentDone();
+    if (ev.type === 'keydown') {
+      const k = ev.key;
+      if (k === 'Escape' && (pre || done)) return 'builder';
+      if (k === 'Enter') { if (pre) s.start_countdown(); else if (done) this.retry(); }
+      if (k === 'x' && (flying || pre)) s.abort();
+      if (k === 'Space') s.separate();
+      if (k === 'g') { s.autopilot = !s.autopilot; if (!s.autopilot) s.pitch_cmd = s.pitch; s.say('Piloto automático ' + (s.autopilot ? 'ACTIVADO' : 'DESACTIVADO'), 'info'); }
+      if (k === 't') this.warp_i = (this.warp_i + 1) % WARPS.length;
+      if (k === 'e' && s.status === 'flying') s.toggle_engine();
+      if (k === 'r' && s.status === 'flying') this.reset_pulse = true;
+    }
+    if (pre) {
+      if (this.btn_start.clicked(ev)) s.start_countdown();
+      if (this.btn_wait.clicked(ev)) for (let i = 0; i < 120; i++) this.weather.update(1.0);
+      if (this.btn_back.clicked(ev)) return 'builder';
+    }
+    if (this.btn_abort.clicked(ev) && (flying || pre)) s.abort();
+    if (done) {
+      if (this.btn_res_build.clicked(ev)) return 'builder';
+      if (this.btn_res_retry.clicked(ev)) this.retry();
+    }
+    return null;
+  }
+  update(dt) {
+    if (this.phase !== 'ascent') return this.updateMod(dt);
+    const s = this.sim;
+    const ctl = { thr: (K('w', 'ArrowUp') ? 1 : 0) - (K('s', 'ArrowDown') ? 1 : 0), pitch: (K('d', 'ArrowRight') ? 1 : 0) - (K('a', 'ArrowLeft') ? 1 : 0),
+      coolant: K('c'), vent: K('v'), reset: this.reset_pulse };
+    const mc = this.panel.ctl(s);
+    ctl.coolant = ctl.coolant || !!mc.coolant; ctl.vent = ctl.vent || !!mc.vent;
+    if (mc.pitch) ctl.pitch = mc.pitch;
+    this.snd.hold_hiss(s.status === 'flying' && !!(ctl.coolant || ctl.vent));
+    this.reset_pulse = false;
+    if (s.status === 'countdown' || s.status === 'flying') {
+      this.acc += dt * (s.status === 'flying' ? WARPS[this.warp_i] * 1.7 : 1);
+      let n = 0;
+      while (this.acc >= DT && n < 60) { s.update(ctl); ctl.reset = false; this.acc -= DT; n++; }
+      this.acc = Math.min(this.acc, DT);
+    }
+    if (s.status === 'exploded' || s.status === 'crashed') { this.end_timer += dt; this.warp_i = 0; }
+    if (s.status === 'orbit') { this.warp_i = 0; this.end_timer += dt; }
+    this.snd.process(s, dt);
+    this.scene.handleEvents(s);
+    if (s.status === 'orbit' && s.result === 'orbita_alta') {
+      this.orbit_timer += dt;
+      if (this.orbit_timer > 3.0) { this.total = s.score(); this.milestones.push('Órbita alta alcanzada'); this.startPhase('rendezvous'); }
+    }
+  }
+  draw(dt) {
+    if (this.phase !== 'ascent') return this.drawMod();
+    const s = this.sim;
+    this.scene.draw(s, dt);
+    this.drawTelemetry();
+    this.drawAlerts();
+    this.panel.draw(s, this.warp_i);
+    if (s.status === 'countdown' || s.status === 'flying' || s.status === 'pad') this.btn_abort.draw();
+    if (s.status === 'pad') this.drawPrelaunch();
+    if (s.status === 'countdown') txt(`${Math.max(0, Math.ceil(s.countdown))}`, W / 2, 140, 90, WARN, true, 'center');
+    if (s.status === 'orbit' && s.result === 'orbita_alta') {
+      txt('¡ÓRBITA ALTA ALCANZADA!', W / 2, 90, 36, GOOD, true, 'center');
+      txt('Preparando el acoplamiento con el satélite...', W / 2, 130, 18, TEXT, false, 'center');
+    } else if (this.ascentDone()) this.drawResult();
+  }
+  ascentDone() {
+    const s = this.sim;
+    if (s.status === 'orbit') return s.result !== 'orbita_alta';
+    return (s.status === 'exploded' || s.status === 'crashed' || s.status === 'aborted') && (this.end_timer > (s.cities_hit.length ? 5.5 : 2.0) || s.status === 'aborted');
+  }
+  startPhase(name) { this.snd.stop_all(); this.phase = name; this.mod_end_t = 0; const seed = Math.floor(now()) % 1000; this.mod = name === 'rendezvous' ? new Rendezvous(seed) : new Reentry(seed); }
+  modFinished() { const m = this.mod; if (m.status === 'lost') return this.mod_end_t > 1.5; return m.status === 'won' && this.phase === 'reentry' && this.mod_end_t > 1.5; }
+  handleMod(ev) {
+    const m = this.mod, done = this.modFinished();
+    if (ev.type === 'keydown') {
+      const k = ev.key;
+      if (k === 'm') this.snd.toggle_mute();
+      if (k === 'x' && m.status === 'running') m.abort();
+      if (k === 'Space' && this.phase === 'reentry') m.open_chute();
+      if (done && k === 'Escape') return 'builder';
+      if (done && k === 'Enter') this.retry();
+    }
+    if (this.btn_abort.clicked(ev) && m.status === 'running') m.abort();
+    if (this.phase === 'reentry' && ev.type === 'down') m.click(ev.pos);
+    if (done) {
+      if (this.btn_res_build.clicked(ev)) return 'builder';
+      if (this.btn_res_retry.clicked(ev)) this.retry();
+    }
+    return null;
+  }
+  updateMod(dt) {
+    const m = this.mod;
+    const up = (K('w', 'ArrowUp') ? 1 : 0) - (K('s', 'ArrowDown') ? 1 : 0);
+    const keys = this.phase === 'rendezvous' ? { rot: (K('a', 'ArrowLeft') ? 1 : 0) - (K('d', 'ArrowRight') ? 1 : 0), thr: up } : { pitch: up };
+    m.update(dt, keys, m.mouseCtl());
+    this.snd.hold_hiss(this.phase === 'rendezvous' && m.status === 'running' && m.thrusting !== 0);
+    const map = { boom: 'boom', dock: 'beep_go', chute: 'sep', tear: 'alarm', alarm: 'alarm', land: 'win' };
+    for (const ev of m.events) this.snd.play(map[ev] || 'click');
+    m.events.length = 0;
+    if (m.status !== 'running') this.mod_end_t += dt;
+    if (this.phase === 'rendezvous' && m.status === 'won' && this.mod_end_t > 3.0) {
+      this.total += 500; this.milestones.push('Acoplamiento con el satélite'); this.startPhase('reentry'); return;
+    }
+    if (this.phase === 'reentry' && m.status === 'won' && !this.milestones.includes('Reentrada y aterrizaje')) {
+      this.milestones.push('Reentrada y aterrizaje');
+      this.total += 800 + Math.floor(m.integrity * 2);
+      if (this.cfg.crewed) this.total = Math.floor(this.total * 1.5);
+    }
+  }
+  drawMod() {
+    const m = this.mod;
+    m.drawScene(); m.drawHud(); m.drawPanel();
+    if (m.status === 'running') this.btn_abort.draw();
+    else if (this.phase === 'rendezvous' && m.status === 'won') {
+      txt('¡ACOPLAMIENTO COMPLETADO!', 460, 90, 34, GOOD, true, 'center');
+      txt('Separando la etapa para la reentrada...', 460, 128, 18, TEXT, false, 'center');
+    }
+    if (this.modFinished()) this.drawResultMod();
+  }
+  drawResultMod() {
+    const m = this.mod;
+    fillRect([0, 0, 0, 150], 0, 0, W, SCENE_H);
+    const win = m.status === 'won', col = win ? GOOD : BAD;
+    panelR([W / 2 - 330, 100, 660, 420], [14, 17, 26], col);
+    txt(win ? 'MISIÓN COMPLETA' : m.title, W / 2, 120, 34, col, true, 'midtop');
+    let y = wrapCentered(m.end_reason, W / 2, 175, 17, 600, TEXT) + 40;
+    for (const name of ['Órbita alta alcanzada', 'Acoplamiento con el satélite', 'Reentrada y aterrizaje']) {
+      const ok = this.milestones.includes(name);
+      txt((ok ? '✔ ' : '✘ ') + name, W / 2 - 200, y, 16, ok ? GOOD : DIM); y += 26;
+    }
+    txt(`Puntuación total: ${fmtn(this.total)}`, W / 2, y + 12, 20, TEXT, true, 'midtop');
+    this.btn_res_build.draw(); this.btn_res_retry.draw();
+    txt('Esc: constructor · Enter: repetir', W / 2, 500, 13, DIM, false, 'midtop');
+  }
+  drawPrelaunch() {
+    const w = this.weather, px = 30, pw = 540;
+    panelR([px, 20, pw, 300], [14, 17, 26], ACCENT);
+    txt('PLATAFORMA DE LANZAMIENTO', px + pw / 2, 32, 22, ACCENT, true, 'midtop');
+    const hh = Math.floor(w.hour), mm = Math.floor((w.hour % 1) * 60);
+    const rows = [['Hora local', `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}` + (w.is_night ? '  (noche)' : '')], ['Clima', w.name], ['Viento', `${w.wind.toFixed(1)} m/s`], ['Temperatura', `${w.temp.toFixed(0)} °C`]];
+    rows.forEach(([a, b], k) => {
+      txt(a, px + 30, 70 + k * 24, 16, DIM);
+      const col = (a === 'Clima' && w.cond === 3) ? BAD : ((a === 'Clima' && w.cond === 2) ? WARN : TEXT);
+      txt(b, px + pw - 30, 70 + k * 24, 16, col, true, 'topright');
+    });
+    txt('Tormentas y lluvia aumentan los fallos. Puedes esperar a que mejore.', px + pw / 2, 172, 13, DIM, false, 'midtop');
+    this.btn_start.draw(); this.btn_wait.draw(); this.btn_back.draw();
+    panelR([px, 332, pw, 112], [14, 17, 26]);
+    ['W/S acelerador · A/D cabeceo · ESPACIO separar etapa', 'G piloto automático · C refrigerar · V ventear presión', 'R reiniciar sistemas · E apagar motor · T acelerar tiempo', 'X ABORTAR (en vuelo destruye el cohete)']
+      .forEach((l, k) => txt(l, px + pw / 2, 342 + k * 24, 13, TEXT, false, 'midtop'));
+  }
+  drawAlerts() {
+    const s = this.sim;
+    if (s.status !== 'flying') return;
+    let y = 12;
+    const blink = Math.floor(now() / 300) % 2 === 0;
+    if (s.orbit_ready && !s.engine_cut) {
+      panelR([20, y, 560, 60], [10, 40, 20], GOOD);
+      txt('¡ÓRBITA LOGRADA! Pulsa E: APAGAR MOTORES', 32, y + 6, 20, GOOD, true);
+      txt(`Si no, se apagarán solos en ${Math.max(0, s.orbit_ready_t).toFixed(0)} s. Después irás al satélite.`, 32, y + 34, 14, TEXT);
+      y += 70;
+    } else if (!s.faults.nActive() && s.sep_timer === null && s.alt > 20000) {
+      const [apo, per] = s.orbit();
+      let msg = null;
+      if (!(s.engine_cut && s.cur >= s.n_stages - 1 && !s.orbit_ready)) {
+        const ap = apo === Infinity ? '∞' : (apo / 1000).toFixed(0), pr = per > 0 ? (per / 1000).toFixed(0) : '—';
+        msg = `OBJETIVO: perigeo ≥120 km (ahora ${pr}) y apogeo ≥500 km (ahora ${ap}). Sigue acelerando con el cohete inclinado.`;
+      }
+      if (msg) txt(msg, 22, y + 2, 13, TEXT, true);
+    }
+    for (const k in s.faults.active) {
+      const sev = s.faults.active[k], [name, fix] = FAULT_INFO[k], col = (sev > 0.6 && blink) ? BAD : WARN;
+      panelR([20, y, 560, 44], [40, 14, 14], col);
+      txt('⚠ ' + name, 32, y + 4, 16, col, true);
+      txt(fix, 32, y + 24, 12, TEXT);
+      bar([420, y + 16, 150, 12], sev, col);
+      y += 50;
+    }
+    if (s.sep_timer !== null) {
+      const col = blink ? BAD : WARN;
+      panelR([20, y, 560, 70], [50, 12, 12], col);
+      txt('¡SEPARA LA ETAPA! (ESPACIO)', 32, y + 6, 24, col, true);
+      txt(`Explotará en ${Math.max(0, s.sep_timer).toFixed(0)} s`, 32, y + 38, 20, TEXT, true);
+      bar([330, y + 44, 240, 12], s.sep_timer / s.SEP_MARGIN, col);
+    } else if (s.fuel_frac() < 0.10 && s.cur < s.n_stages - 1 && s.prop[s.cur] > 0) {
+      txt('Combustible casi agotado: prepárate para separar (ESPACIO)', 30, y + 4, 16, WARN, true);
+    }
+    const tips = [];
+    if (s.ignited && s.engine_cut && s.prop[s.cur] > 0 && !s.orbit_ready && s.alt < 120e3) tips.push('Motores APAGADOS: pulsa E para encenderlos.');
+    if (s.ignited && !s.engine_cut) {
+      if (s.vr < -50 && s.alt < 100e3) tips.push('¡ESTÁS CAYENDO! Acelerador al 100 % y apunta más alto (cabeceo menor).');
+      if (s.throttle < 0.9 && !s.faults.nActive()) tips.push('Acelerador bajo: súbelo al 100 % (arrastra el slider o ↑).');
+      if ('avionics' in s.faults.active) tips.push('Aviónica averiada: pulsa R y espera; hasta entonces el empuje es débil.');
+      if (!s.autopilot) tips.push('Piloto automático apagado: pulsa G para que el cohete se incline solo.');
+    }
+    const ty = y + (s.sep_timer !== null ? 80 : 6);
+    tips.slice(0, 3).forEach((t, i) => txt('▶ ' + t, 24, ty + i * 20, 15, WARN, true));
+  }
+  drawResult() {
+    const s = this.sim;
+    fillRect([0, 0, 0, 150], 0, 0, W, SCENE_H);
+    const win = s.status === 'orbit', col = win ? GOOD : (s.status === 'aborted' ? WARN : BAD);
+    panelR([W / 2 - 330, 100, 660, 420], [14, 17, 26], col);
+    const title = { orbit: s.result === 'orbita_alta' ? 'MISIÓN CUMPLIDA' : 'ÓRBITA BAJA', exploded: 'COHETE DESTRUIDO', crashed: 'MISIÓN FALLIDA', aborted: 'LANZAMIENTO ABORTADO' }[s.status];
+    txt(title, W / 2, 120, 34, col, true, 'midtop');
+    let y = wrapCentered(s.end_reason, W / 2, 175, 17, 600, TEXT) + 40;
+    if (s.cities_hit.length) { txt('¡Los restos han destruido: ' + s.cities_hit.map(i => CITIES[i][1]).join(', ') + '!', W / 2, y, 16, BAD, true, 'midtop'); y += 28; }
+    if (s.cfg.crewed && (s.status === 'exploded' || s.status === 'crashed')) {
+      txt(s.crew_saved ? 'Tripulación a salvo gracias a la torre de escape.' : 'La tripulación ha perdido la vida.', W / 2, y, 16, s.crew_saved ? GOOD : BAD, true, 'midtop'); y += 30;
+    }
+    [['Altitud máxima', `${fmtn(s.max_alt / 1000)} km`], ['Tiempo de vuelo', `${fmtn(s.t)} s`], ['Integridad final', `${s.integrity.toFixed(0)}%`], ['Puntuación', fmtn(s.score())]]
+      .forEach(([a, b], k) => { txt(a, W / 2 - 200, 300 + k * 26, 16, DIM); txt(b, W / 2 + 200, 300 + k * 26, 16, TEXT, true, 'topright'); });
+    this.btn_res_build.draw(); this.btn_res_retry.draw();
+    txt('Esc: constructor · Enter: repetir', W / 2, 500, 13, DIM, false, 'midtop');
+  }
+  drawTelemetry() {
+    const s = this.sim;
+    fillRect([10, 13, 20], 0, TEL_Y, W, H - TEL_Y);
+    line(ACCENT, 0, TEL_Y, W, TEL_Y, 2);
+    const x0 = 14, y0 = TEL_Y + 10;
+    txt('TELEMETRÍA', x0, y0, 13, ACCENT, true);
+    const alt = Math.max(s.alt, 0);
+    const rows1 = [['Altitud', `${fmtn(alt / 1000, 1)} km`, TEXT], ['Velocidad', `${fmtn(s.speed)} m/s`, TEXT], ['Vel. vertical', `${fmtn(s.vr)} m/s`, TEXT],
+      ['Vel. horizontal', `${fmtn(s.vt)} m/s`, TEXT], ['Mach', s.mach.toFixed(1), TEXT], ['Fuerza G', `${s.gforce.toFixed(1)} g`, levelColor(s.gforce, 4, 7)],
+      ['Presión dinámica (q)', `${(s.q / 1000).toFixed(1)} kPa`, levelColor(s.q, 25000, 40000)], ['Rozamiento (casco)', `${s.temp_skin.toFixed(0)} °C`, levelColor(s.temp_skin, 450, 700)]];
+    rows1.forEach(([a, b, c], k) => { txt(a, x0, y0 + 22 + k * 19, 14, DIM); txt(b, x0 + 300, y0 + 22 + k * 19, 14, c, true, 'topright'); });
+    const x1 = 350;
+    [['Temp. motor', s.temp_eng, 1400, `${s.temp_eng.toFixed(0)} °C`, 850, 1000], ['Presión tanques', s.pressure, 2.2, `${s.pressure.toFixed(2)} bar`, 1.4, 1.7],
+      ['Estrés estructural', s.stress, 1.5, `${(s.stress * 100).toFixed(0)}%`, 0.7, 1.0]].forEach(([a, v, mx, lab, w, b], k) => {
+      const yy = y0 + 22 + k * 30;
+      txt(a, x1, yy, 14, DIM); txt(lab, x1 + 300, yy, 14, levelColor(v, w, b), true, 'topright');
+      bar([x1, yy + 17, 300, 6], v / mx, levelColor(v, w, b));
+    });
+    [['Combustible etapa', s.fuel_frac(), `${(s.fuel_frac() * 100).toFixed(0)}%`, ACCENT], ['Refrigerante', s.coolant / 100, `${s.coolant.toFixed(0)}%`, ACCENT], ['Integridad', s.integrity / 100, `${s.integrity.toFixed(0)}%`, GOOD]]
+      .forEach(([a, v, lab, col], k) => {
+        const yy = y0 + 112 + k * 22, c = (a !== 'Integridad' || v > 0.5) ? col : (v > 0.25 ? WARN : BAD);
+        txt(a, x1, yy, 13, DIM); txt(lab, x1 + 300, yy, 13, TEXT, true, 'topright'); bar([x1 + 130, yy + 4, 110, 8], v, c);
+      });
+    const x2 = 680, [apo, per] = s.orbit();
+    const orb_ok = per >= TARGET_ORBIT_ALT && apo >= TARGET_APO;
+    const apo_s = apo === Infinity ? '∞' : `${fmtn(apo / 1000)} km`, per_s = per > -EARTH_R / 2 ? `${fmtn(per / 1000)} km` : '—';
+    const thrust = s.thrust_now()[0];
+    const rows3 = [['Etapa', `${s.cur + 1} / ${s.n_stages}`, TEXT], ['Masa', `${fmtn(s.mass() / 1000)} t`, TEXT], ['Empuje', `${(thrust / 1e6).toFixed(1)} MN`, TEXT],
+      ['Acelerador', `${(s.throttle * 100).toFixed(0)}%` + (s.engine_cut ? ' (motor OFF)' : ''), TEXT], ['Apogeo', apo_s, TEXT],
+      ['Perigeo (obj. ≥120 km, apogeo ≥500 km)', per_s, orb_ok ? GOOD : TEXT]];
+    txt('VUELO', x2, y0, 13, ACCENT, true);
+    rows3.forEach(([a, b, c], k) => { txt(a, x2, y0 + 22 + k * 19, 14, DIM); txt(b, x2 + 270, y0 + 22 + k * 19, 14, c, true, 'topright'); });
+    const yy = y0 + 22 + 6 * 19 + 4, gp = s.guide_pitch();
+    txt(`Cabeceo ${s.pitch.toFixed(0)}°  (guía ${gp.toFixed(0)}°)  ·  Piloto auto: ` + (s.autopilot ? 'SÍ' : 'NO'), x2, yy, 13, TEXT);
+    bar([x2, yy + 20, 270, 6], 0, ACCENT);
+    fillRect(GOOD, x2 + 270 * Math.min(1, Math.max(0, gp / 100)) - 2, yy + 16, 4, 14);
+    fillRect(TEXT, x2 + 270 * Math.min(1, Math.max(0, s.pitch / 100)) - 2, yy + 16, 4, 14);
+    const x3 = 990, w = this.weather;
+    txt(`Clima: ${w.name} · viento ${w.wind.toFixed(0)} m/s · ${String(Math.floor(w.hour)).padStart(2, '0')}:${String(Math.floor((w.hour % 1) * 60)).padStart(2, '0')}`, x3, y0, 13, w.cond >= 2 ? WARN : DIM);
+    txt(`Tiempo ×${WARPS[this.warp_i]} (T) · T+${fmtn(s.t)}s`, x3, y0 + 18, 13, DIM);
+    const lines = [];
+    for (const [t, msg, lvl] of s.log.slice(-8)) {
+      let cur = '';
+      for (const wd of msg.split(' ')) { if (textW(cur + wd, 12) > 275) { lines.push([cur, lvl]); cur = '  '; } cur += wd + ' '; }
+      lines.push([cur, lvl]);
+    }
+    lines.slice(-9).forEach(([ln, lvl], k) => txt(ln, x3, y0 + 40 + k * 15, 12, LOGC[lvl]));
+  }
+}
+/* ============================================================ sonido (WebAudio, sintetizado) */
+const RATE = 22050;
+function noiseLP(n, k, rng) { const out = new Float32Array(n); let y = 0; for (let i = 0; i < n; i++) { y += (rng.uniform(-1, 1) - y) * k; out[i] = y; } return out; }
+function toneArr(freq, dur, decay = 4, vol = 1, shape = 0) {
+  const n = Math.floor(RATE * dur), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const t = i / RATE; let s = Math.sin(2 * Math.PI * freq * t); if (shape) s = s > 0 ? 1 : -1; out[i] = s * Math.exp(-decay * t) * vol; }
+  return out;
+}
+function cat(...arrs) { const n = arrs.reduce((a, b) => a + b.length, 0), out = new Float32Array(n); let o = 0; for (const a of arrs) { out.set(a, o); o += a.length; } return out; }
+
+class Sounds {
+  constructor() {
+    this.ok = false; this.muted = false; this.ctx = null; this.buf = {}; this.active = new Set();
+    this.last_countdown = null; this.last_status = null; this.last_log = 0; this.last_flash = 0; this.alarm_t = 0; this.eng_ch = null; this.hiss_ch = null; this._seen = null;
+  }
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); return; }
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC(); this.master = this.ctx.createGain(); this.master.gain.value = 0.8; this.master.connect(this.ctx.destination);
+      this.build(); this.ok = true;
+    } catch (e) { this.ok = false; }
+  }
+  mk(samples, vol = 1) {
+    let peak = 1e-9; for (let i = 0; i < samples.length; i++) peak = Math.max(peak, Math.abs(samples[i]));
+    const b = this.ctx.createBuffer(1, samples.length, RATE), d = b.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) d[i] = clamp(samples[i] / peak * vol, -1, 1) * 0.976;
+    return b;
+  }
+  build() {
+    const r = new RNG(7); let n = RATE * 2;
+    const low = noiseLP(n, 0.06, r), mid = noiseLP(n, 0.25, r), eng = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const t = i / RATE; const tone = Math.sin(2 * Math.PI * 44 * t) + 0.6 * Math.sin(2 * Math.PI * 88 * t) + 0.3 * Math.sin(2 * Math.PI * 132 * t); eng[i] = low[i] * 2.2 + mid[i] * 0.9 + tone * 0.25; }
+    this.buf.engine = this.mk(eng, 0.9);
+    n = Math.floor(RATE * 2.8);
+    let a = noiseLP(n, 0.5, r), b = noiseLP(n, 0.04, r); const ex = new Float32Array(n);
+    for (let i = 0; i < n; i++) ex[i] = (a[i] * 0.6 + b[i] * 2.5) * Math.exp(-i / RATE * 1.6) * (i > 40 ? 1 : i / 40);
+    this.buf.boom = this.mk(ex, 1.0);
+    n = Math.floor(RATE * 3.0); b = noiseLP(n, 0.03, r); const th = new Float32Array(n);
+    for (let i = 0; i < n; i++) th[i] = b[i] * (Math.exp(-i / RATE * 0.9) * (0.6 + 0.4 * Math.sin(i / RATE * 17)));
+    this.buf.thunder = this.mk(th, 0.9);
+    n = Math.floor(RATE * 1.4); a = noiseLP(n, 0.1, r); const ig = new Float32Array(n);
+    for (let i = 0; i < n; i++) ig[i] = a[i] * Math.min(1, i / (RATE * 0.8)) * (1 - 0.3 * (i / n));
+    this.buf.ignite = this.mk(ig, 0.8);
+    this.buf.beep = this.mk(toneArr(880, 0.16, 6), 0.5);
+    this.buf.beep_go = this.mk(toneArr(1320, 0.5, 3), 0.6);
+    this.buf.alarm = this.mk(cat(toneArr(660, 0.18, 2, 1, 1), toneArr(520, 0.18, 2, 1, 1)), 0.4);
+    n = Math.floor(RATE * 0.5); a = noiseLP(n, 0.2, r); const sep = new Float32Array(n);
+    for (let i = 0; i < n; i++) sep[i] = (a[i] * 1.2 + Math.sin(2 * Math.PI * 70 * i / RATE)) * Math.exp(-i / RATE * 9);
+    this.buf.sep = this.mk(sep, 0.9);
+    this.buf.click = this.mk(toneArr(1500, 0.04, 60), 0.35);
+    n = Math.floor(RATE * 0.5); const hp = new Float32Array(n); let prev = 0;
+    for (let i = 0; i < n; i++) { const x = r.uniform(-1, 1) * (0.5 + 0.5 * Math.sin(i / n * Math.PI)); hp[i] = x - prev * 0.9; prev = x; }
+    this.buf.hiss = this.mk(hp, 0.5);
+    const zap = new Float32Array(Math.floor(RATE * 0.25)); for (let i = 0; i < zap.length; i++) zap[i] = r.uniform(-1, 1) * Math.exp(-i / RATE * 25);
+    this.buf.zap = this.mk(zap, 0.9);
+    const win = cat(...[523, 659, 784, 1047].map(f => toneArr(f, 0.28, 3)), toneArr(1047, 0.8, 2), new Float32Array(1));
+    this.buf.win = this.mk(win, 0.6);
+    this.buf.lose = this.mk(cat(toneArr(220, 0.5, 2.5, 1, 1), toneArr(165, 0.9, 2, 1, 1)), 0.4);
+  }
+  start(name, vol, loop) {
+    const src = this.ctx.createBufferSource(), gn = this.ctx.createGain();
+    src.buffer = this.buf[name]; src.loop = !!loop; gn.gain.value = vol; src.connect(gn); gn.connect(this.master);
+    const ch = { src, gn }; this.active.add(ch);
+    src.onended = () => this.active.delete(ch);
+    src.start(); return ch;
+  }
+  play(name, vol = 1) { if (this.ok && !this.muted && this.buf[name]) this.start(name, vol, false); }
+  killCh(ch) { if (ch) { try { ch.src.stop(); } catch (e) {} this.active.delete(ch); } }
+  toggle_mute() { this.muted = !this.muted; if (this.ok && this.muted) this.stop_all(); }
+  stop_all() { for (const ch of [...this.active]) this.killCh(ch); this.eng_ch = this.hiss_ch = null; }
+  hold_hiss(on) {
+    if (!this.ok || this.muted) return;
+    if (on) { if (!this.hiss_ch) this.hiss_ch = this.start('hiss', 0.5, true); }
+    else if (this.hiss_ch) { this.killCh(this.hiss_ch); this.hiss_ch = null; }
+  }
+  process(sim, dt) {
+    if (!this.ok || this.muted) return;
+    if (sim.status === 'countdown') {
+      const n = Math.max(0, Math.ceil(sim.countdown));
+      if (n !== this.last_countdown) { this.play(n > 0 ? 'beep' : 'beep_go', 0.8); this.last_countdown = n; }
+    }
+    if (sim.status !== this.last_status) {
+      if (sim.status === 'orbit') this.play('win'); else if (sim.status === 'crashed') this.play('lose');
+      this.last_status = sim.status;
+    }
+    for (const ev of sim.events) {
+      if (ev[0] === 'ignite') this.play('ignite', 1.0); else if (ev[0] === 'explosion') this.play('boom', 1.0); else if (ev[0] === 'sep') this.play('sep', 0.9);
+    }
+    for (const [t, msg, lvl] of sim.log.slice(-4)) {
+      const key = Math.round(t * 100) / 100 + '|' + msg;
+      if (key !== this._seen && lvl === 'bad' && t >= this.last_log) { this.last_log = t; this._seen = key; this.play('alarm', 0.7); }
+    }
+    if (sim.status === 'flying' && (sim.faults.nActive() || sim.sep_timer !== null)) {
+      this.alarm_t -= dt;
+      if (this.alarm_t <= 0) { this.alarm_t = 1.4; this.play('alarm', 0.35); }
+    }
+    const fl = sim.weather.flash;
+    if (fl > 0.95 && this.last_flash <= 0.95) { this.play('zap', 0.7); this.play('thunder', 0.8); }
+    this.last_flash = fl;
+    const thrust = sim.status === 'flying' && sim.thrust_now()[0] > 0;
+    if (thrust) {
+      const vol = (0.15 + 0.85 * sim.throttle) * (0.35 + 0.65 * Math.exp(-Math.max(sim.alt, 0) / 25000));
+      if (!this.eng_ch) this.eng_ch = this.start('engine', vol, true);
+      this.eng_ch.gn.gain.value = vol;
+    } else if (this.eng_ch) { this.killCh(this.eng_ch); this.eng_ch = null; }
+  }
+}
+
+/* ============================================================ bucle principal y eventos */
+const snd = new Sounds();
+const cfg = defaultConfig();
+const builder = new Builder(cfg);
+let flight = null, mode = 'builder';
+
+function dispatch(ev) {
+  if (mode === 'builder') {
+    if (builder.handle(ev) === 'launch') { flight = new FlightScreen(cfg, snd); mode = 'flight'; }
+  } else if (flight.handle(ev) === 'builder') { snd.stop_all(); mode = 'builder'; }
+}
+function toggleFS() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+  } catch (e) {}
+}
+document.getElementById('fs').addEventListener('click', e => { toggleFS(); cv.focus(); });
+
+function keyName(e) { if (e.key === ' ') return 'Space'; return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+const GAME_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter', 'Escape', 'w', 'a', 's', 'd', 'e', 'g', 'c', 'v', 'r', 't', 'x', 'm']);
+window.addEventListener('keydown', e => {
+  snd.init();
+  if (e.altKey && e.key === 'Enter') { toggleFS(); e.preventDefault(); return; }
+  if (e.ctrlKey || e.metaKey) return;
+  const typing = document.activeElement === nameInput;
+  const k = keyName(e);
+  if (!typing) { if (GAME_KEYS.has(k)) e.preventDefault(); held.add(k); }
+  if (e.repeat && !(mode === 'builder' && k.startsWith('Arrow'))) return;
+  dispatch({ type: 'keydown', key: k });
+});
+window.addEventListener('keyup', e => { held.delete(keyName(e)); });
+window.addEventListener('blur', () => { held.clear(); mouse.down = false; });
+nameInput.addEventListener('input', () => { cfg.name = nameInput.value.toUpperCase().slice(0, 14); nameInput.value = cfg.name; });
+nameInput.addEventListener('blur', () => { builder.editing = false; });
+
+function setMouse(e) { const r = cv.getBoundingClientRect(); mouse.x = (e.clientX - r.left) * W / r.width; mouse.y = (e.clientY - r.top) * H / r.height; }
+cv.addEventListener('pointerdown', e => {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  snd.init(); setMouse(e); mouse.down = true;
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  dispatch({ type: 'down', pos: [mouse.x, mouse.y] });
+  if (!builder.editing) { e.preventDefault(); cv.focus(); }
+});
+window.addEventListener('pointermove', e => { setMouse(e); dispatch({ type: 'move', pos: [mouse.x, mouse.y] }); });
+window.addEventListener('pointerup', e => { setMouse(e); mouse.down = false; dispatch({ type: 'up', pos: [mouse.x, mouse.y] }); });
+window.addEventListener('pointercancel', () => { mouse.down = false; dispatch({ type: 'up', pos: [mouse.x, mouse.y] }); });
+cv.addEventListener('wheel', e => { e.preventDefault(); dispatch({ type: 'wheel', dy: sgn(e.deltaY) }); }, { passive: false });
+cv.addEventListener('mousedown', e => { if (builder.editing) e.preventDefault(); });
+cv.addEventListener('contextmenu', e => e.preventDefault());
+
+function resize() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let w = vw, h = w * H / W; if (h > vh) { h = vh; w = h * W / H; }
+  cv.style.width = Math.floor(w) + 'px'; cv.style.height = Math.floor(h) + 'px';
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+}
+window.addEventListener('resize', resize); resize();
+
+let last = now();
+function frame() {
+  const t = now(), dt = Math.min((t - last) / 1000, 0.05); last = t;
+  g.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+  g.lineJoin = 'round';
+  try {
+    if (mode === 'builder') builder.draw();
+    else { flight.update(dt); flight.draw(dt); }
+  } catch (err) { console.error(err); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__cohetes = { dispatch, held, mouse, snd, cfg, builder, get flight() { return flight; }, get mode() { return mode; } };
+</script>
+
+</body>
+</html>
